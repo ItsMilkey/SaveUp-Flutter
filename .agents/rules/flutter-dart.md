@@ -1,52 +1,36 @@
-# Reglas Flutter/Dart (siempre activas)
+# Reglas Flutter/Dart — saveup_app (siempre activas)
 
-Aplican a todo el código de este repositorio, sin excepción.
+Antes de escribir código, lee `docs/CONTEXT.md` y la tarea en `docs/tareas/`.
+El contrato del backend está en `docs/contrato/` y manda sobre cualquier suposición.
 
-## Lenguaje y nombres
+## Alcance y honestidad
+- Implementa solo lo que pide la tarea. No agregues funcionalidades "de paso".
+- No inventes endpoints, campos ni códigos de error. Si falta algo, déjalo como `TODO` y repórtalo.
+- No digas que algo funciona si no lo ejecutaste. Si no pudiste correr la app en un
+  dispositivo, dilo explícitamente.
 
-- **Null safety** activado: no usar `!` para silenciar nulabilidad salvo que sea
-  demostrablemente seguro, y nunca en datos que vienen del backend.
-- Código y nombres de símbolos en **inglés**; documentación y comentarios en
-  **español**.
-- Archivos y carpetas en `snake_case`. Clases en `PascalCase`, variables y
-  métodos en `camelCase`.
-- **Un archivo por widget público.** Los widgets privados auxiliares pueden
-  vivir en el mismo archivo que su widget público.
+## Dinero y tiempo
+- Prohibido `double` para dinero en dominio, estado y UI. Usa `Decimal`.
+- `num`/`double` solo en `lib/core/money/money_json.dart` (borde de serialización).
+- Porcentajes: tal como llegan (1.5 = 1,5 %). No dividir ni multiplicar por 100.
+- La app no recalcula saldos, intereses, cuotas ni CAE: muestra lo que entrega el backend.
+- Instantes en UTC; fechas de calendario `yyyy-MM-dd` sin zona; mes de negocio en America/Santiago.
 
-## Estado
+## Arquitectura
+- `domain` no importa Flutter ni Dio. `presentation` no habla con `data` directamente.
+- Nada de lógica de negocio en widgets. Un widget público por archivo.
+- Estado solo con Riverpod. Sin generadores de código (freezed, build_runner, openapi-generator).
+- Archivos `snake_case.dart`. Símbolos en inglés; textos de UI y docs en español.
 
-- **Riverpod es el único gestor de estado.** No usar `setState` para estado de
-  negocio, ni `Provider` de `provider`, ni Bloc, ni GetX.
-- `setState` solo se admite para estado efímero de UI (animaciones, controllers).
-- Los providers viven cerca de la feature que los usa; los transversales, en
-  `lib/core/` o `lib/app/`.
+## Red y errores
+- Todo acceso HTTP pasa por el cliente de `lib/core/network/`. No crear `Dio()` sueltos.
+- Los errores se traducen a `AppFailure` por `codigo`; nunca decidir mensajes con `detail`.
+- Nunca registrar en logs el header `Authorization`, tokens, contraseñas ni cuerpos de auth.
+- Los tokens viven solo en `flutter_secure_storage`.
+- Sin `print`. Sin reintentos automáticos en bucle (excepto el refresh único documentado).
 
-## Separación de capas
-
-- **Sin lógica de negocio en widgets.** Los widgets solo leen estado y emiten
-  eventos; la lógica vive en `domain` o en los notifiers/providers.
-- Nada de llamadas HTTP directas desde `presentation`: siempre a través de
-  repositorios/casos de uso.
-
-## Dinero
-
-- **Nunca `double` para dinero.** Usar `Decimal` de `package:decimal`.
-- Parsear montos del backend con `Money.parse` y mostrarlos con
-  `Money.formatClp`.
-
-## Prohibiciones
-
-- **Sin `print`** (ni `debugPrint` para datos sensibles). Usar logging
-  estructurado o propagar el error.
-- Sin generadores de código (freezed, build_runner) por ahora.
-- No inventar contratos del backend: endpoints, campos y códigos de error se
-  dejan como `TODO` documentado hasta confirmarlos.
-
-## Pruebas y calidad
-
-- **Pruebas junto a cada módulo nuevo**: unitarias para `domain`/`core`, de
-  widgets para `presentation`.
-- `flutter analyze` y `flutter test` deben pasar sin errores ni warnings antes
-  de cerrar una tarea.
-- No dejar código comentado ni TODOs sin dueño: todo `TODO` explica qué falta y
-  de qué documento/equipo depende.
+## Calidad
+- Cada módulo nuevo trae pruebas en `test/` espejando `lib/`.
+- Cierra cada tarea con `flutter analyze` (sin issues) y `flutter test` (en verde).
+- No agregues dependencias que la tarea no mencione sin justificarlo en el resumen final.
+- No hagas `git push` ni comandos destructivos. Commits locales en español.

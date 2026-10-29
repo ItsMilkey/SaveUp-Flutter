@@ -1,10 +1,10 @@
 import 'package:decimal/decimal.dart';
 import 'package:intl/intl.dart';
 
-/// Utilidades de dinero.
+/// Utilidades de dinero para **datos escritos por la persona**.
 ///
-/// El backend envía los montos como string decimal para no perder precisión
-/// al pasar por JSON. Aquí se convierten a [Decimal] y se formatean como CLP.
+/// Los montos que vienen del backend **no** se parsean aquí: viajan como número
+/// JSON con escala 2 y se leen con `moneyFromJson` (`money_json.dart`).
 ///
 /// Regla del proyecto: el dinero nunca se representa con `double`.
 class Money {
@@ -20,30 +20,56 @@ class Money {
     customPattern: '\u00A4#,##0',
   );
 
-  /// Convierte un monto del backend (string decimal) a [Decimal].
-  ///
-  /// Acepta enteros y decimales con punto o coma (`"1234.50"`, `"1234,50"`),
-  /// porque el formato exacto está pendiente de confirmar con el backend.
-  /// TODO: fijar el separador decimal aceptado cuando esté documentado en
-  /// `docs/CLIENTE_FLUTTER.md` del backend.
-  ///
-  /// Lanza [FormatException] si el valor no es un decimal válido.
-  static Decimal parse(String rawAmount) {
-    final String normalized = rawAmount.trim().replaceAll(',', '.');
+  static final RegExp _numericPattern = RegExp(r'^-?\d+(\.\d+)?$');
+  static final RegExp _spacesAndCurrency = RegExp(r'[\s$]');
 
-    if (normalized.isEmpty) {
+  /// Interpreta un monto escrito por la persona, de forma tolerante.
+  ///
+  /// Acepta:
+  /// - punto o coma como separador decimal (`"1234,50"`, `"1234.50"`);
+  /// - separador de miles con puntos (`"1.234.567"`, `"$1.234.567"`);
+  /// - signo negativo (`"-12.500"`).
+  ///
+  /// Lanza [FormatException] si el texto no es un monto válido.
+  static Decimal parseUserInput(String raw) {
+    String text = raw.trim().replaceAll(_spacesAndCurrency, '');
+    if (text.isEmpty) {
       throw const FormatException('El monto está vacío.');
     }
 
-    return Decimal.parse(normalized);
+    final bool hasComma = text.contains(',');
+    final bool hasDot = text.contains('.');
+
+    if (hasComma && hasDot) {
+      // El último separador que aparece es el decimal; el otro es de miles.
+      final bool commaIsDecimal = text.lastIndexOf(',') > text.lastIndexOf('.');
+      text = commaIsDecimal
+          ? text.replaceAll('.', '').replaceAll(',', '.')
+          : text.replaceAll(',', '');
+    } else if (hasComma) {
+      text = text.replaceAll('.', '').replaceAll(',', '.');
+    } else if (hasDot) {
+      final List<String> groups = text.split('.');
+      final bool looksLikeThousands = groups.length > 1 &&
+          groups.first != '0' &&
+          groups.skip(1).every((String group) => group.length == 3);
+      if (looksLikeThousands) {
+        text = groups.join();
+      }
+    }
+
+    if (!_numericPattern.hasMatch(text)) {
+      throw FormatException('Monto inválido: "$raw".', raw);
+    }
+
+    return Decimal.parse(text);
   }
 
   /// Formatea un monto como pesos chilenos, sin decimales y con separador
   /// de miles (`$1.234.567`).
   ///
   /// El redondeo a peso se hace sobre [Decimal] (nunca con `double`).
-  /// TODO: confirmar con el backend la regla de redondeo de CLP (hoy se usa
-  /// el redondeo half-up por defecto de `decimal`).
+  /// TODO: confirmar con producto si algún caso debe mostrar centavos.
   static String formatClp(Decimal amount) {
     final Decimal rounded = amount.round(scale: 0);
 

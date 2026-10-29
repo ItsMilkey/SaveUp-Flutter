@@ -1,44 +1,24 @@
-# Tareas
+# Tareas de saveup_app
 
-Backlog de la app móvil. Cada tarea es un archivo Markdown en esta carpeta con
-el siguiente formato.
+Cada tarea es un archivo `Fn-nombre.md` con: **Objetivo**, **Prerrequisito**, **Lecturas previas**,
+**Alcance**, **Pruebas**, **Fuera de alcance**, **Criterios de aceptación** y **Entrega**.
+Se ejecutan en orden con el workflow `/nueva-feature` (ej. `/nueva-feature docs/tareas/F0-core.md`).
+Al terminar, marcar aquí con `[x]`.
 
-## Formato
+## Plan
 
-```markdown
-# <ID> — <Título corto>
+- [x] **F0** núcleo: dinero, tiempo, errores y cliente HTTP con sesión — `F0-core.md`
+- [ ] **F1** autenticación, sesión persistente y versión mínima — `F1-auth.md`
+- [ ] **F2** cuenta: recuperar y cambiar contraseña, eliminar cuenta, legales (el envío de correo
+  está pendiente en producción; legales depende de T9.7 del backend)
+- [ ] **F3** movimientos, saldo y categorías (primer corte vertical completo: listar, crear,
+  filtrar, editar, eliminar; pantalla de inicio real)
+- [ ] **F4** deudas: lista, detalle, pagos flexibles, amortización, cancelar
+- [ ] **F5** simulador de endeudamiento (`POST /simulaciones/credito`)
+- [ ] **F6** presupuesto: configuración, ejecución, historial, límites por categoría
+- [ ] **F7** metas de ahorro: crear, abonar, retirar
+- [ ] **F8** exportar reportes (guardar/compartir archivo)
+- [ ] **F9** notificaciones push (requiere proyecto Firebase y, para iOS, cuenta de Apple
+  Developer de pago; en producción el backend las tiene desactivadas)
 
-## Objetivo
-Qué problema resuelve y para quién, en 2-3 líneas.
-
-## Alcance
-Qué entra y qué NO entra (para evitar scope creep).
-
-## Criterios de aceptación
-- [ ] Criterio verificable 1
-- [ ] Criterio verificable 2
-
-## Pruebas
-- [ ] Prueba unitaria de ...
-- [ ] Prueba de widget de ...
-
-## Dependencias / notas
-Endpoints del backend, tareas previas, decisiones pendientes (TODOs).
-```
-
-Reglas:
-
-- Una tarea = un PR conceptual.
-- Los criterios de aceptación deben ser verificables (no "que se vea bien").
-- Toda dependencia del backend se referencia a `docs/CLIENTE_FLUTTER.md`; no se
-  inventan contratos.
-- Al cerrar una tarea, actualizar su estado en la lista de abajo.
-
-## Estado de bloques
-
-| Bloque | Descripción | Estado |
-| --- | --- | --- |
-| F0 | _Por completar_ | Pendiente |
-| F1 | _Por completar_ | Pendiente |
-
-> Todo: completar la definición de F0 y F1 con el equipo de producto.
+Las tareas F2 en adelante se redactan cuando se acerque su turno, con el contrato real a mano.
