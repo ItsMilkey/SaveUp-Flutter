@@ -13,6 +13,10 @@ Copiar al repo (solo lectura, no editar a mano):
 
 - `docs/contrato/openapi.json` — contrato de la API v1 (SaveUp Lite API 1.0.0).
 - `docs/contrato/CLIENTE_FLUTTER.md` — guía de consumo escrita por el backend.
+- `docs/contrato/PLAN_FORMULAS.md` — fórmulas exactas del plan mensual (T10c/T10d).
+- `docs/contrato/plan-vectores.json` — vectores de referencia del plan; se regeneran desde el
+  backend (`PlanVectoresTest`). Si aumenta su `version`, los tests de la app deben fallar hasta
+  portar los cambios.
 
 Si el backend cambia, se reemplazan esos dos archivos y se actualiza este documento.
 Ante contradicción entre este documento y el contrato, manda el contrato.
@@ -33,7 +37,10 @@ Ante contradicción entre este documento y el contrato, manda el contrato.
 
 Regla de dependencias: `presentation` → `domain` ← `data`. `domain` no conoce Flutter ni
 Dio. Nada de lógica de negocio en widgets. El backend es la única fuente de aritmética
-financiera (saldos, intereses, cuotas, CAE): la app **muestra**, no recalcula.
+financiera (saldos, intereses, cuotas, CAE): la app **muestra**, no recalcula. Única
+excepción autorizada (D6): los campos del plan mensual que dependen solo de los montos
+planificados se recalculan localmente durante el arrastre de sliders, con las fórmulas de
+`docs/contrato/PLAN_FORMULAS.md` validadas por vectores.
 
 ## Convenciones
 
@@ -170,12 +177,22 @@ Un `codigo` desconocido cae en una falla genérica conservando status y `detail`
   `PUT/DELETE /movimientos/{id}`. Tipos: `INGRESO_GENERAL`, `GASTO_GENERAL`, `PAGO_DEUDA`,
   `ABONO_META`, `RETIRO_META`. Solo ingresos y gastos generales se editan/eliminan desde acá.
 - **Saldos:** `GET /saldos/me` (`/saldos` también existe).
-- **Categorías:** `GET /categorias`.
+- **Categorías:** `GET /categorias`, `GET /categorias/sugerencia?texto&contexto` (hasta 3
+  sugerencias con `confianza`/`motivo`; la respuesta repite el `texto` recibido y trae
+  `ambigua=true` si la 1ª y la 2ª difieren en menos de 0.10), `PUT /categorias/{id}/tipo-preferido`,
+  `GET /categorias/preferencias`.
 - **Deudas:** `POST /deudas`, `GET /deudas/me`, `GET/PUT /deudas/{id}`, `POST /deudas/{id}/pagar`,
   `GET /deudas/{id}/pagos`, `GET /deudas/{id}/amortizacion`, `PATCH /deudas/{id}/cancelar`.
 - **Simulador:** `POST /simulaciones/credito` (no persiste).
 - **Presupuesto:** `GET/POST /presupuestos/me`, `GET/PUT /presupuestos/categorias/me`,
-  `GET /presupuestos/{ejecucion,historial}/me`, `GET /presupuestos/categorias/ejecucion/me`.
+  `GET /presupuestos/{ejecucion,historial}/me`, `GET /presupuestos/categorias/ejecucion/me`,
+  `GET /presupuestos/sugerencia-regla` (informativa: se acepta con `POST /presupuestos/me`).
+- **Plan mensual:** `GET /planes/{mes}` (`?incluirReferencias=true` agrega referencias
+  históricas a `porCategoria`), `POST /planes/{mes}/partidas`,
+  `PUT/DELETE /planes/{mes}/partidas/{id}`, `PATCH /planes/{mes}/montos` (lote atómico de
+  1 a 100 cambios, "todo o nada"; responde el plan completo; 409 sobre partidas vinculadas
+  a deuda), `PUT /planes/{mes}/ingreso-referencia`, `POST /planes/{mes}/copiar-desde/{mesOrigen}`
+  (los avisos van en `avisos[]`), `GET/POST /planes/grupos`, `PUT/DELETE /planes/grupos/{id}`.
 - **Metas:** `POST /metas`, `GET /metas/me`, `PUT/DELETE /metas/{id}`, `POST /metas/{id}/{abonar,retirar}`.
 - **Reportes:** `GET /reportes/movimientos/exportar` (bytes + `Content-Disposition`).
 - **Push:** `GET/POST/DELETE /notificaciones/dispositivos`. (`/notificaciones/recordatorios/ejecutar`
@@ -192,6 +209,17 @@ Un `codigo` desconocido cae en una falla genérica conservando status y `detail`
 - **D4 — `register` no inicia sesión:** al terminar el registro se lleva al login con el correo
   precargado (un solo intento de login, sin automatismos).
 - **D5 — Zona de negocio** con el paquete `timezone`, inicializado al arrancar.
+- **D6 — Recálculo local en el plan mensual (sliders).** Durante el arrastre, la app recalcula
+  localmente solo lo que depende de los montos planificados (`diferencia`, `porcentajeUsado`
+  truncado DOWN a 2 decimales, `estado` por multiplicación cruzada — no se usa el porcentaje
+  truncado —, `planificadoTotal`, `remanenteLibre`, `margenSeguridadPct`, `excedeIngreso`,
+  los grupos afectados y `repartoPorTipo`), portando las fórmulas de
+  `docs/contrato/PLAN_FORMULAS.md` a una clase pura de Dart. Seguimos sin recalcular
+  `real`, la imputación de movimientos, `estadoCuota`, las referencias históricas ni ningún
+  otro dato del servidor. La clase pasa los casos V01–V33 de `docs/contrato/plan-vectores.json`
+  en la suite de tests. Al soltar el slider: `PATCH /planes/{mes}/montos` y el estado local se
+  reemplaza por el plan que devuelve el servidor. Tope del slider:
+  `monto actual + max(remanenteLibre, 0)`; sobreasignar es válido con aviso informativo.
 
 ## Pendientes / fuera del alcance actual
 

@@ -15,7 +15,11 @@ Al terminar, marcar aquí con `[x]`.
   filtrar, editar, eliminar; pantalla de inicio real)
 - [ ] **F4** deudas: lista, detalle, pagos flexibles, amortización, cancelar
 - [ ] **F5** simulador de endeudamiento (`POST /simulaciones/credito`)
-- [ ] **F6** presupuesto: configuración, ejecución, historial, límites por categoría
+- [ ] **F6** presupuesto: configuración, ejecución, historial, límites por categoría,
+  sugerencia-regla
+- [ ] **F6a** plan mensual: partidas, grupos, sliders con cálculo local (D6) y lote atómico
+  de montos — `F6a-plan-mensual.md` (ya redactada: se reservaron su contrato y sus fórmulas
+  en la misma pasada de análisis)
 - [ ] **F7** metas de ahorro: crear, abonar, retirar
 - [ ] **F8** exportar reportes (guardar/compartir archivo)
 - [ ] **F9** notificaciones push (requiere proyecto Firebase y, para iOS, cuenta de Apple
