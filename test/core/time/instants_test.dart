@@ -25,10 +25,7 @@ void main() {
     });
 
     test('rechaza un instante sin zona', () {
-      expect(
-        () => parseInstant('2026-10-22T12:15:00'),
-        throwsFormatException,
-      );
+      expect(() => parseInstant('2026-10-22T12:15:00'), throwsFormatException);
     });
 
     test('rechaza una fecha de calendario', () {

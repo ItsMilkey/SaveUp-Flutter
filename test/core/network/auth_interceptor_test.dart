@@ -60,7 +60,8 @@ void main() {
 
   test('adjunta el token en las rutas protegidas', () async {
     await saveTokens(token: 'abc');
-    adapter.handler = (RequestOptions options) async => jsonResponse(<String, Object?>{'ok': true});
+    adapter.handler = (RequestOptions options) async =>
+        jsonResponse(<String, Object?>{'ok': true});
 
     await client.get<Map<String, dynamic>>('/movimientos/me');
 
@@ -84,8 +85,8 @@ void main() {
       return problemResponse('TOKEN_EXPIRADO', statusCode: 401);
     };
 
-    final Response<Map<String, dynamic>> response =
-        await client.get<Map<String, dynamic>>('/movimientos/me');
+    final Response<Map<String, dynamic>> response = await client
+        .get<Map<String, dynamic>>('/movimientos/me');
 
     expect(response.statusCode, 200);
     expect(resourceCalls, 2);
@@ -114,15 +115,18 @@ void main() {
       return problemResponse('TOKEN_EXPIRADO', statusCode: 401);
     };
 
-    final List<Response<Map<String, dynamic>>> responses =
-        await Future.wait(<Future<Response<Map<String, dynamic>>>>[
-      client.get<Map<String, dynamic>>('/movimientos/a'),
-      client.get<Map<String, dynamic>>('/movimientos/b'),
-      client.get<Map<String, dynamic>>('/movimientos/c'),
-    ]);
+    final List<Response<Map<String, dynamic>>> responses = await Future.wait(
+      <Future<Response<Map<String, dynamic>>>>[
+        client.get<Map<String, dynamic>>('/movimientos/a'),
+        client.get<Map<String, dynamic>>('/movimientos/b'),
+        client.get<Map<String, dynamic>>('/movimientos/c'),
+      ],
+    );
 
     expect(
-      responses.every((Response<Map<String, dynamic>> r) => r.statusCode == 200),
+      responses.every(
+        (Response<Map<String, dynamic>> r) => r.statusCode == 200,
+      ),
       isTrue,
     );
     expect(refreshCalls, 1, reason: 'el refresh debe ser single-flight');

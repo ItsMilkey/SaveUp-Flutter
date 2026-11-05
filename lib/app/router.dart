@@ -1,31 +1,107 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import 'home_screen.dart';
+import '../features/app_version/presentation/app_version_controller.dart';
+import '../features/app_version/presentation/update_required_screen.dart';
+import '../features/auth/presentation/auth_controllers.dart';
+import '../features/auth/presentation/home_provisoria_screen.dart';
+import '../features/auth/presentation/login_screen.dart';
+import '../features/auth/presentation/register_screen.dart';
+import '../features/auth/presentation/splash_screen.dart';
+import '../features/auth/domain/auth_session.dart';
+import '../core/network/session_events.dart';
+import 'routes.dart';
 
-/// Nombres de ruta centralizados para evitar strings sueltos en la app.
-abstract final class AppRoutes {
-  static const String home = '/';
-  static const String homeName = 'home';
-}
-
-/// Router de la aplicación.
+/// Router de la aplicación con redirección según sesión y versión.
+///
+/// - Sin versión de sesión (`unknown`): splash en `/`.
+/// - Actualización obligatoria: solo `/actualizacion`.
+/// - Sin sesión: `/login` y `/registro`; las privadas vuelven a `/login`.
+/// - Con sesión: `/home`.
 ///
 /// Se expone como provider para que sea reemplazable en pruebas y para
 /// liberar sus recursos cuando el contenedor se destruya.
 final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
   final GoRouter router = GoRouter(
-    initialLocation: AppRoutes.home,
+    initialLocation: AppRoutes.splash,
+    redirect: (context, state) => redirectLogic(ref, state),
     routes: <RouteBase>[
       GoRoute(
+        path: AppRoutes.splash,
+        name: 'splash',
+        builder: (_, _) => const SplashScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.actualizacion,
+        name: 'actualizacion',
+        builder: (_, _) => const UpdateRequiredScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.login,
+        name: 'login',
+        builder: (_, _) => const LoginScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.registro,
+        name: 'registro',
+        builder: (_, _) => const RegisterScreen(),
+      ),
+      GoRoute(
         path: AppRoutes.home,
-        name: AppRoutes.homeName,
-        builder: (_, _) => const HomeScreen(),
+        name: 'home',
+        builder: (_, _) => const HomeProvisoriaScreen(),
       ),
     ],
   );
+
+  // La sesión puede vencer en cualquier momento (401 no recuperable): el
+  // interceptor ya borró los tokens; aquí se navega al login con aviso.
+  final StreamSubscription<SessionEvent> expiredSub = ref
+      .watch(sessionEventsProvider)
+      .events
+      .listen((SessionEvent event) {
+        ref.read(authSessionProvider.notifier).markSessionExpired();
+      });
+  ref.onDispose(() => unawaited(expiredSub.cancel()));
+
+  // Redibujar el router cuando cambian sesión o versión.
+  ref.listen(authSessionProvider, (_, _) => router.refresh());
+  ref.listen(appVersionProvider, (_, _) => router.refresh());
 
   ref.onDispose(router.dispose);
 
   return router;
 });
+
+/// Decide la ruta según el estado global.
+String? redirectLogic(Ref ref, GoRouterState state) {
+  final String location = state.matchedLocation;
+  final AppVersionState version = ref.read(appVersionProvider);
+
+  // Versión mínima: bloquea todo lo que no sea actualizar.
+  if (version is AppVersionBlocked) {
+    return location == AppRoutes.actualizacion ? null : AppRoutes.actualizacion;
+  }
+  if (location == AppRoutes.actualizacion) {
+    return AppRoutes.splash;
+  }
+
+  final AuthSession session = ref.read(authSessionProvider);
+  if (session is SessionUnknown) {
+    return location == AppRoutes.splash ? null : AppRoutes.splash;
+  }
+
+  final bool isAuthRoute =
+      location == AppRoutes.login || location == AppRoutes.registro;
+  if (session is SessionUnauthenticated) {
+    if (location == AppRoutes.splash || location == AppRoutes.home) {
+      return AppRoutes.login;
+    }
+    return isAuthRoute ? null : AppRoutes.login;
+  }
+
+  // SessionAuthenticated: las rutas de acceso no tienen nada que hacer aquí.
+  return isAuthRoute || location == AppRoutes.splash ? AppRoutes.home : null;
+}

@@ -19,11 +19,8 @@ void main() {
   });
 
   test('mapea un 500 con idError a ServerFailure', () async {
-    adapter.handler = (RequestOptions options) async => problemResponse(
-          'ERROR_INTERNO',
-          statusCode: 500,
-          idError: 'uuid-123',
-        );
+    adapter.handler = (RequestOptions options) async =>
+        problemResponse('ERROR_INTERNO', statusCode: 500, idError: 'uuid-123');
 
     try {
       await client.get('/movimientos/me');
@@ -35,14 +32,14 @@ void main() {
 
   test('mapea la validación por campo', () async {
     adapter.handler = (RequestOptions options) async => problemResponse(
-          'VALIDACION_FALLIDA',
-          errores: <Map<String, String>>[
-            <String, String>{
-              'campo': 'monto',
-              'mensaje': 'Debe ser mayor que cero',
-            },
-          ],
-        );
+      'VALIDACION_FALLIDA',
+      errores: <Map<String, String>>[
+        <String, String>{
+          'campo': 'monto',
+          'mensaje': 'Debe ser mayor que cero',
+        },
+      ],
+    );
 
     try {
       await client.post('/movimientos', data: <String, Object?>{'monto': 0});
@@ -55,12 +52,12 @@ void main() {
 
   test('un cuerpo no JSON conserva el status', () async {
     adapter.handler = (RequestOptions options) async => ResponseBody.fromString(
-          '<html>Bad Gateway</html>',
-          502,
-          headers: <String, List<String>>{
-            Headers.contentTypeHeader: <String>['text/html'],
-          },
-        );
+      '<html>Bad Gateway</html>',
+      502,
+      headers: <String, List<String>>{
+        Headers.contentTypeHeader: <String>['text/html'],
+      },
+    );
 
     try {
       await client.get('/movimientos/me');

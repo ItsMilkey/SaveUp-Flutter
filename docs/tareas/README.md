@@ -8,7 +8,7 @@ Al terminar, marcar aquí con `[x]`.
 ## Plan
 
 - [x] **F0** núcleo: dinero, tiempo, errores y cliente HTTP con sesión — `F0-core.md`
-- [ ] **F1** autenticación, sesión persistente y versión mínima — `F1-auth.md`
+- [x] **F1** autenticación, sesión persistente y versión mínima — `F1-auth.md`
 - [ ] **F2** cuenta: recuperar y cambiar contraseña, eliminar cuenta, legales (el envío de correo
   está pendiente en producción; legales depende de T9.7 del backend)
 - [ ] **F3** movimientos, saldo y categorías (primer corte vertical completo: listar, crear,

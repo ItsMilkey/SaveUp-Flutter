@@ -47,22 +47,33 @@ ResponseBody problemResponse(
   List<Map<String, String>>? errores,
   String? idError,
 }) {
-  return jsonResponse(
-    <String, Object?>{
-      'type': 'about:blank',
-      'title': 'Error',
-      'status': statusCode,
-      'detail': detail,
-      'instance': '/api/v1/recurso',
-      'codigo': codigo,
-      'errores': ?errores,
-      'idError': ?idError,
-    },
-    statusCode: statusCode,
-  );
+  return jsonResponse(<String, Object?>{
+    'type': 'about:blank',
+    'title': 'Error',
+    'status': statusCode,
+    'detail': detail,
+    'instance': '/api/v1/recurso',
+    'codigo': codigo,
+    'errores': ?errores,
+    'idError': ?idError,
+  }, statusCode: statusCode);
 }
 
 /// Header de autorización, sin depender de las mayúsculas internas de Dio.
 Object? authorizationOf(RequestOptions options) {
   return options.headers['Authorization'] ?? options.headers['authorization'];
+}
+
+/// Cuerpo de la petición como JSON, sin importar si Dio lo serializó a texto.
+Map<String, dynamic> jsonBodyOf(RequestOptions options) {
+  final Object? data = options.data;
+  if (data is Map) {
+    return data.map(
+      (Object? key, Object? value) => MapEntry(key.toString(), value),
+    );
+  }
+  if (data is String) {
+    return jsonDecode(data) as Map<String, dynamic>;
+  }
+  throw StateError('No hay cuerpo JSON: ${data.runtimeType}');
 }

@@ -19,17 +19,11 @@ void main() {
     });
 
     test('acepta el 29 de febrero de un año bisiesto', () {
-      expect(
-        CalendarDate.parse('2024-02-29').toJson(),
-        '2024-02-29',
-      );
+      expect(CalendarDate.parse('2024-02-29').toJson(), '2024-02-29');
     });
 
     test('rechaza el 29 de febrero de un año no bisiesto', () {
-      expect(
-        () => CalendarDate.parse('2025-02-29'),
-        throwsFormatException,
-      );
+      expect(() => CalendarDate.parse('2025-02-29'), throwsFormatException);
     });
 
     test('rechaza meses y días fuera de rango', () {
@@ -40,8 +34,10 @@ void main() {
 
     test('rechaza formatos distintos a yyyy-MM-dd', () {
       expect(() => CalendarDate.parse('22-10-2026'), throwsFormatException);
-      expect(() => CalendarDate.parse('2026-10-22T00:00:00Z'),
-          throwsFormatException);
+      expect(
+        () => CalendarDate.parse('2026-10-22T00:00:00Z'),
+        throwsFormatException,
+      );
       expect(() => CalendarDate.parse('2026/10/22'), throwsFormatException);
       expect(() => CalendarDate.parse(''), throwsFormatException);
     });
@@ -70,12 +66,7 @@ void main() {
 
       expect(
         dates.map((CalendarDate date) => date.toString()).toList(),
-        <String>[
-          '2025-12-31',
-          '2026-09-30',
-          '2026-10-01',
-          '2026-10-22',
-        ],
+        <String>['2025-12-31', '2026-09-30', '2026-10-01', '2026-10-22'],
       );
     });
   });

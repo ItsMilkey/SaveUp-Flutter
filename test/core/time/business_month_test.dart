@@ -6,8 +6,9 @@ void main() {
   setUpAll(initializeTimeZones);
 
   test('un instante de madrugada UTC cae en el mes anterior en Santiago', () {
-    final BusinessMonth month =
-        BusinessMonth.fromInstant(DateTime.utc(2026, 2, 1, 2));
+    final BusinessMonth month = BusinessMonth.fromInstant(
+      DateTime.utc(2026, 2, 1, 2),
+    );
 
     expect(month, const BusinessMonth(2026, 1));
   });

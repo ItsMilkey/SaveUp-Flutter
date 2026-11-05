@@ -41,10 +41,7 @@ void main() {
 
   group('moneyToJson', () {
     test('rechaza más de 2 decimales', () {
-      expect(
-        () => moneyToJson(Decimal.parse('1.999')),
-        throwsArgumentError,
-      );
+      expect(() => moneyToJson(Decimal.parse('1.999')), throwsArgumentError);
     });
 
     test('rechaza montos de 10^13 o más', () {
@@ -97,8 +94,7 @@ void main() {
         final int whole = random.nextInt(1000000000);
         final int cents = random.nextInt(100);
         final String sign = random.nextBool() ? '' : '-';
-        final String raw =
-            '$sign$whole.${cents.toString().padLeft(2, '0')}';
+        final String raw = '$sign$whole.${cents.toString().padLeft(2, '0')}';
         final Decimal original = Decimal.parse(raw);
 
         expect(

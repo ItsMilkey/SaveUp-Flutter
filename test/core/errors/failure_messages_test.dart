@@ -57,17 +57,12 @@ void main() {
   });
 
   test('ERROR_INTERNO sin idError no menciona soporte', () {
-    expect(
-      failureMessage(const ServerFailure()),
-      isNot(contains('soporte')),
-    );
+    expect(failureMessage(const ServerFailure()), isNot(contains('soporte')));
   });
 
   test('USUARIO_YA_REGISTRADO sugiere iniciar sesión', () {
     expect(
-      failureMessage(
-        const ConflictFailure(codigo: 'USUARIO_YA_REGISTRADO'),
-      ),
+      failureMessage(const ConflictFailure(codigo: 'USUARIO_YA_REGISTRADO')),
       contains('Inicia sesión'),
     );
   });
