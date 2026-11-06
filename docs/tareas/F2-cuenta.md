@@ -16,9 +16,14 @@
 >   irreversibilidad → confirmación por contraseña), `CREDENCIALES_INVALIDAS`
 >   inline en el input con reintento, `endSessionLocally()` al éxito y aviso
 >   "Tu cuenta ha sido eliminada permanentemente." en `/login`.
-> - `flutter analyze` sin issues; 185 tests en verde. Verificación manual de
->   F2 pendiente al cierre con usuario desechable `ana.demo2`.
-> Pendientes: visor legal (texto provisional aprobado).
+> - **4. Visor legal** (`/legales`, público y accesible también con sesión):
+>   pestañas Términos/Privacidad alimentadas por `legalVersionsProvider`,
+>   texto provisional marcado (contenido oficial pendiente de fuente) y pie
+>   con las versiones del servidor. Corrección de redirect: `/legales` debe
+>   permitirse tanto sin como con sesión (antes el `isAuthRoute` la rebotaba
+>   a home cuando había sesión).
+> - `flutter analyze` sin issues; 189 tests en verde. Alcance de código
+>   completo. Verificación manual integral pendiente con `ana.demo2`.
 
 ## Objetivo
 Que una persona autenticada pueda cambiar su contraseña, eliminar su cuenta; y que sin

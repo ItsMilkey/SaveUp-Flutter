@@ -23,4 +23,7 @@ abstract final class AppRoutes {
 
   /// Restablecimiento con token, sin sesión.
   static const String restablecerContrasena = '/restablecer-contrasena';
+
+  /// Visor de documentos legales (accesible con o sin sesión).
+  static const String legales = '/legales';
 }

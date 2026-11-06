@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../features/account/presentation/cambiar_contrasena_screen.dart';
+import '../features/account/presentation/legales_screen.dart';
 import '../features/account/presentation/recuperacion_screens.dart';
 import '../features/app_version/presentation/app_version_controller.dart';
 import '../features/app_version/presentation/update_required_screen.dart';
@@ -70,6 +71,11 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
         name: 'restablecerContrasena',
         builder: (_, _) => const RestablecerContrasenaScreen(),
       ),
+      GoRoute(
+        path: AppRoutes.legales,
+        name: 'legales',
+        builder: (_, _) => const LegalesScreen(),
+      ),
     ],
   );
 
@@ -110,19 +116,26 @@ String? redirectLogic(Ref ref, GoRouterState state) {
     return location == AppRoutes.splash ? null : AppRoutes.splash;
   }
 
-  /// Sin sesión: login, registro, recuperación y restablecimiento.
+  /// Sin sesión: login, registro, recuperación y restablecimiento (el visor
+  /// de legales es público también, pero accesible además CON sesión;ver
+  /// `esPublico` más abajo).
   final bool isAuthRoute =
       location == AppRoutes.login ||
       location == AppRoutes.registro ||
       location == AppRoutes.recuperarContrasena ||
       location == AppRoutes.restablecerContrasena;
+
+  /// Rutas navegables sin sesión, incluidas las que también sirven con ella.
+  final bool esPublico = isAuthRoute || location == AppRoutes.legales;
+
   if (session is SessionUnauthenticated) {
     if (location == AppRoutes.splash || location == AppRoutes.home) {
       return AppRoutes.login;
     }
-    return isAuthRoute ? null : AppRoutes.login;
+    return esPublico ? null : AppRoutes.login;
   }
 
-  // SessionAuthenticated: las rutas de acceso no tienen nada que hacer aquí.
+  // SessionAuthenticated: la sesión sigue válida; las rutas de acceso no
+  // tienen nada que hacer aquí y `/legales` queda disponible.
   return isAuthRoute || location == AppRoutes.splash ? AppRoutes.home : null;
 }

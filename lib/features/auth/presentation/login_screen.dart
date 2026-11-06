@@ -118,6 +118,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 onPressed: ui is LoginSubmitting ? null : _goRegistro,
                 child: const Text('¿No tienes cuenta? Crea una aquí'),
               ),
+              TextButton(
+                onPressed: ui is LoginSubmitting
+                    ? null
+                    : () => GoRouter.of(context).push(AppRoutes.legales),
+                child: const Text('Términos y privacidad'),
+              ),
             ],
           ),
         ),

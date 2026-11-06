@@ -62,6 +62,11 @@ class HomeProvisoriaScreen extends ConsumerWidget {
                     onPressed: () => EliminarCuentaDialog.show(context),
                     child: const Text('Eliminar cuenta'),
                   ),
+                  const SizedBox(height: 12),
+                  TextButton(
+                    onPressed: () => GoRouter.of(context).push(AppRoutes.legales),
+                    child: const Text('Términos y privacidad'),
+                  ),
                 ],
               ),
       ),
