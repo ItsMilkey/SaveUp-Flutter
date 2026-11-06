@@ -34,10 +34,19 @@
 > ok/error, referencias) y pantalla (resumen/grupos/sliders, navegación de mes,
 > referencias, avisos de copia, alta de grupo). 290 verdes.
 >
-> **Pendiente para cerrar F6a por completo:** formulario de alta/edición de
-> partidas (con sugeridor de categorías) y edición del ingreso de referencia
-> (`PUT /planes/{mes}/ingreso-referencia`), que la especificación incluye pero
-> no estaban en el alcance de los tres bloques directivos.
+> **Pendiente para cerrar F6a por completo:** ~~formulario de alta/edición de
+> partidas (con sugeridor de categorías) y edición del ingreso de referencia~~
+> **Completado en el tramo final (commit `2e9dbe5`):** ingreso de referencia
+> editable desde el resumen (`PUT`, vista local inmediata y restauración si
+> falla), alta de partida con sugeridor de F3, edición con categoría/monto
+> bloqueados si está vinculada a deuda, y eliminación con confirmación que
+> recarga el plan autoritativo.
+>
+> **Verificación manual final (emulador, backend real):** ingreso cambiado a
+> `$950.000` (BD y remanente/margen recalculados: $169.364 / 17,83 %); alta de
+> «cafe» con sugerencia preseleccionada (Restaurantes y Salidas), monto 5.000 y
+> grupo Variable (BD: `partida_plan` id 7; resumen $785.636 y deseos 0,53 %).
+> **F6a cerrada oficialmente** con 300 tests verdes y `flutter analyze` limpio.
 >
 > **Verificación manual (emulador, backend real): PASÓ.** Plan de noviembre
 > sembrado vía API (2 grupos, Arriendo, Supermercado y una partida vinculada a
