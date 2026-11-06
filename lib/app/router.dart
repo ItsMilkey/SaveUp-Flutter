@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../features/account/presentation/cambiar_contrasena_screen.dart';
+import '../features/account/presentation/recuperacion_screens.dart';
 import '../features/app_version/presentation/app_version_controller.dart';
 import '../features/app_version/presentation/update_required_screen.dart';
 import '../features/auth/presentation/auth_controllers.dart';
@@ -59,6 +60,16 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
         name: 'cambiarContrasena',
         builder: (_, _) => const CambiarContrasenaScreen(),
       ),
+      GoRoute(
+        path: AppRoutes.recuperarContrasena,
+        name: 'recuperarContrasena',
+        builder: (_, _) => const SolicitarRecuperacionScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.restablecerContrasena,
+        name: 'restablecerContrasena',
+        builder: (_, _) => const RestablecerContrasenaScreen(),
+      ),
     ],
   );
 
@@ -99,8 +110,12 @@ String? redirectLogic(Ref ref, GoRouterState state) {
     return location == AppRoutes.splash ? null : AppRoutes.splash;
   }
 
+  /// Sin sesión: login, registro, recuperación y restablecimiento.
   final bool isAuthRoute =
-      location == AppRoutes.login || location == AppRoutes.registro;
+      location == AppRoutes.login ||
+      location == AppRoutes.registro ||
+      location == AppRoutes.recuperarContrasena ||
+      location == AppRoutes.restablecerContrasena;
   if (session is SessionUnauthenticated) {
     if (location == AppRoutes.splash || location == AppRoutes.home) {
       return AppRoutes.login;

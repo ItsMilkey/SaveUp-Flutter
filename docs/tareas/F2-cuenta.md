@@ -1,11 +1,20 @@
 # F2 — Cuenta, perfil y seguridad
 
-> **Avance (2026-11-06):** entregable 1 hecho — cambio de contraseña
-> (`PUT /usuarios/me/contrasena`) con cierre de sesión local vía
-> `AuthSessionController.endSessionLocally()` (sin `/auth/logout`: el backend
-> ya revoca todas las sesiones), `flutter analyze` sin issues y 169 tests en
-> verde. Pendientes: recuperación/restablecimiento, eliminación de cuenta,
-> visor legal (texto provisional aprobado).
+> **Avance (2026-11-06):** entregables 1 y 2 hechos.
+> - **1. Cambio de contraseña** (`PUT /usuarios/me/contrasena`) con cierre de
+>   sesión local vía `AuthSessionController.endSessionLocally()` (sin
+>   `/auth/logout`: el backend ya revoca todas las sesiones).
+> - **2. Recuperación y restablecimiento** (`POST /auth/recuperar-contrasena` /
+>   `auth/restablecer-contrasena`): rutas públicas `/recuperar-contrasena` y
+>   `/restablecer-contrasena`, aviso del envío pendiente
+>   (`app.mail.enabled=false`), mensaje genérico anti-enumeración y
+>   `TOKEN_VERIFICACION_INVALIDO` inline al campo token con vía de
+>   re-solicitud. Checklist de política extraído a
+>   `auth/presentation/password_policy_checklist.dart` (una sola copia).
+> - `flutter analyze` sin issues; 179 tests en verde. Verificación manual de
+>   F2 pendiente al cierre con usuario desechable `ana.demo2`.
+> Pendientes: eliminación de cuenta, visor legal (texto provisional
+> aprobado).
 
 ## Objetivo
 Que una persona autenticada pueda cambiar su contraseña, eliminar su cuenta; y que sin

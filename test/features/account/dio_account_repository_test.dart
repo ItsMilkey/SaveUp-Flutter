@@ -74,4 +74,77 @@ void main() {
       }
     });
   });
+
+  group('solicitarRecuperacion', () {
+    test('envía el correo a POST /auth/recuperar-contrasena', () async {
+      adapter.handler = (RequestOptions options) async {
+        expect(options.method, 'POST');
+        expect(options.path.endsWith('/auth/recuperar-contrasena'), isTrue);
+        expect(jsonBodyOf(options), <String, Object?>{
+          'email': 'ana@example.cl',
+        });
+        return jsonResponse(
+          <String, Object?>{'message': 'Si el correo está registrado.'},
+        );
+      };
+
+      await repository.solicitarRecuperacion(email: 'ana@example.cl');
+    });
+  });
+
+  group('restablecerContrasena', () {
+    test('envía el token y la nueva contraseña al endpoint del contrato', () async {
+      adapter.handler = (RequestOptions options) async {
+        expect(options.method, 'POST');
+        expect(options.path.endsWith('/auth/restablecer-contrasena'), isTrue);
+        expect(jsonBodyOf(options), <String, Object?>{
+          'token': 'token-de-correo',
+          'nuevaContrasena': 'contrasena2',
+        });
+        return jsonResponse(<String, Object?>{'message': 'Contraseña restablecida.'});
+      };
+
+      await repository.restablecerContrasena(
+        token: 'token-de-correo',
+        nuevaContrasena: 'contrasena2',
+      );
+    });
+
+    test('TOKEN_VERIFICACION_INVALIDO llega como BadRequestFailure', () async {
+      adapter.handler = (RequestOptions options) async =>
+          problemResponse('TOKEN_VERIFICACION_INVALIDO', statusCode: 400);
+
+      try {
+        await repository.restablecerContrasena(
+          token: 'vencido',
+          nuevaContrasena: 'contrasena2',
+        );
+        fail('debió lanzar');
+      } on BadRequestFailure catch (failure) {
+        expect(failure.codigo, 'TOKEN_VERIFICACION_INVALIDO');
+      }
+    });
+
+    test('VALIDACION_FALLIDA reparte errores[] por campo', () async {
+      adapter.handler = (RequestOptions options) async => problemResponse(
+        'VALIDACION_FALLIDA',
+        errores: <Map<String, String>>[
+          <String, String>{
+            'campo': 'nuevaContrasena',
+            'mensaje': 'no cumple la política',
+          },
+        ],
+      );
+
+      try {
+        await repository.restablecerContrasena(
+          token: 'token-de-correo',
+          nuevaContrasena: 'contrasena2',
+        );
+        fail('debió lanzar');
+      } on ValidationFailure catch (failure) {
+        expect(failure.errors.single.field, 'nuevaContrasena');
+      }
+    });
+  });
 }

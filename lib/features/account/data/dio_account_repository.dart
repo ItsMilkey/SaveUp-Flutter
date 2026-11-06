@@ -37,6 +37,34 @@ class DioAccountRepository implements AccountRepository {
     );
   }
 
+  @override
+  Future<void> solicitarRecuperacion({required String email}) async {
+    // Contrato: siempre 200 {message}, genérico (anti-enumeración).
+    await _readObject(
+      () => client.post<dynamic>(
+        '/auth/recuperar-contrasena',
+        data: SolicitudRecuperacionRequestDto(email: email.trim()).toJson(),
+      ),
+    );
+  }
+
+  @override
+  Future<void> restablecerContrasena({
+    required String token,
+    required String nuevaContrasena,
+  }) async {
+    // Contrato: 200 {message}; el backend revoca todas las sesiones.
+    await _readObject(
+      () => client.post<dynamic>(
+        '/auth/restablecer-contrasena',
+        data: RestablecerContrasenaRequestDto(
+          token: token.trim(),
+          nuevaContrasena: nuevaContrasena,
+        ).toJson(),
+      ),
+    );
+  }
+
   /// Ejecuta la petición y descarta su cuerpo (`{message}`), exigiendo que
   /// sea un objeto JSON bien formado.
   Future<Map<String, dynamic>> _readObject(

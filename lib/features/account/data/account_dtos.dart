@@ -25,3 +25,34 @@ class CambioContrasenaRequestDto {
     };
   }
 }
+
+/// Cuerpo de `POST /auth/recuperar-contrasena`.
+class SolicitudRecuperacionRequestDto {
+  const SolicitudRecuperacionRequestDto({required this.email});
+
+  /// Correo con el que se registró la cuenta.
+  final String email;
+
+  Map<String, Object?> toJson() => <String, Object?>{'email': email};
+}
+
+/// Cuerpo de `POST /auth/restablecer-contrasena`.
+class RestablecerContrasenaRequestDto {
+  const RestablecerContrasenaRequestDto({
+    required this.token,
+    required this.nuevaContrasena,
+  });
+
+  /// Token de un solo uso recibido por correo (o por los logs, en dev).
+  final String token;
+
+  /// Nueva contraseña: 8–64 caracteres, letra y número, ≤72 bytes UTF-8.
+  final String nuevaContrasena;
+
+  Map<String, Object?> toJson() {
+    return <String, Object?>{
+      'token': token,
+      'nuevaContrasena': nuevaContrasena,
+    };
+  }
+}

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../app/routes.dart';
 import '../domain/validators.dart';
+import 'password_policy_checklist.dart';
 import 'auth_controllers.dart';
 
 /// Creación de cuenta: RUT, nombre, apellido, correo y contraseña.
@@ -131,7 +132,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 ),
               ),
               const SizedBox(height: 8),
-              _PasswordChecklist(value: _contrasenaController.text),
+              PasswordPolicyChecklist(value: _contrasenaController.text),
               const SizedBox(height: 16),
               if (ui is RegisterSubmitting)
                 const LinearProgressIndicator()
@@ -183,48 +184,5 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
           email: _correoController.text,
           contrasena: _contrasenaController.text,
         );
-  }
-}
-
-/// Checklist visible de la política de contraseña.
-class _PasswordChecklist extends StatelessWidget {
-  const _PasswordChecklist({required this.value});
-
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    final PasswordCheck check = PasswordCheck.evaluate(value);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        _check(context, check.hasLength, 'Entre 8 y 64 caracteres'),
-        _check(context, check.hasLetter, 'Al menos una letra'),
-        _check(context, check.hasNumber, 'Al menos un número'),
-        _check(
-          context,
-          check.hasByteLimit,
-          'Máximo 72 bytes en UTF-8 (tildes y ñ cuentan doble)',
-        ),
-      ],
-    );
-  }
-
-  Widget _check(BuildContext context, bool ok, String label) {
-    final ColorScheme scheme = Theme.of(context).colorScheme;
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2),
-      child: Row(
-        children: <Widget>[
-          Icon(
-            ok ? Icons.check_circle : Icons.circle_outlined,
-            size: 18,
-            color: ok ? scheme.primary : scheme.onSurfaceVariant,
-          ),
-          const SizedBox(width: 8),
-          Text(label, style: Theme.of(context).textTheme.bodySmall),
-        ],
-      ),
-    );
   }
 }

@@ -107,6 +107,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               _actionArea(context, ui),
               const SizedBox(height: 12),
               TextButton(
+                onPressed: ui is LoginSubmitting
+                    ? null
+                    : () => GoRouter.of(
+                        context,
+                      ).push(AppRoutes.recuperarContrasena),
+                child: const Text('¿Olvidaste tu contraseña?'),
+              ),
+              TextButton(
                 onPressed: ui is LoginSubmitting ? null : _goRegistro,
                 child: const Text('¿No tienes cuenta? Crea una aquí'),
               ),

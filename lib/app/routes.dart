@@ -17,4 +17,10 @@ abstract final class AppRoutes {
 
   /// Cambio de contraseña (sesión activa).
   static const String cambiarContrasena = '/cuenta/cambiar-contrasena';
+
+  /// Solicitud de recuperación sin sesión.
+  static const String recuperarContrasena = '/recuperar-contrasena';
+
+  /// Restablecimiento con token, sin sesión.
+  static const String restablecerContrasena = '/restablecer-contrasena';
 }
