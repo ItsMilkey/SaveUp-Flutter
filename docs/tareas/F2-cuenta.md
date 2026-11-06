@@ -23,7 +23,31 @@
 >   permitirse tanto sin como con sesión (antes el `isAuthRoute` la rebotaba
 >   a home cuando había sesión).
 > - `flutter analyze` sin issues; 189 tests en verde. Alcance de código
->   completo. Verificación manual integral pendiente con `ana.demo2`.
+>   completo.
+> **Verificación manual integral (2026-11-06, emulador `emulator-5554`,
+> backend local real, protocolo `adb` + capturas): PASÓ COMPLETA.**
+> 1. Visor legal con sesión activa (`ana.demo1`): pestañas Términos/
+>    Privacidad, versiones del backend y texto provisional ✓. Accesible
+>    también desde login ✓.
+> 2. Registro de `ana.demo2` (RUT `13580246-8`): checklist 4/4, aviso
+>    "Cuenta creada" y correo precargado en login ✓.
+> 3. Login `Demo1234` → home ✓.
+> 4. Cambio de contraseña `Demo1234` → `NuevaClave1`: aviso del cierre de
+>    sesión, redirección a `/login` con "Contraseña actualizada
+>    correctamente…" y correo precargado; refresh token revocado en BD ✓;
+>    re-login con la nueva clave → home ✓.
+> 5. Recuperación: banner del envío pendiente visible ✓; solicitud 200
+>    genérica → formulario del token; token obtenido del correo log-only
+>    del backend (`CorreoService`) ✓.
+> 6. Restablecimiento con token → `ClaveRestablecida1`: "Contraseña
+>    restablecida con éxito…", login con la nueva clave → home ✓.
+> 7. Eliminación de cuenta: diálogo 2 pasos; `CREDENCIALES_INVALIDAS` con
+>    la clave vieja quedó inline en el input con el diálogo abierto ✓;
+>    éxito con la clave correcta → "Tu cuenta ha sido eliminada
+>    permanentemente." + `/login` con correo precargado; usuario borrado
+>    de BD (3 → 2 filas) ✓; login posterior rechazado ("Correo o
+>    contraseña incorrectos.") ✓.
+> 8. Estado final restaurado: sesión activa de `ana.demo1` en home.
 
 ## Objetivo
 Que una persona autenticada pueda cambiar su contraseña, eliminar su cuenta; y que sin
