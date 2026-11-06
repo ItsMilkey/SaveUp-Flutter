@@ -148,8 +148,114 @@ class PlanMensualController extends Notifier<PlanMensualState> {
     }
   }
 
-  /// `onChange` del slider: recalcula localmente, sin red.
-  ///
+  /// Actualiza el ingreso de referencia con vista local inmediata y `PUT`.
+  Future<AppFailure?> actualizarIngreso(Decimal? monto) async {
+    final PlanMensual? previo = state.plan;
+    if (previo == null) {
+      return null;
+    }
+    final PlanMensual local = PlanMensual(
+      mes: previo.mes,
+      existe: previo.existe,
+      ingresoReferencia: monto,
+      calculo: _calculadora.recalcularMontos(
+        base: previo.calculo,
+        nuevosMontos: const <int, Decimal>{},
+        ingresoReferencia: monto,
+      ),
+      partidas: previo.partidas,
+      grupos: previo.grupos,
+      avisos: previo.avisos,
+    );
+    state = state.copyWith(plan: local);
+    try {
+      final PlanMensual servidor = await ref
+          .read(planMensualRepositoryProvider)
+          .actualizarIngreso(state.mes, monto);
+      state = state.copyWith(plan: servidor);
+      return null;
+    } on AppFailure catch (failure) {
+      state = state.copyWith(plan: previo);
+      return failure;
+    }
+  }
+
+  /// Crea una partida y reemplaza el plan con la respuesta autoritativa.
+  Future<AppFailure?> crearPartida({
+    required String nombre,
+    required int categoriaId,
+    required Decimal montoPlanificado,
+    int? grupoId,
+  }) async {
+    try {
+      final PlanMensual plan = await ref
+          .read(planMensualRepositoryProvider)
+          .crearPartida(
+            state.mes,
+            nombre: nombre,
+            categoriaId: categoriaId,
+            montoPlanificado: montoPlanificado,
+            grupoId: grupoId,
+          );
+      state = state.copyWith(
+        plan: plan,
+        cambiosPendientes: const <int, Decimal>{},
+        limpiarErrorLote: true,
+      );
+      return null;
+    } on AppFailure catch (failure) {
+      return failure;
+    }
+  }
+
+  /// Edita una partida (parcial) y reemplaza el plan con la respuesta.
+  Future<AppFailure?> editarPartida(
+    int id, {
+    String? nombre,
+    int? categoriaId,
+    int? grupoId,
+    bool quitarGrupo = false,
+  }) async {
+    try {
+      final PlanMensual plan = await ref
+          .read(planMensualRepositoryProvider)
+          .editarPartida(
+            state.mes,
+            id,
+            nombre: nombre,
+            categoriaId: categoriaId,
+            grupoId: grupoId,
+            quitarGrupo: quitarGrupo,
+          );
+      state = state.copyWith(plan: plan);
+      return null;
+    } on AppFailure catch (failure) {
+      return failure;
+    }
+  }
+
+  /// Elimina una partida (204) y recarga el plan autoritativo.
+  Future<AppFailure?> eliminarPartida(int id) async {
+    try {
+      await ref.read(planMensualRepositoryProvider).eliminarPartida(
+        state.mes,
+        id,
+      );
+      final PlanMensual plan = await ref
+          .read(planMensualRepositoryProvider)
+          .obtener(state.mes, incluirReferencias: state.incluirReferencias);
+      state = state.copyWith(
+        plan: plan,
+        cambiosPendientes: const <int, Decimal>{},
+        limpiarErrorLote: true,
+      );
+      return null;
+    } on AppFailure catch (failure) {
+      return failure;
+    }
+  }
+
+  /// `onChange` del slider: recalcula localmente, sin red.  ///
   /// Las partidas vinculadas a una deuda se ignoran: su monto lo define la
   /// cuota y el backend responde 409 si se intenta cambiar.
   void moverPartida(int partidaId, Decimal monto) {

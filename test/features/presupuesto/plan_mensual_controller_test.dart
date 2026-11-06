@@ -313,4 +313,77 @@ void main() {
       isTrue,
     );
   });
+
+  testWidgets('actualizarIngreso recalcula remanente y margen', (
+    WidgetTester tester,
+  ) async {
+    montar(planBase());
+    await cargar();
+
+    final AppFailure? failure = await container
+        .read(planMensualProvider.notifier)
+        .actualizarIngreso(d('900000'));
+
+    expect(failure, isNull);
+    expect(repo.ingresos.single, ('2026-11', d('900000')));
+    final PlanMensualState estado = container.read(planMensualProvider);
+    expect(estado.plan!.ingresoReferencia!.compareTo(d('900000')), 0);
+    expect(
+      estado.plan!.calculo.resumen.remanenteLibre!.compareTo(d('250000')),
+      0,
+    );
+  });
+
+  testWidgets('fallo al guardar el ingreso restaura el plan previo', (
+    WidgetTester tester,
+  ) async {
+    montar(planBase());
+    await cargar();
+    repo.errorCopia = const UnknownFailure(detail: 'sin red');
+
+    final AppFailure? failure = await container
+        .read(planMensualProvider.notifier)
+        .actualizarIngreso(d('900000'));
+
+    expect(failure, isNotNull);
+    expect(
+      container.read(planMensualProvider).plan!.ingresoReferencia!.compareTo(
+        d('1000000'),
+      ),
+      0,
+    );
+  });
+
+  testWidgets('crear, editar y eliminar partida delegan en el repositorio', (
+    WidgetTester tester,
+  ) async {
+    montar(planBase());
+    await cargar();
+    final PlanMensualController controller = container.read(
+      planMensualProvider.notifier,
+    );
+
+    expect(
+      await controller.crearPartida(
+        nombre: 'Nueva',
+        categoriaId: 4,
+        montoPlanificado: d('100000'),
+        grupoId: 1,
+      ),
+      isNull,
+    );
+    expect(repo.partidasCreadas.single['nombre'], 'Nueva');
+    expect(repo.partidasCreadas.single['montoPlanificado'], d('100000'));
+
+    expect(
+      await controller.editarPartida(1, nombre: 'Editada', grupoId: null, quitarGrupo: true),
+      isNull,
+    );
+    expect(repo.partidasEditadas.single['quitarGrupo'], isTrue);
+
+    expect(await controller.eliminarPartida(1), isNull);
+    expect(repo.partidasEliminadas.single, ('2026-11', 1));
+    // La eliminación recarga el plan autoritativo.
+    expect(repo.consultas.length, greaterThanOrEqualTo(2));
+  });
 }

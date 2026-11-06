@@ -323,3 +323,62 @@ class GrupoPlanEdicionDto {
     if (orden != null) 'orden': orden,
   };
 }
+
+/// Cuerpo de `POST /planes/{mes}/partidas`.
+class PartidaCreacionDto {
+  const PartidaCreacionDto({
+    required this.nombre,
+    this.categoriaId,
+    this.montoPlanificado,
+    this.grupoId,
+    this.deudaId,
+  });
+
+  final String nombre;
+  final int? categoriaId;
+  final Decimal? montoPlanificado;
+  final int? grupoId;
+  final int? deudaId;
+
+  Map<String, Object?> toJson() => <String, Object?>{
+    'nombre': nombre,
+    if (categoriaId != null) 'categoriaId': categoriaId,
+    if (montoPlanificado != null)
+      'montoPlanificado': moneyToJson(montoPlanificado!),
+    if (grupoId != null) 'grupoId': grupoId,
+    if (deudaId != null) 'deudaId': deudaId,
+  };
+}
+
+/// Cuerpo de `PUT /planes/{mes}/partidas/{id}` (parcial).
+class PartidaEdicionDto {
+  const PartidaEdicionDto({
+    this.nombre,
+    this.categoriaId,
+    this.grupoId,
+    this.quitarGrupo = false,
+  });
+
+  final String? nombre;
+  final int? categoriaId;
+  final int? grupoId;
+  final bool quitarGrupo;
+
+  Map<String, Object?> toJson() => <String, Object?>{
+    if (nombre != null) 'nombre': nombre,
+    if (categoriaId != null) 'categoriaId': categoriaId,
+    if (grupoId != null) 'grupoId': grupoId,
+    if (quitarGrupo) 'quitarGrupo': true,
+  };
+}
+
+/// Cuerpo de `PUT /planes/{mes}/ingreso-referencia`.
+class IngresoReferenciaDto {
+  const IngresoReferenciaDto({required this.monto});
+
+  final Decimal? monto;
+
+  Map<String, Object?> toJson() => <String, Object?>{
+    'monto': monto == null ? null : moneyToJson(monto!),
+  };
+}

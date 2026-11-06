@@ -10,6 +10,8 @@ import '../../domain/plan_calculo.dart';
 import '../../domain/plan_mensual.dart';
 import '../controllers/plan_mensual_controller.dart';
 import '../widgets/grupos_plan_dialog.dart';
+import '../widgets/ingreso_referencia_dialog.dart';
+import '../widgets/partida_form_dialog.dart';
 import '../widgets/partida_monto_slider.dart';
 
 /// Pantalla del plan mensual (F6a): resumen, grupos, sliders, referencias y
@@ -39,6 +41,13 @@ class _PlanScreenState extends ConsumerState<PlanScreen> {
     final PlanMensualState estado = ref.watch(planMensualProvider);
 
     return Scaffold(
+      floatingActionButton: estado.plan?.existe ?? false
+          ? FloatingActionButton.extended(
+              onPressed: _nuevaPartida,
+              icon: const Icon(Icons.add),
+              label: const Text('Nueva partida'),
+            )
+          : null,
       appBar: AppBar(
         title: const Text('Plan'),
         actions: <Widget>[
@@ -136,7 +145,7 @@ class _PlanScreenState extends ConsumerState<PlanScreen> {
               ),
             ),
           if (plan.avisos.isNotEmpty) _Avisos(avisos: plan.avisos),
-          _Resumen(plan: plan),
+          _Resumen(plan: plan, onEditarIngreso: _editarIngreso),
           if (estado.errorLote != null)
             Padding(
               padding: const EdgeInsets.only(top: 8),
@@ -176,6 +185,8 @@ class _PlanScreenState extends ConsumerState<PlanScreen> {
               partidaIds: <int>[
                 for (final PartidaPlan p in plan.partidas) p.id,
               ],
+              onEditar: _editarPartida,
+              onEliminar: _eliminarPartida,
             )
           else
             for (final GrupoResultado grupo in plan.grupos)
@@ -184,6 +195,8 @@ class _PlanScreenState extends ConsumerState<PlanScreen> {
                 planificado: grupo.planificado,
                 real: grupo.real,
                 partidaIds: grupo.partidaIds,
+                onEditar: _editarPartida,
+                onEliminar: _eliminarPartida,
               ),
         ],
       ),
@@ -245,12 +258,102 @@ class _PlanScreenState extends ConsumerState<PlanScreen> {
       ),
     );
   }
+
+  Future<void> _editarIngreso() async {
+    final PlanMensual? plan = ref.read(planMensualProvider).plan;
+    if (plan == null) {
+      return;
+    }
+    final IngresoReferenciaValor? valor = await IngresoReferenciaDialog.show(
+      context,
+      actual: plan.ingresoReferencia,
+    );
+    if (valor == null || !mounted) {
+      return;
+    }
+    final AppFailure? failure = await ref
+        .read(planMensualProvider.notifier)
+        .actualizarIngreso(valor.monto);
+    if (failure != null && mounted) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(failureMessage(failure))));
+    }
+  }
+
+  Future<void> _nuevaPartida() async {
+    final bool? creada = await PartidaFormDialog.show(
+      context,
+      mes: _mes.toString(),
+    );
+    if ((creada ?? false) && mounted) {
+      await ref.read(planMensualProvider.notifier).cargar(_mes.toString());
+    }
+  }
+
+  Future<void> _editarPartida(int id) async {
+    final PartidaPlan? partida = ref.read(planMensualProvider).plan?.partida(id);
+    if (partida == null) {
+      return;
+    }
+    final bool? editada = await PartidaFormDialog.show(
+      context,
+      mes: _mes.toString(),
+      partida: partida,
+    );
+    if ((editada ?? false) && mounted) {
+      await ref.read(planMensualProvider.notifier).cargar(_mes.toString());
+    }
+  }
+
+  Future<void> _eliminarPartida(int id) async {
+    final PartidaPlan? partida = ref.read(planMensualProvider).plan?.partida(id);
+    if (partida == null) {
+      return;
+    }
+    final bool? confirmado = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext dialogContext) => AlertDialog(
+        title: const Text('¿Eliminar partida?'),
+        content: Text(
+          '«${partida.nombre}» se quitará del plan y su monto volverá al '
+          'remanente libre.',
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.error,
+              foregroundColor: Theme.of(context).colorScheme.onError,
+            ),
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('Eliminar'),
+          ),
+        ],
+      ),
+    );
+    if (confirmado != true || !mounted) {
+      return;
+    }
+    final AppFailure? failure = await ref
+        .read(planMensualProvider.notifier)
+        .eliminarPartida(id);
+    if (failure != null && mounted) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(failureMessage(failure))));
+    }
+  }
 }
 
 class _Resumen extends StatelessWidget {
-  const _Resumen({required this.plan});
+  const _Resumen({required this.plan, required this.onEditarIngreso});
 
   final PlanMensual plan;
+  final VoidCallback onEditarIngreso;
 
   @override
   Widget build(BuildContext context) {
@@ -286,6 +389,24 @@ class _Resumen extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 8),
+            Row(
+              children: <Widget>[
+                Expanded(
+                  child: _fila(
+                    theme,
+                    'Ingreso de referencia',
+                    plan.ingresoReferencia == null
+                        ? 'Sin definir'
+                        : Money.formatClp(plan.ingresoReferencia!),
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.edit_outlined, size: 18),
+                  tooltip: 'Editar ingreso de referencia',
+                  onPressed: onEditarIngreso,
+                ),
+              ],
+            ),
             _fila(theme, 'Planificado', Money.formatClp(resumen.planificadoTotal)),
             _fila(theme, 'Remanente libre', remanente),
             _fila(theme, 'Margen de seguridad', margen),
@@ -363,12 +484,16 @@ class _SeccionGrupo extends StatelessWidget {
     required this.planificado,
     required this.real,
     required this.partidaIds,
+    required this.onEditar,
+    required this.onEliminar,
   });
 
   final String titulo;
   final Decimal planificado;
   final Decimal real;
   final List<int> partidaIds;
+  final ValueChanged<int> onEditar;
+  final ValueChanged<int> onEliminar;
 
   @override
   Widget build(BuildContext context) {
@@ -397,7 +522,12 @@ class _SeccionGrupo extends StatelessWidget {
             child: Text('Sin partidas en este mes.'),
           )
         else
-          for (final int id in partidaIds) PartidaMontoSlider(partidaId: id),
+          for (final int id in partidaIds)
+            PartidaMontoSlider(
+              partidaId: id,
+              onEditar: () => onEditar(id),
+              onEliminar: () => onEliminar(id),
+            ),
       ],
     );
   }

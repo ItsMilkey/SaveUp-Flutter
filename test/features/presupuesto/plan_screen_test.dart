@@ -224,4 +224,86 @@ void main() {
     expect(repo.grupos.single.nombre, 'Fijos');
     expect(find.text('Fijos'), findsWidgets);
   });
+
+  testWidgets('editar el ingreso de referencia desde el resumen', (
+    WidgetTester tester,
+  ) async {
+    final FakePlanMensualRepository repo = FakePlanMensualRepository(
+      plan: planConGrupos(),
+    );
+    await montar(tester, repo);
+    expect(find.text(r'$1.000.000'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Editar ingreso de referencia'));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Ingreso mensual'),
+      '900000',
+    );
+    await tester.tap(find.text('Guardar'));
+    await tester.pumpAndSettle();
+
+    expect(repo.ingresos.single.$2, d('900000'));
+    expect(find.text(r'$900.000'), findsOneWidget);
+    expect(find.text(r'$160.000'), findsOneWidget);
+  });
+
+  testWidgets('eliminar una partida pide confirmación y llama al DELETE', (
+    WidgetTester tester,
+  ) async {
+    final FakePlanMensualRepository repo = FakePlanMensualRepository(
+      plan: planConGrupos(),
+    );
+    await montar(tester, repo);
+
+    await tester.scrollUntilVisible(
+      find.byTooltip('Eliminar partida').first,
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Eliminar partida').first);
+    await tester.pumpAndSettle();
+    expect(find.text('¿Eliminar partida?'), findsOneWidget);
+
+    await tester.tap(find.text('Eliminar'));
+    await tester.pumpAndSettle();
+
+    expect(repo.partidasEliminadas, hasLength(1));
+  });
+
+  testWidgets('editar una partida vinculada bloquea categoría y monto', (
+    WidgetTester tester,
+  ) async {
+    final PlanMensual plan = planDePrueba(
+      ingresoReferencia: d('1000000'),
+      partidas: <PartidaSpec>[
+        PartidaSpec(
+          id: 20,
+          nombre: 'Cuota crédito',
+          categoriaId: 8,
+          codigo: 'DEUDAS',
+          tipo: TipoPresupuesto.necesidad,
+          monto: d('43500'),
+          deudaId: 77,
+        ),
+      ],
+    );
+    final FakePlanMensualRepository repo = FakePlanMensualRepository(
+      plan: plan,
+    );
+    await montar(tester, repo);
+
+    await tester.scrollUntilVisible(
+      find.byTooltip('Editar partida'),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Editar partida'));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('fijada por la deuda'), findsOneWidget);
+    expect(find.widgetWithText(TextFormField, 'Monto planificado'), findsNothing);
+  });
 }

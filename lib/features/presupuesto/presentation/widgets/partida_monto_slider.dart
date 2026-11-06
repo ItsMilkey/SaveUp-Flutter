@@ -15,9 +15,16 @@ import '../plan_labels.dart';
 /// - Partidas vinculadas a una deuda (`deudaId`): sin control, con badge de
 ///   cuota y la nota de que el monto lo define la deuda.
 class PartidaMontoSlider extends ConsumerWidget {
-  const PartidaMontoSlider({super.key, required this.partidaId});
+  const PartidaMontoSlider({
+    super.key,
+    required this.partidaId,
+    this.onEditar,
+    this.onEliminar,
+  });
 
   final int partidaId;
+  final VoidCallback? onEditar;
+  final VoidCallback? onEliminar;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -61,6 +68,26 @@ class PartidaMontoSlider extends ConsumerWidget {
             ),
           ],
         ),
+        if (onEditar != null || onEliminar != null)
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              if (onEditar != null)
+                IconButton(
+                  visualDensity: VisualDensity.compact,
+                  icon: const Icon(Icons.edit_outlined, size: 20),
+                  tooltip: 'Editar partida',
+                  onPressed: onEditar,
+                ),
+              if (onEliminar != null)
+                IconButton(
+                  visualDensity: VisualDensity.compact,
+                  icon: const Icon(Icons.delete_outline, size: 20),
+                  tooltip: 'Eliminar partida',
+                  onPressed: onEliminar,
+                ),
+            ],
+          ),
       ],
     );
 

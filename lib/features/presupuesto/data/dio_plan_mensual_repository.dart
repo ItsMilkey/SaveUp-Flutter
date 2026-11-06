@@ -1,3 +1,4 @@
+import 'package:decimal/decimal.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/network/api_client.dart';
@@ -98,5 +99,69 @@ class DioPlanMensualRepository implements PlanMensualRepository {
   Future<void> eliminarGrupo(int id) async {
     // Contrato: 204 sin cuerpo.
     await client.delete<dynamic>('/planes/grupos/$id');
+  }
+
+  @override
+  Future<PlanMensual> actualizarIngreso(String mes, Decimal? monto) async {
+    final Map<String, dynamic> body = await readObject(
+      () => client.put<dynamic>(
+        '/planes/$mes/ingreso-referencia',
+        data: IngresoReferenciaDto(monto: monto).toJson(),
+      ),
+    );
+    return parseJson(() => PlanMensualDto.fromJson(body));
+  }
+
+  @override
+  Future<PlanMensual> crearPartida(
+    String mes, {
+    required String nombre,
+    int? categoriaId,
+    Decimal? montoPlanificado,
+    int? grupoId,
+    int? deudaId,
+  }) async {
+    final Map<String, dynamic> body = await readObject(
+      () => client.post<dynamic>(
+        '/planes/$mes/partidas',
+        data: PartidaCreacionDto(
+          nombre: nombre,
+          categoriaId: categoriaId,
+          montoPlanificado: montoPlanificado,
+          grupoId: grupoId,
+          deudaId: deudaId,
+        ).toJson(),
+      ),
+    );
+    return parseJson(() => PlanMensualDto.fromJson(body));
+  }
+
+  @override
+  Future<PlanMensual> editarPartida(
+    String mes,
+    int id, {
+    String? nombre,
+    int? categoriaId,
+    int? grupoId,
+    bool quitarGrupo = false,
+  }) async {
+    final Map<String, dynamic> body = await readObject(
+      () => client.put<dynamic>(
+        '/planes/$mes/partidas/$id',
+        data: PartidaEdicionDto(
+          nombre: nombre,
+          categoriaId: categoriaId,
+          grupoId: grupoId,
+          quitarGrupo: quitarGrupo,
+        ).toJson(),
+      ),
+    );
+    return parseJson(() => PlanMensualDto.fromJson(body));
+  }
+
+  @override
+  Future<void> eliminarPartida(String mes, int id) async {
+    // Contrato: 204 sin cuerpo.
+    await client.delete<dynamic>('/planes/$mes/partidas/$id');
   }
 }

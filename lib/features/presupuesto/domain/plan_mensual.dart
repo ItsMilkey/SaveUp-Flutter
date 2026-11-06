@@ -212,4 +212,30 @@ abstract interface class PlanMensualRepository {
 
   /// `DELETE /planes/grupos/{id}` (204; las partidas quedan sin grupo).
   Future<void> eliminarGrupo(int id);
+
+  /// `PUT /planes/{mes}/ingreso-referencia` (`null` lo quita).
+  Future<PlanMensual> actualizarIngreso(String mes, Decimal? monto);
+
+  /// `POST /planes/{mes}/partidas`.
+  Future<PlanMensual> crearPartida(
+    String mes, {
+    required String nombre,
+    int? categoriaId,
+    Decimal? montoPlanificado,
+    int? grupoId,
+    int? deudaId,
+  });
+
+  /// `PUT /planes/{mes}/partidas/{id}` (parcial; `quitarGrupo` quita el grupo).
+  Future<PlanMensual> editarPartida(
+    String mes,
+    int id, {
+    String? nombre,
+    int? categoriaId,
+    int? grupoId,
+    bool quitarGrupo = false,
+  });
+
+  /// `DELETE /planes/{mes}/partidas/{id}` → 204.
+  Future<void> eliminarPartida(String mes, int id);
 }

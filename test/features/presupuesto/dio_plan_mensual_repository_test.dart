@@ -1,3 +1,4 @@
+import 'package:decimal/decimal.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:saveup_app/core/network/api_client.dart';
@@ -238,5 +239,67 @@ void main() {
     expect(plan.grupos.single.nombre, 'Fijos');
     expect(plan.calculo.guia?.necesidades.toString(), '50');
     expect(plan.partidas.single.estado.codigo, 'BAJO_EL_PLAN');
+  });
+
+  test('actualizarIngreso envía el monto como número', () async {
+    adapter.handler = (RequestOptions options) async {
+      expect(options.method, 'PUT');
+      expect(options.path.endsWith('/planes/2026-11/ingreso-referencia'), isTrue);
+      expect(jsonBodyOf(options), <String, Object?>{'monto': 900000});
+      return jsonResponse(planJson());
+    };
+
+    await repository.actualizarIngreso('2026-11', Decimal.parse('900000'));
+  });
+
+  test('crearPartida envía el cuerpo del contrato', () async {
+    adapter.handler = (RequestOptions options) async {
+      expect(options.method, 'POST');
+      expect(options.path.endsWith('/planes/2026-11/partidas'), isTrue);
+      expect(jsonBodyOf(options), <String, Object?>{
+        'nombre': 'Arriendo',
+        'categoriaId': 4,
+        'montoPlanificado': 400000,
+        'grupoId': 1,
+      });
+      return jsonResponse(planJson());
+    };
+
+    await repository.crearPartida(
+      '2026-11',
+      nombre: 'Arriendo',
+      categoriaId: 4,
+      montoPlanificado: Decimal.parse('400000'),
+      grupoId: 1,
+    );
+  });
+
+  test('editarPartida es parcial y permite quitar el grupo', () async {
+    adapter.handler = (RequestOptions options) async {
+      expect(options.method, 'PUT');
+      expect(options.path.endsWith('/planes/2026-11/partidas/9'), isTrue);
+      expect(jsonBodyOf(options), <String, Object?>{
+        'nombre': 'Arriendo 2',
+        'quitarGrupo': true,
+      });
+      return jsonResponse(planJson());
+    };
+
+    await repository.editarPartida(
+      '2026-11',
+      9,
+      nombre: 'Arriendo 2',
+      quitarGrupo: true,
+    );
+  });
+
+  test('eliminarPartida acepta el 204', () async {
+    adapter.handler = (RequestOptions options) async {
+      expect(options.method, 'DELETE');
+      expect(options.path.endsWith('/planes/2026-11/partidas/9'), isTrue);
+      return ResponseBody.fromString('', 204);
+    };
+
+    await repository.eliminarPartida('2026-11', 9);
   });
 }

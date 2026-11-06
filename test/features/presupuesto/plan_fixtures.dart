@@ -100,6 +100,14 @@ class FakePlanMensualRepository implements PlanMensualRepository {
   final List<bool> consultasReferencias = <bool>[];
   final List<(String destino, String origen)> copias =
       <(String destino, String origen)>[];
+  final List<(String mes, Decimal? monto)> ingresos =
+      <(String mes, Decimal? monto)>[];
+  final List<Map<String, Object?>> partidasCreadas =
+      <Map<String, Object?>>[];
+  final List<Map<String, Object?>> partidasEditadas =
+      <Map<String, Object?>>[];
+  final List<(String mes, int id)> partidasEliminadas =
+      <(String mes, int id)>[];
   final List<GrupoPlan> grupos = <GrupoPlan>[];
   int siguienteGrupoId = 1;
   List<AvisoPlan> avisosCopia = const <AvisoPlan>[];
@@ -219,6 +227,82 @@ class FakePlanMensualRepository implements PlanMensualRepository {
       throw errorGrupos!;
     }
     grupos.removeWhere((GrupoPlan g) => g.id == id);
+  }
+
+  @override
+  Future<PlanMensual> actualizarIngreso(String mes, Decimal? monto) async {
+    ingresos.add((mes, monto));
+    if (errorCopia != null) {
+      throw errorCopia!;
+    }
+    plan = PlanMensual(
+      mes: plan.mes,
+      existe: plan.existe,
+      ingresoReferencia: monto,
+      calculo: _calculadora.recalcularMontos(
+        base: plan.calculo,
+        nuevosMontos: const <int, Decimal>{},
+        ingresoReferencia: monto,
+      ),
+      partidas: plan.partidas,
+      grupos: plan.grupos,
+      avisos: plan.avisos,
+    );
+    return plan;
+  }
+
+  @override
+  Future<PlanMensual> crearPartida(
+    String mes, {
+    required String nombre,
+    int? categoriaId,
+    Decimal? montoPlanificado,
+    int? grupoId,
+    int? deudaId,
+  }) async {
+    partidasCreadas.add(<String, Object?>{
+      'mes': mes,
+      'nombre': nombre,
+      'categoriaId': categoriaId,
+      'montoPlanificado': montoPlanificado,
+      'grupoId': grupoId,
+      'deudaId': deudaId,
+    });
+    if (errorCopia != null) {
+      throw errorCopia!;
+    }
+    return plan;
+  }
+
+  @override
+  Future<PlanMensual> editarPartida(
+    String mes,
+    int id, {
+    String? nombre,
+    int? categoriaId,
+    int? grupoId,
+    bool quitarGrupo = false,
+  }) async {
+    partidasEditadas.add(<String, Object?>{
+      'mes': mes,
+      'id': id,
+      'nombre': nombre,
+      'categoriaId': categoriaId,
+      'grupoId': grupoId,
+      'quitarGrupo': quitarGrupo,
+    });
+    if (errorCopia != null) {
+      throw errorCopia!;
+    }
+    return plan;
+  }
+
+  @override
+  Future<void> eliminarPartida(String mes, int id) async {
+    partidasEliminadas.add((mes, id));
+    if (errorCopia != null) {
+      throw errorCopia!;
+    }
   }
 }
 
