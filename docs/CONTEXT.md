@@ -227,6 +227,9 @@ Un `codigo` desconocido cae en una falla genérica conservando status y `detail`
   En producción el backend lo tiene desactivado; el registro de dispositivos sí funciona.
 - Recuperación de contraseña por correo: en producción el envío está pendiente de activación
   en el backend. La UI debe decir que el envío aún no está disponible.
-- Textos legales: el backend entrega `versionTerminos` y `versionPrivacidad`; la pantalla
-  depende de la tarea T9.7 del backend (pendiente).
+- Textos legales: `legalVersionsProvider` gestiona las **versiones dinámicas**
+  (`versionTerminos`/`versionPrivacidad` desde `GET /app/version`) y el visor de
+  `/legales` ya está implementado (F2), pero el **cuerpo renderizado es un
+  placeholder estático** en `features/account/domain/legal_documents.dart`; se
+  reemplazará cuando exista el endpoint (o fuente) del contenido legal oficial.
 - Publicación en tiendas: fuera del MVP. Para iOS requerirá build en CI con el SDK vigente.

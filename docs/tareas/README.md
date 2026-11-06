@@ -9,8 +9,8 @@ Al terminar, marcar aquí con `[x]`.
 
 - [x] **F0** núcleo: dinero, tiempo, errores y cliente HTTP con sesión — `F0-core.md`
 - [x] **F1** autenticación, sesión persistente y versión mínima — `F1-auth.md`
-- [ ] **F2** cuenta: recuperar y cambiar contraseña, eliminar cuenta, legales (el envío de correo
-  está pendiente en producción; legales depende de T9.7 del backend)
+- [x] **F2** cuenta: recuperar y cambiar contraseña, eliminar cuenta, legales (envío de correo
+  pendiente en producción; cuerpo legal provisional hasta que exista su fuente)
 - [ ] **F3** movimientos, saldo y categorías (primer corte vertical completo: listar, crear,
   filtrar, editar, eliminar; pantalla de inicio real)
 - [ ] **F4** deudas: lista, detalle, pagos flexibles, amortización, cancelar
