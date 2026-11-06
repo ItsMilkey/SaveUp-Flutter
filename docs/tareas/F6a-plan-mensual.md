@@ -9,6 +9,19 @@
 > 0, el caso 250.001/250.000 y un truncado explícito. 40 tests del bloque en
 > verde; suite total 270. Pendiente: Bloques 2 (controlador/sliders/lote) y
 > 3 (pantalla, grupos, referencias y partidas vinculadas).
+>
+> **Avance Bloque 2 (2026-11-06): controlador, slider y lote atómico.**
+> `PlanMensualController` (Notifier) con `PlanMensualState`: recálculo local en
+> `moverPartida` (sin HTTP, vía `CalculadoraPlanDart.recalcularMontos`, que
+> preserva `real` e imputación según D6), buffer de cambios por `partidaId`,
+> `soltar()` que envía `PATCH /planes/{mes}/montos` en lotes de ≤100,
+> reconciliación autoritativa con la respuesta y reaplicación visual de lo que
+> quede sin confirmar; concurrencia sin bloquear sliders; reintento manual;
+> partidas con `deudaId` ignoradas; tope `monto + max(remanente, 0)`.
+> DTOs de lectura y de mutación + repositorio. Widget `PartidaMontoSlider`
+> (drag local, PATCH solo al soltar; vinculadas sin slider con badge y aviso).
+> Tests: 6 del controlador (local, lote único, concurrencia, vinculada, error +
+> reintento, máximo 100) y 2 del slider. Total 278 en verde.
 
 ## Objetivo
 Que la persona vea y edite el plan del mes (partidas por categoría con grupos, ingreso de

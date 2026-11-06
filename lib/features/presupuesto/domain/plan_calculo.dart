@@ -36,6 +36,15 @@ enum EstadoEjecucion {
 
   final String codigo;
 
+  static EstadoEjecucion parse(String codigo) {
+    for (final EstadoEjecucion estado in values) {
+      if (estado.codigo == codigo) {
+        return estado;
+      }
+    }
+    throw FormatException('Estado de ejecución desconocido: "$codigo".');
+  }
+
   /// Compara por **multiplicación cruzada**: `real·100` contra
   /// `80·plan` y `100·plan`; nunca usa el porcentaje truncado.
   static EstadoEjecucion desde(Decimal real, Decimal planificado) {
@@ -63,6 +72,15 @@ enum EstadoCuota {
 
   final String codigo;
 
+  static EstadoCuota parse(String codigo) {
+    for (final EstadoCuota estado in values) {
+      if (estado.codigo == codigo) {
+        return estado;
+      }
+    }
+    throw FormatException('Estado de cuota desconocido: "$codigo".');
+  }
+
   static EstadoCuota desde(Decimal real, Decimal montoCuota) {
     if (real == Decimal.zero) {
       return pendiente;
@@ -79,6 +97,15 @@ enum MotivoSinPlanificar {
   const MotivoSinPlanificar(this.codigo);
 
   final String codigo;
+
+  static MotivoSinPlanificar parse(String codigo) {
+    for (final MotivoSinPlanificar motivo in values) {
+      if (motivo.codigo == codigo) {
+        return motivo;
+      }
+    }
+    throw FormatException('Motivo sin planificar desconocido: "$codigo".');
+  }
 }
 
 /// Tipos de movimiento que participan del plan.
@@ -252,6 +279,10 @@ class PartidaResultado {
     required this.porcentajeUsado,
     required this.estado,
     required this.estadoCuota,
+    required this.montoPlanificado,
+    this.categoria,
+    this.grupoId,
+    this.deudaId,
   });
 
   final int id;
@@ -263,6 +294,11 @@ class PartidaResultado {
 
   /// Solo para partidas vinculadas a una deuda.
   final EstadoCuota? estadoCuota;
+
+  final Decimal montoPlanificado;
+  final CategoriaRef? categoria;
+  final int? grupoId;
+  final int? deudaId;
 }
 
 class CategoriaResultado {

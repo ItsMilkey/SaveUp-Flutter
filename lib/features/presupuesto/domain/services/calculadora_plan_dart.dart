@@ -259,6 +259,211 @@ class CalculadoraPlanDart {
     );
   }
 
+  /// Recalcula la **vista local** durante el arrastre, sin tocar `real` ni la
+  /// imputación (decisión D6): solo `planificado`, `diferencia`,
+  /// `porcentajeUsado`, `estado`, resumen, grupos afectados y reparto.
+  ///
+  /// Conserva `estadoCuota`, `sinPlanificar` y todo lo que depende de los
+  /// movimientos del mes, porque el servidor es la única fuente de esa verdad.
+  PlanCalculado recalcularMontos({
+    required PlanCalculado base,
+    required Map<int, Decimal> nuevosMontos,
+    Decimal? ingresoReferencia,
+  }) {
+    final List<PartidaResultado> partidas = <PartidaResultado>[
+      for (final PartidaResultado partida in base.partidas)
+        _partidaConMonto(
+          partida,
+          _dinero(nuevosMontos[partida.id] ?? partida.montoPlanificado),
+        ),
+    ];
+    final Map<int, PartidaResultado> porId = <int, PartidaResultado>{
+      for (final PartidaResultado partida in partidas) partida.id: partida,
+    };
+
+    Decimal planificadoTotal = Decimal.zero;
+    for (final PartidaResultado partida in partidas) {
+      planificadoTotal += partida.montoPlanificado;
+    }
+    planificadoTotal = _dinero(planificadoTotal);
+
+    final List<CategoriaResultado> porCategoria = <CategoriaResultado>[
+      for (final CategoriaResultado categoria in base.porCategoria)
+        _categoriaConPlanificado(
+          categoria,
+          _planificadoDeCategoria(partidas, categoria.categoriaId),
+        ),
+    ];
+
+    final List<RepartoTipoResultado> reparto = <RepartoTipoResultado>[
+      for (final RepartoTipoResultado fila in base.repartoPorTipo)
+        _repartoConPlanificado(
+          fila,
+          _planificadoDeTipo(partidas, fila.tipo),
+          ingresoReferencia,
+          base.guia,
+        ),
+    ];
+
+    final List<GrupoResultado> grupos = <GrupoResultado>[
+      for (final GrupoResultado grupo in base.grupos)
+        _grupoConPlanificado(
+          grupo,
+          _planificadoDeGrupo(grupo, porId),
+          planificadoTotal,
+        ),
+    ];
+
+    final Decimal? remanenteLibre = ingresoReferencia == null
+        ? null
+        : _dinero(ingresoReferencia - planificadoTotal);
+    final Decimal? margen = ingresoReferencia == null ||
+            ingresoReferencia == Decimal.zero
+        ? null
+        : _porcentajeHalfUp(remanenteLibre!, ingresoReferencia);
+    final ResumenCalculado resumen = ResumenCalculado(
+      planificadoTotal: planificadoTotal,
+      remanenteLibre: remanenteLibre,
+      margenSeguridadPct: margen,
+      excedeIngreso:
+          ingresoReferencia != null && planificadoTotal > ingresoReferencia,
+      ingresoReal: base.resumen.ingresoReal,
+      gastoRealTotal: base.resumen.gastoRealTotal,
+      disponibleReal: base.resumen.disponibleReal,
+      ahorroRegistrado: base.resumen.ahorroRegistrado,
+      sinPlanificar: base.resumen.sinPlanificar,
+    );
+
+    return PlanCalculado(
+      resumen: resumen,
+      partidas: partidas,
+      porCategoria: porCategoria,
+      repartoPorTipo: reparto,
+      guia: base.guia,
+      grupos: grupos,
+    );
+  }
+
+  PartidaResultado _partidaConMonto(
+    PartidaResultado partida,
+    Decimal monto,
+  ) {
+    return PartidaResultado(
+      id: partida.id,
+      nombre: partida.nombre,
+      real: partida.real,
+      diferencia: _dinero(monto - partida.real),
+      porcentajeUsado: _porcentajeUsado(partida.real, monto),
+      estado: EstadoEjecucion.desde(partida.real, monto),
+      estadoCuota: partida.estadoCuota,
+      montoPlanificado: monto,
+      categoria: partida.categoria,
+      grupoId: partida.grupoId,
+      deudaId: partida.deudaId,
+    );
+  }
+
+  Decimal _planificadoDeCategoria(
+    List<PartidaResultado> partidas,
+    int categoriaId,
+  ) {
+    Decimal total = Decimal.zero;
+    for (final PartidaResultado partida in partidas) {
+      if (partida.categoria?.id == categoriaId) {
+        total += partida.montoPlanificado;
+      }
+    }
+    return _dinero(total);
+  }
+
+  Decimal _planificadoDeTipo(
+    List<PartidaResultado> partidas,
+    TipoPresupuesto tipo,
+  ) {
+    Decimal total = Decimal.zero;
+    for (final PartidaResultado partida in partidas) {
+      if (partida.categoria?.tipo == tipo) {
+        total += partida.montoPlanificado;
+      }
+    }
+    return _dinero(total);
+  }
+
+  Decimal _planificadoDeGrupo(
+    GrupoResultado grupo,
+    Map<int, PartidaResultado> porId,
+  ) {
+    Decimal total = Decimal.zero;
+    for (final int id in grupo.partidaIds) {
+      total += porId[id]?.montoPlanificado ?? Decimal.zero;
+    }
+    return _dinero(total);
+  }
+
+  CategoriaResultado _categoriaConPlanificado(
+    CategoriaResultado categoria,
+    Decimal planificado,
+  ) {
+    return CategoriaResultado(
+      categoriaId: categoria.categoriaId,
+      codigo: categoria.codigo,
+      tipo: categoria.tipo,
+      planificado: planificado,
+      real: categoria.real,
+      diferencia: _dinero(planificado - categoria.real),
+      porcentajeUsado: _porcentajeUsado(categoria.real, planificado),
+      estado: EstadoEjecucion.desde(categoria.real, planificado),
+    );
+  }
+
+  RepartoTipoResultado _repartoConPlanificado(
+    RepartoTipoResultado fila,
+    Decimal planificado,
+    Decimal? ingresoReferencia,
+    GuiaCalculo? guia,
+  ) {
+    final Decimal? porcentaje = _porcentajeHalfUp(
+      planificado,
+      ingresoReferencia,
+    );
+    Decimal? diferenciaPuntos;
+    if (fila.tipo != TipoPresupuesto.otros &&
+        porcentaje != null &&
+        guia != null) {
+      final Decimal referencia = fila.tipo == TipoPresupuesto.necesidad
+          ? guia.necesidades
+          : guia.deseos;
+      diferenciaPuntos = _dinero(porcentaje - referencia);
+    }
+    return RepartoTipoResultado(
+      tipo: fila.tipo,
+      planificado: planificado,
+      porcentajeDelIngreso: porcentaje,
+      real: fila.real,
+      porcentajeRealDelIngresoReal: fila.porcentajeRealDelIngresoReal,
+      diferenciaPuntos: diferenciaPuntos,
+    );
+  }
+
+  GrupoResultado _grupoConPlanificado(
+    GrupoResultado grupo,
+    Decimal planificado,
+    Decimal planificadoTotal,
+  ) {
+    return GrupoResultado(
+      id: grupo.id,
+      nombre: grupo.nombre,
+      orden: grupo.orden,
+      planificado: planificado,
+      porcentajeDelPlanificado: _porcentajeHalfUp(
+        planificado,
+        planificadoTotal,
+      ),
+      real: grupo.real,
+      partidaIds: grupo.partidaIds,
+    );
+  }
+
   PartidaResultado _resultadoPartida(
     PartidaCalculo partida,
     Decimal real,
@@ -274,6 +479,10 @@ class CalculadoraPlanDart {
       estadoCuota: partida.deudaId == null
           ? null
           : EstadoCuota.desde(real, planificado),
+      montoPlanificado: planificado,
+      categoria: partida.categoria,
+      grupoId: partida.grupoId,
+      deudaId: partida.deudaId,
     );
   }
 
