@@ -1,5 +1,15 @@
 # F6a — Plan mensual: partidas, grupos, sliders con cálculo local y lote atómico
 
+> **Avance Bloque 1 (2026-11-06): motor puro + vectores.**
+> `CalculadoraPlanDart` en `lib/features/presupuesto/domain/services/` porta
+> `CalculadoraPlan.java` con `Decimal` (HALF_UP) y `porcentajeUsado` truncado
+> DOWN. El test `test/features/presupuesto/plan_vectores_test.dart` lee la
+> copia de solo lectura `docs/contrato/plan-vectores.json` (v3) y valida
+> **V01–V33 campo a campo**; añade inmutabilidad/idempotencia, plan 0, ingreso
+> 0, el caso 250.001/250.000 y un truncado explícito. 40 tests del bloque en
+> verde; suite total 270. Pendiente: Bloques 2 (controlador/sliders/lote) y
+> 3 (pantalla, grupos, referencias y partidas vinculadas).
+
 ## Objetivo
 Que la persona vea y edite el plan del mes (partidas por categoría con grupos, ingreso de
 referencia, copia desde un mes anterior) y ajuste montos con **sliders** cuyo recálculo
