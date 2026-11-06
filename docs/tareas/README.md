@@ -12,8 +12,8 @@ Al terminar, marcar aquí con `[x]`.
 - [x] **F2** cuenta: recuperar y cambiar contraseña, eliminar cuenta, legales (envío de correo
   pendiente en producción; cuerpo legal provisional hasta que exista su fuente)
 - [ ] **F3** movimientos, saldo y categorías (primer corte vertical completo: listar, crear,
-  filtrar, editar, eliminar; pantalla de inicio real) — **primer corte hecho** (saldo, listado
-  con filtros, alta mínima y sugeridor); falta editar/eliminar en `F3b`
+  filtrar, editar, eliminar; pantalla de inicio real) — **corte completo hecho**: saldo, listado
+  con filtros, alta, sugeridor, edición y eliminación; verificación manual registrada.
 - [ ] **F4** deudas: lista, detalle, pagos flexibles, amortización, cancelar
 - [ ] **F5** simulador de endeudamiento (`POST /simulaciones/credito`)
 - [ ] **F6** presupuesto: configuración, ejecución, historial, límites por categoría,

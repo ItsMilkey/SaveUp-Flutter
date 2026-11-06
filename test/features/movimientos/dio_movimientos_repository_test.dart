@@ -163,8 +163,60 @@ void main() {
     });
   });
 
-  group('sugerencia', () {
-    test('envía texto y contexto; parsea ambigua y confianza', () async {
+  group('editar', () {
+    test('PUT parcial: envía solo los campos y devuelve el actualizado', () async {
+      adapter.handler = (RequestOptions options) async {
+        expect(options.method, 'PUT');
+        expect(options.path.endsWith('/movimientos/7'), isTrue);
+        expect(jsonBodyOf(options), <String, Object?>{
+          'monto': 13000,
+          'descripcion': 'Supermercado editado',
+        });
+        return jsonResponse(
+          movimientoJson(
+            id: 7,
+            monto: -13000,
+            descripcion: 'Supermercado editado',
+          ),
+        );
+      };
+
+      final movimiento = await movimientos.editar(
+        id: 7,
+        monto: Decimal.parse('13000'),
+        descripcion: 'Supermercado editado',
+      );
+
+      expect(movimiento.id, 7);
+      expect(movimiento.descripcion, 'Supermercado editado');
+      expect(movimiento.monto.toString(), '-13000');
+    });
+
+    test('desvincularPartida viaja solo cuando es true', () async {
+      adapter.handler = (RequestOptions options) async {
+        expect(jsonBodyOf(options), <String, Object?>{
+          'desvincularPartida': true,
+        });
+        return jsonResponse(movimientoJson(id: 7, monto: -1000));
+      };
+
+      await movimientos.editar(id: 7, desvincularPartida: true);
+    });
+  });
+
+  group('eliminar', () {
+    test('DELETE /movimientos/{id} acepta el 204 sin cuerpo', () async {
+      adapter.handler = (RequestOptions options) async {
+        expect(options.method, 'DELETE');
+        expect(options.path.endsWith('/movimientos/9'), isTrue);
+        return ResponseBody.fromString('', 204);
+      };
+
+      await movimientos.eliminar(9);
+    });
+  });
+
+  group('sugerencia', () {    test('envía texto y contexto; parsea ambigua y confianza', () async {
       adapter.handler = (RequestOptions options) async {
         expect(options.path.endsWith('/categorias/sugerencia'), isTrue);
         expect(options.queryParameters['texto'], 'cena aniversario');

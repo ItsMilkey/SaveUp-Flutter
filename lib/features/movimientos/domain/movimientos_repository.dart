@@ -1,5 +1,6 @@
 import 'package:decimal/decimal.dart';
 
+import 'movimiento.dart';
 import 'movimiento_filtro.dart';
 import 'movimiento_tipo.dart';
 
@@ -19,4 +20,21 @@ abstract interface class MovimientosRepository {
     required MovimientoTipo tipo,
     int? categoriaId,
   });
+
+  /// `PUT /movimientos/{id}`: edición **parcial**.
+  ///
+  /// Los `null` significan "no enviado" y conservan el valor actual. El tipo
+  /// **no es editable** (el contrato no lo incluye: el signo lo impone el tipo
+  /// actual). Devuelve el movimiento actualizado del backend.
+  Future<Movimiento> editar({
+    required int id,
+    Decimal? monto,
+    String? descripcion,
+    int? categoriaId,
+    int? partidaId,
+    bool desvincularPartida = false,
+  });
+
+  /// `DELETE /movimientos/{id}` → `204` sin cuerpo.
+  Future<void> eliminar(int id);
 }

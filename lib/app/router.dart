@@ -13,8 +13,9 @@ import '../features/auth/presentation/login_screen.dart';
 import '../features/auth/presentation/register_screen.dart';
 import '../features/auth/presentation/splash_screen.dart';
 import '../features/movimientos/presentation/movimientos_screen.dart';
-import '../features/movimientos/presentation/nuevo_movimiento_screen.dart';
+import '../features/movimientos/presentation/movimiento_form_screen.dart';
 import '../features/auth/domain/auth_session.dart';
+import '../features/movimientos/domain/movimiento.dart';
 import '../core/network/session_events.dart';
 import 'routes.dart';
 
@@ -80,7 +81,17 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
       GoRoute(
         path: AppRoutes.nuevoMovimiento,
         name: 'nuevoMovimiento',
-        builder: (_, _) => const NuevoMovimientoScreen(),
+        builder: (_, _) => const MovimientoFormScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.editarMovimiento,
+        name: 'editarMovimiento',
+        builder: (_, GoRouterState state) {
+          final Object? extra = state.extra;
+          return extra is Movimiento
+              ? MovimientoFormScreen(movimiento: extra)
+              : const MovimientosScreen();
+        },
       ),
     ],
   );

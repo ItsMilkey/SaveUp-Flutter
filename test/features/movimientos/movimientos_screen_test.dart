@@ -222,4 +222,147 @@ void main() {
     expect(sinFiltro.queryParameters.containsKey('tipoMovimiento'), isFalse);
     expect(find.text('Sueldo'), findsOneWidget);
   });
+
+  testWidgets('editar un movimiento actualiza la lista y el saldo', (
+    WidgetTester tester,
+  ) async {
+    int saldoLlamadas = 0;
+    adapter.handler = (RequestOptions options) async {
+      if (options.path.endsWith('/app/version')) {
+        return versionResponse();
+      }
+      if (options.path.endsWith('/usuarios/me')) {
+        return jsonResponse(meBody());
+      }
+      if (options.path.endsWith('/saldos/me')) {
+        saldoLlamadas += 1;
+        return saldoResponse(saldo: saldoLlamadas == 1 ? -12500 : -13000);
+      }
+      if (options.path.endsWith('/categorias')) {
+        return jsonResponse(<Object?>[
+          <String, Object?>{
+            'id': 1,
+            'codigo': 'ALIMENTACION_BASE',
+            'nombre': 'Alimentación Básica',
+          },
+        ]);
+      }
+      if (options.path.endsWith('/movimientos/paginados/me')) {
+        return jsonResponse(<String, Object?>{
+          'content': <Object?>[
+            movimientoJson(
+              id: 1,
+              monto: -12500,
+              descripcion: 'Supermercado',
+            ),
+          ],
+          'currentPage': 0,
+          'totalItems': 1,
+          'totalPages': 1,
+        });
+      }
+      if (options.method == 'PUT' &&
+          options.path.endsWith('/movimientos/1')) {
+        expect(jsonBodyOf(options), <String, Object?>{
+          'monto': 13000,
+          'descripcion': 'Supermercado editado',
+          'categoriaId': 1,
+        });
+        return jsonResponse(
+          movimientoJson(
+            id: 1,
+            monto: -13000,
+            descripcion: 'Supermercado editado',
+          ),
+        );
+      }
+      fail('petición inesperada: ${options.method} ${options.path}');
+    };
+
+    await abrirHome(tester);
+    expect(find.text('Supermercado'), findsOneWidget);
+
+    await tester.tap(find.text('Supermercado'));
+    await tester.pumpAndSettle();
+    expect(find.text('Editar movimiento'), findsOneWidget);
+    // Precarga del formulario (tipo fijo, monto absoluto, categoría).
+    expect(find.text('Supermercado'), findsOneWidget);
+    expect(find.text('12500'), findsOneWidget);
+
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Descripción'),
+      'Supermercado editado',
+    );
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Monto'),
+      '13000',
+    );
+    await tester.tap(find.text('Guardar movimiento'));
+    await tester.pumpAndSettle();
+
+    // De vuelta al home con el ítem reconciliado y el saldo refrescado.
+    expect(find.text('Supermercado editado'), findsOneWidget);
+    // Saldo y monto del ítem comparten el mismo valor.
+    expect(find.text(r'-$13.000'), findsNWidgets(2));
+    expect(saldoLlamadas, 2);
+  });
+
+  testWidgets('swipe + confirmación elimina el movimiento y refresca saldo', (
+    WidgetTester tester,
+  ) async {
+    int saldoLlamadas = 0;
+    bool eliminado = false;
+    adapter.handler = (RequestOptions options) async {
+      if (options.path.endsWith('/app/version')) {
+        return versionResponse();
+      }
+      if (options.path.endsWith('/usuarios/me')) {
+        return jsonResponse(meBody());
+      }
+      if (options.path.endsWith('/saldos/me')) {
+        saldoLlamadas += 1;
+        return saldoResponse(saldo: 0);
+      }
+      if (options.path.endsWith('/movimientos/paginados/me')) {
+        return jsonResponse(<String, Object?>{
+          'content': <Object?>[
+            if (!eliminado)
+              movimientoJson(id: 1, monto: -12500, descripcion: 'Supermercado'),
+          ],
+          'currentPage': 0,
+          'totalItems': eliminado ? 0 : 1,
+          'totalPages': eliminado ? 0 : 1,
+        });
+      }
+      if (options.method == 'DELETE' &&
+          options.path.endsWith('/movimientos/1')) {
+        eliminado = true;
+        return ResponseBody.fromString('', 204);
+      }
+      fail('petición inesperada: ${options.method} ${options.path}');
+    };
+
+    await abrirHome(tester);
+    expect(find.text('Supermercado'), findsOneWidget);
+
+    await tester.drag(find.text('Supermercado'), const Offset(-600, 0));
+    await tester.pumpAndSettle();
+    expect(find.text('¿Eliminar movimiento?'), findsOneWidget);
+
+    // Cancelar no borra nada.
+    await tester.tap(find.text('Cancelar'));
+    await tester.pumpAndSettle();
+    expect(find.text('Supermercado'), findsOneWidget);
+    expect(eliminado, isFalse);
+
+    // Confirmar elimina y refresca el saldo.
+    await tester.drag(find.text('Supermercado'), const Offset(-600, 0));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Eliminar'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Supermercado'), findsNothing);
+    expect(eliminado, isTrue);
+    expect(saldoLlamadas, 2);
+  });
 }

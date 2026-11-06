@@ -20,6 +20,13 @@
 > - Filtro por tipo "Ingreso": 0 movimientos + estado vacío con "Quitar
 >   filtros"; filtro por fecha `Desde 2026-11-07`: lista vacía; al limpiar,
 >   vuelven los 2 movimientos.
+>
+> **F3b (edición/eliminación):** `PUT /movimientos/{id}` parcial (el contrato
+> **no** permite cambiar `tipo`) con formulario compartido y reconciliación
+> del ítem + saldo; `DELETE /movimientos/{id}` con swipe + confirmación,
+> quitando el ítem y refrescando el saldo. Solo se ofrece para
+> `INGRESO_GENERAL`/`GASTO_GENERAL` (el backend responde 409 en los demás).
+> 212 tests en verde.
 
 ## Objetivo
 Que una persona autenticada vea su **saldo actual** y sus **movimientos paginados** con
@@ -116,6 +123,20 @@ Ninguna (selectores de fecha nativos de Material).
 - UI: `CategoriaSugeridaPicker` reutilizable sobre el campo descripción (chips de sugerencia +
   confirmación si ambigua).
 
+### 6. Edición y eliminación (F3b)
+- **Edición** (`PUT /movimientos/{id}`): mismo formulario que el alta, con
+  `MovimientoFormScreen(movimiento: ...)`. `tipo` **no es editable** (el
+  contrato no lo incluye; se muestra fijo) y la fecha tampoco. Edición
+  parcial: solo viajan los campos con valor; `desvincularPartida` solo si es
+  `true`. Al 200 se **reemplaza el ítem** en la lista y se refresca el saldo.
+  Si el movimiento tiene partida y se cambia la categoría sin desvincular, el
+  backend responde `400 DATOS_INVALIDOS` y se muestra su `detail`.
+- **Eliminación** (`DELETE /movimientos/{id}` → 204): swipe-to-delete con
+  diálogo de confirmación; al 204 se quita el ítem de la lista local y se
+  refresca el saldo. Errores: SnackBar y el gesto se cancela.
+- Solo se permite editar/eliminar `INGRESO_GENERAL` y `GASTO_GENERAL` sin
+  deuda/meta (regla del backend; el resto responde 409).
+
 ## Pruebas
 - DTOs: `saldo` negativo, `monto` con signo, `confianza` y `Decimal` sin `double`; página con
   `totalPages=0` y `content=[]`.
@@ -134,10 +155,10 @@ Ninguna (selectores de fecha nativos de Material).
 - Nada de `print` ni logs con descripciones/textos del usuario.
 - Dinero siempre `Decimal`; el `double`/`num` solo existe al borde JSON.
 
-## Fuera de alcance (F3b y posteriores)
-Edición y eliminación de movimientos (`PUT`/`DELETE /movimientos/{id}`), filtros por categoría/
-monto/texto en la UI (el dominio los soporta), movimientos vinculados a deudas/metas/partidas,
-navegación completa por pestañas, presupuesto y reportes.
+## Fuera de alcance (posteriores)
+Movimientos vinculados a deudas/metas/partidas (UI), filtros por categoría/
+monto/texto en la UI (el dominio los soporta), navegación completa por
+pestañas, presupuesto y reportes.
 
 ## Criterios de aceptación
 - `flutter analyze` sin issues y `flutter test` en verde.

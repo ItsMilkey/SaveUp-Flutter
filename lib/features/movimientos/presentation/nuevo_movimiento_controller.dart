@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/errors/app_failure.dart';
 import '../../../core/errors/failure_messages.dart';
 import '../data/dio_movimientos_repository.dart';
+import '../domain/movimiento.dart';
 import '../domain/movimiento_tipo.dart';
 import '../domain/movimientos_repository.dart';
 
@@ -37,8 +38,11 @@ class NuevoMovimientoError extends NuevoMovimientoUiState {
   String get message => failureMessage(failure);
 }
 
+/// Éxito: [actualizado] viene de un `PUT` (edición); `null` significa alta.
 class NuevoMovimientoSuccess extends NuevoMovimientoUiState {
-  const NuevoMovimientoSuccess();
+  const NuevoMovimientoSuccess({this.actualizado});
+
+  final Movimiento? actualizado;
 }
 
 final NotifierProvider<NuevoMovimientoController, NuevoMovimientoUiState>
@@ -77,6 +81,36 @@ class NuevoMovimientoController extends Notifier<NuevoMovimientoUiState> {
         categoriaId: categoriaId,
       );
       state = const NuevoMovimientoSuccess();
+    } on ValidationFailure catch (failure) {
+      state = _fieldErrors(failure.errors);
+    } on AppFailure catch (failure) {
+      state = NuevoMovimientoError(failure: failure);
+    }
+  }
+
+  /// `PUT /movimientos/{id}` (edición parcial). El tipo no viaja: el contrato
+  /// no lo permite cambiar.
+  Future<void> editar({
+    required int id,
+    Decimal? monto,
+    String? descripcion,
+    int? categoriaId,
+  }) async {
+    if (state is NuevoMovimientoSubmitting) {
+      return;
+    }
+    state = const NuevoMovimientoSubmitting();
+    final MovimientosRepository repository = ref.read(
+      movimientosRepositoryProvider,
+    );
+    try {
+      final Movimiento actualizado = await repository.editar(
+        id: id,
+        monto: monto,
+        descripcion: descripcion?.trim(),
+        categoriaId: categoriaId,
+      );
+      state = NuevoMovimientoSuccess(actualizado: actualizado);
     } on ValidationFailure catch (failure) {
       state = _fieldErrors(failure.errors);
     } on AppFailure catch (failure) {

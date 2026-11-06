@@ -203,6 +203,36 @@ class MovimientoRegistroDto {
   }
 }
 
+/// Cuerpo de `PUT /movimientos/{id}` (edición parcial; los nulos no se envían).
+///
+/// El contrato **no** acepta `tipoMovimiento`: el signo lo impone el tipo
+/// actual del movimiento.
+class MovimientoEdicionDto {
+  const MovimientoEdicionDto({
+    this.monto,
+    this.descripcion,
+    this.categoriaId,
+    this.partidaId,
+    this.desvincularPartida = false,
+  });
+
+  final Decimal? monto;
+  final String? descripcion;
+  final int? categoriaId;
+  final int? partidaId;
+  final bool desvincularPartida;
+
+  Map<String, Object?> toJson() {
+    return <String, Object?>{
+      if (monto != null) 'monto': moneyToJson(monto!),
+      if (descripcion != null) 'descripcion': descripcion,
+      if (categoriaId != null) 'categoriaId': categoriaId,
+      if (partidaId != null) 'partidaId': partidaId,
+      if (desvincularPartida) 'desvincularPartida': true,
+    };
+  }
+}
+
 /// `SugerenciaCategoriaDTO`.
 class SugerenciaCategoriaDto {
   const SugerenciaCategoriaDto({

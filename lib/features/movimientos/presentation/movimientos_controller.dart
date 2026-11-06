@@ -136,6 +136,38 @@ class MovimientosController extends Notifier<MovimientosState> {
     await _cargarPagina(state.page + 1);
   }
 
+  /// Reemplaza un ítem tras un `PUT` exitoso y refresca la tarjeta de saldo.
+  void aplicarMovimientoActualizado(Movimiento actualizado) {
+    state = _copy(
+      items: <Movimiento>[
+        for (final Movimiento item in state.items)
+          item.id == actualizado.id ? actualizado : item,
+      ],
+    );
+    unawaited(_cargarSaldo());
+  }
+
+  /// `DELETE /movimientos/{id}`: al 204 quita el ítem y refresca el saldo.
+  ///
+  /// Devuelve la falla si no se pudo borrar (la UI la muestra y cancela el
+  /// gesto); `null` significa éxito.
+  Future<AppFailure?> eliminarMovimiento(Movimiento movimiento) async {
+    try {
+      await ref.read(movimientosRepositoryProvider).eliminar(movimiento.id);
+    } on AppFailure catch (failure) {
+      return failure;
+    }
+    state = _copy(
+      items: <Movimiento>[
+        for (final Movimiento item in state.items)
+          if (item.id != movimiento.id) item,
+      ],
+      totalItems: state.totalItems > 0 ? state.totalItems - 1 : 0,
+    );
+    await _cargarSaldo();
+    return null;
+  }
+
   Future<void> _cargarSaldo() async {
     final SaldosRepository repository = ref.read(saldosRepositoryProvider);
     try {

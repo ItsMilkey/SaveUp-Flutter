@@ -4,39 +4,55 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/money/money.dart';
 import '../domain/categoria.dart';
+import '../domain/movimiento.dart';
 import '../domain/movimiento_tipo.dart';
 import '../domain/sugerencia_categoria.dart';
 import 'categoria_sugerencia_controller.dart';
+import 'movimiento_labels.dart';
 import 'nuevo_movimiento_controller.dart';
 
-/// Alta mínima de movimiento con sugeridor de categorías (F3).
+/// Formulario de movimiento (alta y edición comparten pantalla).
 ///
-/// El contrato de `POST /movimientos` no recibe fecha: el backend usa el
-/// instante del registro. El sugeridor nunca asigna en silencio: si la
-/// respuesta es ambigua, la persona debe elegir explícitamente.
-class NuevoMovimientoScreen extends ConsumerStatefulWidget {
-  const NuevoMovimientoScreen({super.key});
+/// Edición: `PUT /movimientos/{id}` — el **tipo no es editable** (el contrato
+/// no lo incluye; el signo lo impone el tipo actual) y por eso se muestra
+/// fijo. El contrato tampoco recibe fecha en el alta: la pone el backend.
+/// El sugeridor nunca asigna en silencio: si la respuesta es ambigua, la
+/// persona debe elegir explícitamente.
+class MovimientoFormScreen extends ConsumerStatefulWidget {
+  const MovimientoFormScreen({super.key, this.movimiento});
+
+  /// `null` = alta; con valor = edición de ese movimiento.
+  final Movimiento? movimiento;
 
   @override
-  ConsumerState<NuevoMovimientoScreen> createState() =>
-      _NuevoMovimientoScreenState();
+  ConsumerState<MovimientoFormScreen> createState() =>
+      _MovimientoFormScreenState();
 }
 
-class _NuevoMovimientoScreenState
-    extends ConsumerState<NuevoMovimientoScreen> {
+class _MovimientoFormScreenState extends ConsumerState<MovimientoFormScreen> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final TextEditingController _descripcionController = TextEditingController();
   final TextEditingController _montoController = TextEditingController();
 
-  MovimientoTipo _tipo = MovimientoTipo.gastoGeneral;
+  late MovimientoTipo _tipo;
   int? _categoriaSeleccionada;
   bool _seleccionManual = false;
   List<SugerenciaCategoria> _sugerencias = const <SugerenciaCategoria>[];
   bool _ambigua = false;
 
+  bool get _esEdicion => widget.movimiento != null;
+
   @override
   void initState() {
     super.initState();
+    final Movimiento? inicial = widget.movimiento;
+    _tipo = inicial?.tipo ?? MovimientoTipo.gastoGeneral;
+    if (inicial != null) {
+      _descripcionController.text = inicial.descripcion;
+      // El campo de monto es positivo: el signo lo impone el tipo.
+      _montoController.text = inicial.monto.abs().toString();
+      _categoriaSeleccionada = inicial.categoria?.id;
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         ref.read(nuevoMovimientoProvider.notifier).reset();
@@ -91,10 +107,10 @@ class _NuevoMovimientoScreenState
       });
     });
 
-    // Al 200 el backend ya registró: volver con resultado para refrescar home.
+    // Al 200 volver con el resultado: alta (`true`) o movimiento actualizado.
     ref.listen(nuevoMovimientoProvider, (_, NuevoMovimientoUiState next) {
       if (next is NuevoMovimientoSuccess) {
-        Navigator.of(context).pop(true);
+        Navigator.of(context).pop(next.actualizado ?? true);
       }
     });
 
@@ -105,7 +121,9 @@ class _NuevoMovimientoScreenState
     };
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Nuevo movimiento')),
+      appBar: AppBar(
+        title: Text(_esEdicion ? 'Editar movimiento' : 'Nuevo movimiento'),
+      ),
       body: SafeArea(
         child: Form(
           key: _formKey,
@@ -133,32 +151,41 @@ class _NuevoMovimientoScreenState
                     ),
                   ),
                 ),
-              DropdownButtonFormField<MovimientoTipo>(
-                initialValue: _tipo,
-                decoration: const InputDecoration(
-                  labelText: 'Tipo',
-                  prefixIcon: Icon(Icons.swap_vert),
+              if (_esEdicion)
+                InputDecorator(
+                  decoration: const InputDecoration(
+                    labelText: 'Tipo',
+                    prefixIcon: Icon(Icons.swap_vert),
+                  ),
+                  child: Text(tipoMovimientoLabel(_tipo)),
+                )
+              else
+                DropdownButtonFormField<MovimientoTipo>(
+                  initialValue: _tipo,
+                  decoration: const InputDecoration(
+                    labelText: 'Tipo',
+                    prefixIcon: Icon(Icons.swap_vert),
+                  ),
+                  items: const <DropdownMenuItem<MovimientoTipo>>[
+                    DropdownMenuItem<MovimientoTipo>(
+                      value: MovimientoTipo.gastoGeneral,
+                      child: Text('Gasto'),
+                    ),
+                    DropdownMenuItem<MovimientoTipo>(
+                      value: MovimientoTipo.ingresoGeneral,
+                      child: Text('Ingreso'),
+                    ),
+                  ],
+                  onChanged: (MovimientoTipo? tipo) {
+                    if (tipo == null) {
+                      return;
+                    }
+                    setState(() => _tipo = tipo);
+                    if (_descripcionController.text.trim().isNotEmpty) {
+                      _consultarSugerencia();
+                    }
+                  },
                 ),
-                items: const <DropdownMenuItem<MovimientoTipo>>[
-                  DropdownMenuItem<MovimientoTipo>(
-                    value: MovimientoTipo.gastoGeneral,
-                    child: Text('Gasto'),
-                  ),
-                  DropdownMenuItem<MovimientoTipo>(
-                    value: MovimientoTipo.ingresoGeneral,
-                    child: Text('Ingreso'),
-                  ),
-                ],
-                onChanged: (MovimientoTipo? tipo) {
-                  if (tipo == null) {
-                    return;
-                  }
-                  setState(() => _tipo = tipo);
-                  if (_descripcionController.text.trim().isNotEmpty) {
-                    _consultarSugerencia();
-                  }
-                },
-              ),
               const SizedBox(height: 12),
               TextFormField(
                 controller: _descripcionController,
@@ -263,6 +290,17 @@ class _NuevoMovimientoScreenState
       return;
     }
     final Decimal monto = Money.parseUserInput(_montoController.text);
+    if (_esEdicion) {
+      await ref
+          .read(nuevoMovimientoProvider.notifier)
+          .editar(
+            id: widget.movimiento!.id,
+            monto: monto,
+            descripcion: _descripcionController.text,
+            categoriaId: _categoriaSeleccionada,
+          );
+      return;
+    }
     await ref
         .read(nuevoMovimientoProvider.notifier)
         .submit(

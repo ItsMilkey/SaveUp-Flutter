@@ -2,6 +2,7 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/network/api_client.dart';
+import '../domain/movimiento.dart';
 import '../domain/movimiento_filtro.dart';
 import '../domain/movimiento_tipo.dart';
 import '../domain/movimientos_repository.dart';
@@ -58,5 +59,35 @@ class DioMovimientosRepository implements MovimientosRepository {
         ).toJson(),
       ),
     );
+  }
+
+  @override
+  Future<Movimiento> editar({
+    required int id,
+    Decimal? monto,
+    String? descripcion,
+    int? categoriaId,
+    int? partidaId,
+    bool desvincularPartida = false,
+  }) async {
+    final Map<String, dynamic> body = await readObject(
+      () => client.put<dynamic>(
+        '/movimientos/$id',
+        data: MovimientoEdicionDto(
+          monto: monto,
+          descripcion: descripcion,
+          categoriaId: categoriaId,
+          partidaId: partidaId,
+          desvincularPartida: desvincularPartida,
+        ).toJson(),
+      ),
+    );
+    return parseJson(() => MovimientoDto.fromJson(body).toDomain());
+  }
+
+  @override
+  Future<void> eliminar(int id) async {
+    // Contrato: 204 sin cuerpo.
+    await client.delete<dynamic>('/movimientos/$id');
   }
 }

@@ -27,6 +27,9 @@ abstract final class AppRoutes {
   /// Alta mínima de movimiento (formulario con sugeridor).
   static const String nuevoMovimiento = '/movimientos/nuevo';
 
+  /// Edición de un movimiento (recibe el `Movimiento` por `extra`).
+  static const String editarMovimiento = '/movimientos/editar';
+
   /// Visor de documentos legales (accesible con o sin sesión).
   static const String legales = '/legales';
 }

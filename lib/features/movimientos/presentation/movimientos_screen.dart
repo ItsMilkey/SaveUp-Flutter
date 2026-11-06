@@ -7,6 +7,7 @@ import 'package:timezone/timezone.dart' as tz;
 
 import '../../../app/config.dart';
 import '../../../app/routes.dart';
+import '../../../core/errors/app_failure.dart';
 import '../../../core/errors/failure_messages.dart';
 import '../../../core/money/money.dart';
 import '../../../core/time/calendar_date.dart';
@@ -16,16 +17,14 @@ import '../../auth/presentation/auth_controllers.dart';
 import '../domain/movimiento.dart';
 import '../domain/movimiento_filtro.dart';
 import '../domain/movimiento_tipo.dart';
+import 'movimiento_labels.dart';
 import 'movimientos_controller.dart';
 
-/// Nombre visible del tipo de movimiento (filtros y filas).
-String tipoMovimientoLabel(MovimientoTipo tipo) => switch (tipo) {
-  MovimientoTipo.ingresoGeneral => 'Ingreso',
-  MovimientoTipo.gastoGeneral => 'Gasto',
-  MovimientoTipo.pagoDeuda => 'Pago de deuda',
-  MovimientoTipo.abonoMeta => 'Abono a meta',
-  MovimientoTipo.retiroMeta => 'Retiro de meta',
-};
+/// Solo los movimientos generales son editables/eliminables (el backend
+/// responde 409 para deudas, metas o abonos automáticos).
+bool movimientoEditable(Movimiento movimiento) =>
+    movimiento.tipo == MovimientoTipo.ingresoGeneral ||
+    movimiento.tipo == MovimientoTipo.gastoGeneral;
 
 /// Home real (primer slice de F3): saldo, filtros y movimientos paginados.
 class MovimientosScreen extends ConsumerStatefulWidget {
@@ -158,7 +157,7 @@ class _MovimientosScreenState extends ConsumerState<MovimientosScreen> {
     }
     return <Widget>[
       for (final Movimiento movimiento in estado.items)
-        _MovimientoTile(movimiento: movimiento),
+        _MovimientoFila(movimiento: movimiento),
       if (estado.cargandoMas)
         const Padding(
           padding: EdgeInsets.symmetric(vertical: 16),
@@ -333,6 +332,95 @@ class _Filtros extends ConsumerWidget {
     } else {
       controller.setHasta(fecha);
     }
+  }
+}
+
+class _MovimientoFila extends ConsumerWidget {
+  const _MovimientoFila({required this.movimiento});
+
+  final Movimiento movimiento;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final bool editable = movimientoEditable(movimiento);
+
+    return Dismissible(
+      key: ValueKey<String>('movimiento-${movimiento.id}'),
+      direction: editable
+          ? DismissDirection.endToStart
+          : DismissDirection.none,
+      background: Container(
+        alignment: Alignment.centerRight,
+        color: Theme.of(context).colorScheme.error,
+        padding: const EdgeInsets.symmetric(horizontal: 24),
+        child: Icon(
+          Icons.delete_outline,
+          color: Theme.of(context).colorScheme.onError,
+        ),
+      ),
+      confirmDismiss: (_) => _confirmarEliminar(context, ref),
+      child: InkWell(
+        onTap: editable ? () => _abrirEdicion(context, ref) : null,
+        child: _MovimientoTile(movimiento: movimiento),
+      ),
+    );
+  }
+
+  Future<void> _abrirEdicion(BuildContext context, WidgetRef ref) async {
+    final Object? resultado = await context.push<Object?>(
+      AppRoutes.editarMovimiento,
+      extra: movimiento,
+    );
+    if (resultado is Movimiento) {
+      ref
+          .read(movimientosProvider.notifier)
+          .aplicarMovimientoActualizado(resultado);
+    }
+  }
+
+  Future<bool> _confirmarEliminar(
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
+    final bool? confirmado = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext dialogContext) => AlertDialog(
+        title: const Text('¿Eliminar movimiento?'),
+        content: Text(
+          '"${movimiento.descripcion}" por '
+          '${Money.formatClp(movimiento.monto)}. Esta acción no se puede '
+          'deshacer.',
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.error,
+              foregroundColor: Theme.of(context).colorScheme.onError,
+            ),
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('Eliminar'),
+          ),
+        ],
+      ),
+    );
+    if (confirmado != true) {
+      return false;
+    }
+
+    final AppFailure? failure = await ref
+        .read(movimientosProvider.notifier)
+        .eliminarMovimiento(movimiento);
+    if (failure != null && context.mounted) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(failureMessage(failure))));
+      return false;
+    }
+    return true;
   }
 }
 
