@@ -11,10 +11,14 @@
 >   `TOKEN_VERIFICACION_INVALIDO` inline al campo token con vía de
 >   re-solicitud. Checklist de política extraído a
 >   `auth/presentation/password_policy_checklist.dart` (una sola copia).
-> - `flutter analyze` sin issues; 179 tests en verde. Verificación manual de
+> - **3. Eliminación de cuenta** (`DELETE /usuarios/me` con `{contrasena}`,
+>   204 sin cuerpo): diálogo defensivo de dos pasos (advertencia de
+>   irreversibilidad → confirmación por contraseña), `CREDENCIALES_INVALIDAS`
+>   inline en el input con reintento, `endSessionLocally()` al éxito y aviso
+>   "Tu cuenta ha sido eliminada permanentemente." en `/login`.
+> - `flutter analyze` sin issues; 185 tests en verde. Verificación manual de
 >   F2 pendiente al cierre con usuario desechable `ana.demo2`.
-> Pendientes: eliminación de cuenta, visor legal (texto provisional
-> aprobado).
+> Pendientes: visor legal (texto provisional aprobado).
 
 ## Objetivo
 Que una persona autenticada pueda cambiar su contraseña, eliminar su cuenta; y que sin

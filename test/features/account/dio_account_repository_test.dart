@@ -147,4 +147,32 @@ void main() {
       }
     });
   });
+
+  group('eliminarCuenta', () {
+    test('envía la contraseña en DELETE /usuarios/me y acepta el 204 vacío', () async {
+      adapter.handler = (RequestOptions options) async {
+        expect(options.method, 'DELETE');
+        expect(options.path.endsWith('/usuarios/me'), isTrue);
+        expect(jsonBodyOf(options), <String, Object?>{
+          'contrasena': 'contrasena1',
+        });
+        // El contrato responde 204 sin cuerpo.
+        return ResponseBody.fromString('', 204);
+      };
+
+      await repository.eliminarCuenta(contrasena: 'contrasena1');
+    });
+
+    test('CREDENCIALES_INVALIDAS llega como CredentialsInvalidFailure', () async {
+      adapter.handler = (RequestOptions options) async =>
+          problemResponse('CREDENCIALES_INVALIDAS', statusCode: 401);
+
+      try {
+        await repository.eliminarCuenta(contrasena: 'contrasena1');
+        fail('debió lanzar');
+      } on CredentialsInvalidFailure {
+        // El borrado se rechaza: la contraseña no coincide.
+      }
+    });
+  });
 }

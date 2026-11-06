@@ -33,4 +33,12 @@ abstract interface class AccountRepository {
     required String token,
     required String nuevaContrasena,
   });
+
+  /// Elimina la cuenta de forma permanente (`DELETE /usuarios/me`).
+  ///
+  /// Contrato: cuerpo `{ contrasena }` (la actual, para confirmar) y respuesta
+  /// `204` **sin cuerpo**. La eliminación invalida además los refresh tokens
+  /// por cuenta eliminada. Quien llama debe cerrar la sesión local inmediato
+  /// después del 204.
+  Future<void> eliminarCuenta({required String contrasena});
 }

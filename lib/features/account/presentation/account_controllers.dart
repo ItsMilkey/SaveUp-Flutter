@@ -72,6 +72,103 @@ const String avisoEnvioCorreoPendiente =
     'servidor. Durante pruebas, el token queda en los registros (logs) del '
     'backend y en el correo de desarrollo.';
 
+/// Aviso del login tras eliminar la cuenta.
+const String avisoCuentaEliminada =
+    'Tu cuenta ha sido eliminada permanentemente.';
+
+/// Estados de la UI del diálogo de eliminación de cuenta.
+sealed class EliminarCuentaUiState {
+  const EliminarCuentaUiState();
+}
+
+class EliminarCuentaIdle extends EliminarCuentaUiState {
+  const EliminarCuentaIdle();
+}
+
+class EliminarCuentaSubmitting extends EliminarCuentaUiState {
+  const EliminarCuentaSubmitting();
+}
+
+/// Contraseña rechazada (`CREDENCIALES_INVALIDAS` o `VALIDACION_FALLIDA` del
+/// campo `contrasena`): va inline en el input del diálogo, que sigue abierto.
+class EliminarCuentaContrasenaInvalida extends EliminarCuentaUiState {
+  const EliminarCuentaContrasenaInvalida(this.message);
+
+  final String message;
+}
+
+/// Otras fallas (red, servidor…): el diálogo también sigue abierto y la
+/// persona puede reintentar o cancelar.
+class EliminarCuentaError extends EliminarCuentaUiState {
+  const EliminarCuentaError({required this.failure});
+
+  final AppFailure failure;
+
+  String get message => failureMessage(failure);
+}
+
+/// Éxito (204): sesión cerrada localmente; el router lleva a `/login` con el
+/// aviso precargado.
+class EliminarCuentaSuccess extends EliminarCuentaUiState {
+  const EliminarCuentaSuccess();
+}
+
+final NotifierProvider<EliminarCuentaController, EliminarCuentaUiState>
+eliminarCuentaProvider =
+    NotifierProvider<EliminarCuentaController, EliminarCuentaUiState>(
+      EliminarCuentaController.new,
+    );
+
+class EliminarCuentaController extends Notifier<EliminarCuentaUiState> {
+  @override
+  EliminarCuentaUiState build() => const EliminarCuentaIdle();
+
+  /// Vuelve a `idle` al abrir el diálogo, para no heredar errores de una
+  /// apertura anterior.
+  void reset() {
+    state = const EliminarCuentaIdle();
+  }
+
+  /// Envía `DELETE /usuarios/me` con la contraseña de confirmación.
+  Future<void> submit({required String contrasena}) async {
+    if (state is EliminarCuentaSubmitting) {
+      return;
+    }
+    state = const EliminarCuentaSubmitting();
+    final AccountRepository repository = ref.read(accountRepositoryProvider);
+    try {
+      await repository.eliminarCuenta(contrasena: contrasena);
+
+      // La cuenta ya no existe: cerrar la sesión local por completo y
+      // avisar en el login. No va `/auth/logout`; los refresh quedaron
+      // inválidos por cuenta eliminada.
+      final String correo = switch (ref.read(authSessionProvider)) {
+        SessionAuthenticated(:final user) => user.email,
+        _ => '',
+      };
+      await ref.read(authSessionProvider.notifier).endSessionLocally();
+      ref
+          .read(loginProvider.notifier)
+          .preload(correo: correo, message: avisoCuentaEliminada);
+      state = const EliminarCuentaSuccess();
+    } on CredentialsInvalidFailure {
+      state = const EliminarCuentaContrasenaInvalida(
+        'La contraseña no es correcta.',
+      );
+    } on ValidationFailure catch (failure) {
+      final String? mensaje = failure.errors
+          .where((FieldError e) => e.field == 'contrasena')
+          .map((FieldError e) => e.message)
+          .firstOrNull;
+      state = mensaje == null
+          ? EliminarCuentaError(failure: failure)
+          : EliminarCuentaContrasenaInvalida(mensaje);
+    } on AppFailure catch (failure) {
+      state = EliminarCuentaError(failure: failure);
+    }
+  }
+}
+
 /// Estados de la UI de solicitud de recuperación de contraseña.
 sealed class SolicitudRecuperacionUiState {
   const SolicitudRecuperacionUiState();

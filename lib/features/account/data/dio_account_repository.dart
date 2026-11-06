@@ -65,6 +65,16 @@ class DioAccountRepository implements AccountRepository {
     );
   }
 
+  @override
+  Future<void> eliminarCuenta({required String contrasena}) async {
+    // Contrato: 204 SIN cuerpo (a diferencia de los 200 {message}); por eso
+    // aquí se descarta la respuesta sin exigir un objeto JSON.
+    await client.delete<dynamic>(
+      '/usuarios/me',
+      data: EliminacionCuentaRequestDto(contrasena: contrasena).toJson(),
+    );
+  }
+
   /// Ejecuta la petición y descarta su cuerpo (`{message}`), exigiendo que
   /// sea un objeto JSON bien formado.
   Future<Map<String, dynamic>> _readObject(

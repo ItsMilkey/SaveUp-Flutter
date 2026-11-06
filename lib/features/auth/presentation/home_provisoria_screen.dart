@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../app/config.dart';
 import '../../../app/routes.dart';
+import '../../account/presentation/eliminar_cuenta_dialog.dart';
 import '../domain/auth_session.dart';
 import '../domain/user_profile.dart';
 import 'auth_controllers.dart';
@@ -52,6 +53,14 @@ class HomeProvisoriaScreen extends ConsumerWidget {
                       context,
                     ).push(AppRoutes.cambiarContrasena),
                     child: const Text('Cambiar contraseña'),
+                  ),
+                  const SizedBox(height: 12),
+                  TextButton(
+                    style: TextButton.styleFrom(
+                      foregroundColor: Theme.of(context).colorScheme.error,
+                    ),
+                    onPressed: () => EliminarCuentaDialog.show(context),
+                    child: const Text('Eliminar cuenta'),
                   ),
                 ],
               ),

@@ -56,3 +56,14 @@ class RestablecerContrasenaRequestDto {
     };
   }
 }
+
+/// Cuerpo de `DELETE /usuarios/me`: confirmación por contraseña actual.
+class EliminacionCuentaRequestDto {
+  const EliminacionCuentaRequestDto({required this.contrasena});
+
+  /// Contraseña actual; el borrado se rechaza si no coincide.
+  final String contrasena;
+
+  Map<String, Object?> toJson() =>
+      <String, Object?>{'contrasena': contrasena};
+}
