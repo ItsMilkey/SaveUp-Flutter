@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:saveup_app/core/network/session_events.dart';
 import 'package:saveup_app/core/network/token_store.dart';
@@ -162,5 +163,51 @@ void main() {
     // La ruta de login es la única accesible sin sesión.
     expect(find.text('Inicia sesión'), findsWidgets);
     expect(find.textContaining('Hola,'), findsNothing);
+  });
+
+  testWidgets('login exitoso: /usuarios/login → home con el nombre del usuario', (
+    WidgetTester tester,
+  ) async {
+    adapter.handler = (options) async {
+      if (options.path.endsWith('/app/version')) {
+        return versionResponse();
+      }
+      if (options.path.endsWith('/usuarios/login')) {
+        return jsonResponse(<String, Object?>{
+          'token': 'jwt.nuevo',
+          'refreshToken': 'refresh.nuevo',
+          'expiraEn': '2026-11-06T15:00:00.000Z',
+        });
+      }
+      if (options.path.endsWith('/usuarios/me')) {
+        return jsonResponse(meBody());
+      }
+      fail('petición inesperada: ${options.path}');
+    };
+
+    await tester.pumpWidget(testApp(adapter: adapter, tokenStore: tokenStore));
+    await tester.pumpAndSettle();
+    expect(find.text('Inicia sesión'), findsWidgets);
+
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Correo'),
+      'ana@example.cl',
+    );
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Contraseña'),
+      'contrasena1',
+    );
+    final Finder boton = find.widgetWithText(FilledButton, 'Iniciar sesión');
+    await tester.ensureVisible(boton);
+    await tester.pumpAndSettle();
+    await tester.tap(boton);
+    await tester.pumpAndSettle();
+
+    // El router debe reaccionar a la sesión autenticada y llevar a home.
+    expect(find.textContaining('Hola,'), findsOneWidget);
+    expect(find.textContaining('Primerahija'), findsOneWidget);
+    // Los tokens quedaron guardados para la próxima sesión.
+    final AuthTokens? tokens = await tokenStore.read();
+    expect(tokens?.refreshToken, 'refresh.nuevo');
   });
 }

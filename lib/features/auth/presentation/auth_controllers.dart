@@ -47,6 +47,12 @@ class AuthSessionController extends Notifier<AuthSession> {
     }
   }
 
+  /// Incorpora la sesión recién autenticada (login exitoso): el router
+  /// reacciona a este cambio y desaloja las rutas de acceso.
+  void adoptSession(UserProfile user) {
+    state = SessionAuthenticated(user);
+  }
+
   /// El evento viene de `core/network` (refresh rechazado): volver al login
   /// con aviso, sea cual sea el estado previo.
   void markSessionExpired() {
@@ -160,9 +166,10 @@ class LoginController extends Notifier<LoginUiState> {
     }
     state = LoginSubmitting(correo: correo, contrasena: contrasena);
     try {
-      await ref
+      final UserProfile profile = await ref
           .read(authRepositoryProvider)
           .login(email: correo.trim(), password: contrasena);
+      ref.read(authSessionProvider.notifier).adoptSession(profile);
       state = const LoginSuccess();
     } on AppFailure catch (failure) {
       // Volver a idle luego de failure evita remitir con el mismo error;
