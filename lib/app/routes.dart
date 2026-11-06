@@ -32,4 +32,16 @@ abstract final class AppRoutes {
 
   /// Visor de documentos legales (accesible con o sin sesión).
   static const String legales = '/legales';
+
+  /// Listado de deudas (F4).
+  static const String deudas = '/deudas';
+
+  /// Alta de deuda.
+  static const String nuevaDeuda = '/deudas/nueva';
+
+  /// Detalle de una deuda.
+  static String deudaDetalle(int id) => '/deudas/$id';
+
+  /// Edición de una deuda (recibe la `Deuda` por `extra`).
+  static String editarDeuda(int id) => '/deudas/$id/editar';
 }

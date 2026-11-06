@@ -1,10 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/network/api_client.dart';
+import '../../../core/network/json_reading.dart';
 import '../domain/categoria.dart';
 import '../domain/categorias_repository.dart';
 import '../domain/sugerencia_categoria.dart';
-import 'json_reading.dart';
 import 'movimiento_dtos.dart';
 
 final Provider<CategoriasRepository> categoriasRepositoryProvider =

@@ -2,11 +2,11 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/network/api_client.dart';
+import '../../../core/network/json_reading.dart';
 import '../domain/movimiento.dart';
 import '../domain/movimiento_filtro.dart';
 import '../domain/movimiento_tipo.dart';
 import '../domain/movimientos_repository.dart';
-import 'json_reading.dart';
 import 'movimiento_dtos.dart';
 
 final Provider<MovimientosRepository> movimientosRepositoryProvider =

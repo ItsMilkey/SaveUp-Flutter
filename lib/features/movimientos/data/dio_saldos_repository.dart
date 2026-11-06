@@ -2,8 +2,8 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/network/api_client.dart';
+import '../../../core/network/json_reading.dart';
 import '../domain/saldos_repository.dart';
-import 'json_reading.dart';
 import 'movimiento_dtos.dart';
 
 final Provider<SaldosRepository> saldosRepositoryProvider =

@@ -1,9 +1,9 @@
 import 'package:dio/dio.dart';
 
-import '../../../core/errors/app_failure.dart';
-import '../../../core/network/json_object.dart';
+import '../errors/app_failure.dart';
+import 'json_object.dart';
 
-/// Helpers de lectura JSON para la capa de datos de movimientos.
+/// Helpers de lectura JSON para las capas de datos.
 ///
 /// Traducen cuerpos inesperados o con forma inválida a [UnknownFailure], igual
 /// que el resto de repositorios de la app.

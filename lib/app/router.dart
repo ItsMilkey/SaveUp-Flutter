@@ -12,6 +12,10 @@ import '../features/auth/presentation/auth_controllers.dart';
 import '../features/auth/presentation/login_screen.dart';
 import '../features/auth/presentation/register_screen.dart';
 import '../features/auth/presentation/splash_screen.dart';
+import '../features/deudas/presentation/deuda_detalle_screen.dart';
+import '../features/deudas/presentation/deuda_form_screen.dart';
+import '../features/deudas/presentation/deudas_screen.dart';
+import '../features/deudas/domain/deuda.dart';
 import '../features/movimientos/presentation/movimientos_screen.dart';
 import '../features/movimientos/presentation/movimiento_form_screen.dart';
 import '../features/auth/domain/auth_session.dart';
@@ -92,6 +96,33 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
               ? MovimientoFormScreen(movimiento: extra)
               : const MovimientosScreen();
         },
+      ),
+      GoRoute(
+        path: AppRoutes.deudas,
+        name: 'deudas',
+        builder: (_, _) => const DeudasScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.nuevaDeuda,
+        name: 'nuevaDeuda',
+        builder: (_, _) => const DeudaFormScreen(),
+      ),
+      GoRoute(
+        path: '/deudas/:id/editar',
+        name: 'editarDeuda',
+        builder: (_, GoRouterState state) {
+          final Object? extra = state.extra;
+          return extra is Deuda
+              ? DeudaFormScreen(deuda: extra)
+              : const DeudasScreen();
+        },
+      ),
+      GoRoute(
+        path: '/deudas/:id',
+        name: 'deudaDetalle',
+        builder: (_, GoRouterState state) => DeudaDetalleScreen(
+          id: int.tryParse(state.pathParameters['id'] ?? '') ?? 0,
+        ),
       ),
     ],
   );

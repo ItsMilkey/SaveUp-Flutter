@@ -77,6 +77,11 @@ class _MovimientosScreenState extends ConsumerState<MovimientosScreen> {
       appBar: AppBar(
         title: const Text(AppConfig.appName),
         actions: <Widget>[
+          IconButton(
+            icon: const Icon(Icons.account_balance_wallet_outlined),
+            tooltip: 'Deudas',
+            onPressed: () => GoRouter.of(context).push(AppRoutes.deudas),
+          ),
           _CuentaMenu(),
           IconButton(
             icon: const Icon(Icons.logout),
