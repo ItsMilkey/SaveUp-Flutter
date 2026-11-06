@@ -27,6 +27,13 @@
 > quitando el ítem y refrescando el saldo. Solo se ofrece para
 > `INGRESO_GENERAL`/`GASTO_GENERAL` (el backend responde 409 en los demás).
 > 212 tests en verde.
+>
+> **Verificación manual F3b (emulador, backend real): PASÓ.** Editar "comida"
+> (4500→5000) desde el ítem: tipo fijo, monto absoluto y categoría
+> precargados; al guardar, `monto=-5000.00` en BD, lista y saldo reconciliados
+> (`-$15.000`). Swipe + diálogo en "supermercado": `Eliminar` borró la fila en
+> BD, saldo `-$5.000`; repetido con "comida": cuenta limpia ($0, 0
+> movimientos, tabla vacía).
 
 ## Objetivo
 Que una persona autenticada vea su **saldo actual** y sus **movimientos paginados** con
