@@ -60,3 +60,15 @@ ResponseBody versionResponse() => jsonResponse(<String, Object?>{
   'versionTerminos': 'v1.2',
   'versionPrivacidad': 'v1',
 });
+
+/// Respuesta estándar de `GET /saldos/me`.
+ResponseBody saldoResponse({num saldo = 0}) =>
+    jsonResponse(<String, Object?>{'saldo': saldo});
+
+/// Página vacía de `GET /movimientos/paginados/me`.
+ResponseBody paginaVaciaResponse() => jsonResponse(<String, Object?>{
+  'content': <Object?>[],
+  'currentPage': 0,
+  'totalItems': 0,
+  'totalPages': 0,
+});

@@ -93,7 +93,7 @@ void main() {
     expect(find.text('Más tarde'), findsOneWidget);
   });
 
-  testWidgets('con sesión válida: splash → home con el nombre del usuario', (
+  testWidgets('con sesión válida: splash → home con saldo', (
     WidgetTester tester,
   ) async {
     await tokenStore.save(token: 'jwt.abc', refreshToken: 'refresh.xyz');
@@ -104,15 +104,21 @@ void main() {
       if (options.path.endsWith('/usuarios/me')) {
         return jsonResponse(meBody());
       }
+      if (options.path.endsWith('/saldos/me')) {
+        return saldoResponse();
+      }
+      if (options.path.endsWith('/movimientos/paginados/me')) {
+        return paginaVaciaResponse();
+      }
       fail('petición inesperada: ${options.path}');
     };
 
     await tester.pumpWidget(testApp(adapter: adapter, tokenStore: tokenStore));
     await tester.pumpAndSettle();
 
-    // El nombre llega desde /usuarios/me.
-    expect(find.textContaining('Hola,'), findsOneWidget);
-    expect(find.textContaining('Ana'), findsOneWidget);
+    // El home real muestra la tarjeta de saldo y el listado (vacío aquí).
+    expect(find.text('Saldo disponible'), findsOneWidget);
+    expect(find.text('No hay movimientos para estos filtros.'), findsOneWidget);
   });
 
   testWidgets('evento "sesión expirada" va al login con aviso', (
@@ -127,6 +133,12 @@ void main() {
       if (options.path.endsWith('/usuarios/me')) {
         return jsonResponse(meBody());
       }
+      if (options.path.endsWith('/saldos/me')) {
+        return saldoResponse();
+      }
+      if (options.path.endsWith('/movimientos/paginados/me')) {
+        return paginaVaciaResponse();
+      }
       fail('petición inesperada: ${options.path}');
     };
 
@@ -134,7 +146,7 @@ void main() {
       testApp(adapter: adapter, tokenStore: tokenStore, sessionEvents: events),
     );
     await tester.pumpAndSettle();
-    expect(find.textContaining('Hola,'), findsOneWidget);
+    expect(find.text('Saldo disponible'), findsOneWidget);
 
     // El interceptor avisó: venció la sesión.
     events.emitExpired();
@@ -162,10 +174,10 @@ void main() {
 
     // La ruta de login es la única accesible sin sesión.
     expect(find.text('Inicia sesión'), findsWidgets);
-    expect(find.textContaining('Hola,'), findsNothing);
+    expect(find.text('Saldo disponible'), findsNothing);
   });
 
-  testWidgets('login exitoso: /usuarios/login → home con el nombre del usuario', (
+  testWidgets('login exitoso: /usuarios/login → home', (
     WidgetTester tester,
   ) async {
     adapter.handler = (options) async {
@@ -181,6 +193,12 @@ void main() {
       }
       if (options.path.endsWith('/usuarios/me')) {
         return jsonResponse(meBody());
+      }
+      if (options.path.endsWith('/saldos/me')) {
+        return saldoResponse();
+      }
+      if (options.path.endsWith('/movimientos/paginados/me')) {
+        return paginaVaciaResponse();
       }
       fail('petición inesperada: ${options.path}');
     };
@@ -204,8 +222,7 @@ void main() {
     await tester.pumpAndSettle();
 
     // El router debe reaccionar a la sesión autenticada y llevar a home.
-    expect(find.textContaining('Hola,'), findsOneWidget);
-    expect(find.textContaining('Primerahija'), findsOneWidget);
+    expect(find.text('Saldo disponible'), findsOneWidget);
     // Los tokens quedaron guardados para la próxima sesión.
     final AuthTokens? tokens = await tokenStore.read();
     expect(tokens?.refreshToken, 'refresh.nuevo');

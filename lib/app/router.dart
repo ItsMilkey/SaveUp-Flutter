@@ -9,10 +9,10 @@ import '../features/account/presentation/recuperacion_screens.dart';
 import '../features/app_version/presentation/app_version_controller.dart';
 import '../features/app_version/presentation/update_required_screen.dart';
 import '../features/auth/presentation/auth_controllers.dart';
-import '../features/auth/presentation/home_provisoria_screen.dart';
 import '../features/auth/presentation/login_screen.dart';
 import '../features/auth/presentation/register_screen.dart';
 import '../features/auth/presentation/splash_screen.dart';
+import '../features/movimientos/presentation/movimientos_screen.dart';
 import '../features/auth/domain/auth_session.dart';
 import '../core/network/session_events.dart';
 import 'routes.dart';
@@ -54,7 +54,7 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
       GoRoute(
         path: AppRoutes.home,
         name: 'home',
-        builder: (_, _) => const HomeProvisoriaScreen(),
+        builder: (_, _) => const MovimientosScreen(),
       ),
       GoRoute(
         path: AppRoutes.cambiarContrasena,

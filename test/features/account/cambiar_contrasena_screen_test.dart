@@ -33,12 +33,20 @@ void main() {
       if (options.path.endsWith('/usuarios/me')) {
         return jsonResponse(meBody());
       }
+      if (options.path.endsWith('/saldos/me')) {
+        return saldoResponse();
+      }
+      if (options.path.endsWith('/movimientos/paginados/me')) {
+        return paginaVaciaResponse();
+      }
       fail('petición inesperada: ${options.path}');
     };
 
     await tester.pumpWidget(testApp(adapter: adapter, tokenStore: tokenStore));
     await tester.pumpAndSettle();
-    // Home con sesión: entrada al formulario de cambio.
+    // Home con sesión: el cambio de contraseña vive en el menú de cuenta.
+    await tester.tap(find.byIcon(Icons.account_circle_outlined));
+    await tester.pumpAndSettle();
     expect(find.text('Cambiar contraseña'), findsOneWidget);
     await tester.tap(find.text('Cambiar contraseña'));
     await tester.pumpAndSettle();

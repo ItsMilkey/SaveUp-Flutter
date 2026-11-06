@@ -33,10 +33,18 @@ void main() {
       if (options.path.endsWith('/usuarios/me')) {
         return jsonResponse(meBody());
       }
+      if (options.path.endsWith('/saldos/me')) {
+        return saldoResponse();
+      }
+      if (options.path.endsWith('/movimientos/paginados/me')) {
+        return paginaVaciaResponse();
+      }
       fail('petición inesperada: ${options.path}');
     };
 
     await tester.pumpWidget(testApp(adapter: adapter, tokenStore: tokenStore));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byIcon(Icons.account_circle_outlined));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Eliminar cuenta'));
     await tester.pumpAndSettle();
@@ -84,7 +92,7 @@ void main() {
 
     // De vuelta al home, con el diálogo cerrado.
     expect(find.text('¿Eliminar tu cuenta?'), findsNothing);
-    expect(find.textContaining('Hola,'), findsOneWidget);
+    expect(find.text('Saldo disponible'), findsOneWidget);
     expect(
       adapter.requests.where(
         (RequestOptions r) =>

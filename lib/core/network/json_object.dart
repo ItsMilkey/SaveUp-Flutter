@@ -29,3 +29,27 @@ Map<String, dynamic>? asJsonMap(Object? data) {
   }
   return null;
 }
+
+/// Devuelve [data] como lista JSON (`List<dynamic>`).
+///
+/// Acepta una lista ya decodificada por Dio o un texto JSON.
+List<dynamic>? asJsonList(Object? data) {
+  if (data is List) {
+    return data;
+  }
+  if (data is String) {
+    final String text = data.trim();
+    if (text.isEmpty) {
+      return null;
+    }
+    try {
+      final Object? decoded = jsonDecode(text);
+      if (decoded is List) {
+        return decoded;
+      }
+    } on FormatException {
+      return null;
+    }
+  }
+  return null;
+}

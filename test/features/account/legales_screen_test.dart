@@ -41,6 +41,12 @@ Future<void> abrirLegales(
     if (options.path.endsWith('/usuarios/me')) {
       return jsonResponse(meBody());
     }
+    if (options.path.endsWith('/saldos/me')) {
+      return saldoResponse();
+    }
+    if (options.path.endsWith('/movimientos/paginados/me')) {
+      return paginaVaciaResponse();
+    }
     fail('petición inesperada: ${options.path}');
   };
 
@@ -51,10 +57,11 @@ Future<void> abrirLegales(
   await tester.pumpAndSettle();
 
   if (conSesion) {
-    await tester.tap(find.text('Términos y privacidad'));
-  } else {
-    await tester.tap(find.text('Términos y privacidad'));
+    // Con sesión el visor vive en el menú de cuenta del home real.
+    await tester.tap(find.byIcon(Icons.account_circle_outlined));
+    await tester.pumpAndSettle();
   }
+  await tester.tap(find.text('Términos y privacidad'));
   await tester.pumpAndSettle();
 }
 
