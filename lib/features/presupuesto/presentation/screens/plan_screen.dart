@@ -40,18 +40,8 @@ class _PlanScreenState extends ConsumerState<PlanScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Plan $_mes'),
+        title: const Text('Plan'),
         actions: <Widget>[
-          IconButton(
-            icon: const Icon(Icons.chevron_left),
-            tooltip: 'Mes anterior',
-            onPressed: () => _cambiarMes(-1),
-          ),
-          IconButton(
-            icon: const Icon(Icons.chevron_right),
-            tooltip: 'Mes siguiente',
-            onPressed: () => _cambiarMes(1),
-          ),
           IconButton(
             icon: Icon(
               estado.incluirReferencias ? Icons.history : Icons.history_toggle_off,
@@ -70,6 +60,25 @@ class _PlanScreenState extends ConsumerState<PlanScreen> {
             onPressed: estado.copiando ? null : _copiarMes,
           ),
         ],
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(44),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              IconButton(
+                icon: const Icon(Icons.chevron_left),
+                tooltip: 'Mes anterior',
+                onPressed: () => _cambiarMes(-1),
+              ),
+              Text('$_mes', style: Theme.of(context).textTheme.titleMedium),
+              IconButton(
+                icon: const Icon(Icons.chevron_right),
+                tooltip: 'Mes siguiente',
+                onPressed: () => _cambiarMes(1),
+              ),
+            ],
+          ),
+        ),
       ),
       body: _cuerpo(estado),
     );

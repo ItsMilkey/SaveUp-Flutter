@@ -38,6 +38,16 @@
 > partidas (con sugeridor de categorías) y edición del ingreso de referencia
 > (`PUT /planes/{mes}/ingreso-referencia`), que la especificación incluye pero
 > no estaban en el alcance de los tres bloques directivos.
+>
+> **Verificación manual (emulador, backend real): PASÓ.** Plan de noviembre
+> sembrado vía API (2 grupos, Arriendo, Supermercado y una partida vinculada a
+> una deuda demo con cuota): la pantalla muestra resumen ($660.000 → 34 % de
+> margen), grupos con subtotales, sliders y la partida vinculada sin slider con
+> badge de cuota. Arrastrar Arriendo a $520.636 actualizó el resumen
+> ($780.636, 21,94 %) y persistió en BD (PATCH). Navegar a diciembre (vacío) y
+> copiar desde noviembre dejó 3 partidas copiadas en BD; la partida vinculada
+> aparece con estado de cuota `PENDIENTE`. Título del AppBar ajustado (selector
+> de mes en barra inferior) tras detectar truncamiento. 290 tests verdes.
 
 ## Objetivo
 Que la persona vea y edite el plan del mes (partidas por categoría con grupos, ingreso de
