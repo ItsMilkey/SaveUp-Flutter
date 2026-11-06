@@ -7,8 +7,19 @@
 > - Slice 2: alta mínima (`POST /movimientos`) con `SugerenciaCategoriaController`
 >   (`AsyncNotifier`, debounce 400 ms, descarte por eco de `texto`, `ambigua`
 >   con elección explícita) y selector de categoría desde `GET /categorias`.
->   207 tests en verde y `flutter analyze` limpio. Verificación manual
->   pendiente.
+>   207 tests en verde y `flutter analyze` limpio.
+>
+> **Verificación manual en emulador (contra backend real, `ana.demo1`): PASÓ.**
+> - Home con saldo real (`$0` inicial, luego `-$14.500` en rojo) y lista vacía.
+> - Alta "comida": el backend devolvió **ambigua** con dos categorías; la UI no
+>   preseleccionó, exigió elegir chip (Restaurantes y Salidas) y guardó
+>   `monto=-4500.00, tipo=GASTO_GENERAL, categoria_id=17` (verificado en BD);
+>   saldo y lista se refrescaron.
+> - Alta "supermercado" (no ambigua): preseleccionó Alimentación Base y guardó
+>   (`categoria_id` correcta), saldo `-$14.500`, 2 movimientos.
+> - Filtro por tipo "Ingreso": 0 movimientos + estado vacío con "Quitar
+>   filtros"; filtro por fecha `Desde 2026-11-07`: lista vacía; al limpiar,
+>   vuelven los 2 movimientos.
 
 ## Objetivo
 Que una persona autenticada vea su **saldo actual** y sus **movimientos paginados** con
