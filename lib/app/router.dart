@@ -13,6 +13,7 @@ import '../features/auth/presentation/login_screen.dart';
 import '../features/auth/presentation/register_screen.dart';
 import '../features/auth/presentation/splash_screen.dart';
 import '../features/movimientos/presentation/movimientos_screen.dart';
+import '../features/movimientos/presentation/nuevo_movimiento_screen.dart';
 import '../features/auth/domain/auth_session.dart';
 import '../core/network/session_events.dart';
 import 'routes.dart';
@@ -75,6 +76,11 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
         path: AppRoutes.legales,
         name: 'legales',
         builder: (_, _) => const LegalesScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.nuevoMovimiento,
+        name: 'nuevoMovimiento',
+        builder: (_, _) => const NuevoMovimientoScreen(),
       ),
     ],
   );

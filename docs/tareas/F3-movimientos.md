@@ -1,5 +1,15 @@
 # F3 — Movimientos, saldo y categorías (primer corte vertical)
 
+> **Avance (2026-11-06):** código del primer corte completo.
+> - Slice 1 (`8c53403`): home real con saldo (`GET /saldos/me`), listado
+>   paginado (`size=50`, scroll infinito, dedupe por `id`), filtros de fechas y
+>   tipo con reinicio a `page=0`, pull-to-refresh y estados vacío/error.
+> - Slice 2: alta mínima (`POST /movimientos`) con `SugerenciaCategoriaController`
+>   (`AsyncNotifier`, debounce 400 ms, descarte por eco de `texto`, `ambigua`
+>   con elección explícita) y selector de categoría desde `GET /categorias`.
+>   207 tests en verde y `flutter analyze` limpio. Verificación manual
+>   pendiente.
+
 ## Objetivo
 Que una persona autenticada vea su **saldo actual** y sus **movimientos paginados** con
 filtros por fechas y tipo, y pueda **registrar un movimiento** con categoría asistida por el
@@ -72,9 +82,10 @@ Ninguna (selectores de fecha nativos de Material).
 - El botón "Nuevo movimiento" abre el alta mínima.
 
 ### 4. Alta mínima de movimiento (ancla del sugeridor)
-- Campos: descripción, monto (`Money.parseUserInput`), fecha (por defecto hoy en
-  America/Santiago), categoría (dropdown desde `GET /categorias`) y tipo (`GASTO_GENERAL` por
-  defecto). `POST /movimientos`. `VALIDACION_FALLIDA` → `errores[]` por campo.
+- Campos: descripción, monto (`Money.parseUserInput`), categoría (dropdown desde
+  `GET /categorias`) y tipo (`GASTO_GENERAL` por defecto). **El contrato no recibe fecha**
+  (`MovimientoRegistroDTO`): el backend usa el instante del registro.
+  `POST /movimientos`. `VALIDACION_FALLIDA` → `errores[]` por campo.
 - Al éxito: cerrar, refrescar saldo y lista.
 
 ### 5. Sugeridor de categorías (desafío UX)

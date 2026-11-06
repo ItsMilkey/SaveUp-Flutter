@@ -101,6 +101,18 @@ class _MovimientosScreenState extends ConsumerState<MovimientosScreen> {
           ],
         ),
       ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () async {
+          final bool? guardado = await context.push<bool>(
+            AppRoutes.nuevoMovimiento,
+          );
+          if (guardado ?? false) {
+            await ref.read(movimientosProvider.notifier).refrescar();
+          }
+        },
+        icon: const Icon(Icons.add),
+        label: const Text('Nuevo movimiento'),
+      ),
     );
   }
 

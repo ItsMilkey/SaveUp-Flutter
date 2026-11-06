@@ -24,6 +24,9 @@ abstract final class AppRoutes {
   /// Restablecimiento con token, sin sesión.
   static const String restablecerContrasena = '/restablecer-contrasena';
 
+  /// Alta mínima de movimiento (formulario con sugeridor).
+  static const String nuevoMovimiento = '/movimientos/nuevo';
+
   /// Visor de documentos legales (accesible con o sin sesión).
   static const String legales = '/legales';
 }
