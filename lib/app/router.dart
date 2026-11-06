@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../features/account/presentation/cambiar_contrasena_screen.dart';
 import '../features/app_version/presentation/app_version_controller.dart';
 import '../features/app_version/presentation/update_required_screen.dart';
 import '../features/auth/presentation/auth_controllers.dart';
@@ -52,6 +53,11 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
         path: AppRoutes.home,
         name: 'home',
         builder: (_, _) => const HomeProvisoriaScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.cambiarContrasena,
+        name: 'cambiarContrasena',
+        builder: (_, _) => const CambiarContrasenaScreen(),
       ),
     ],
   );

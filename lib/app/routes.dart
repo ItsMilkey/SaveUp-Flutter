@@ -14,4 +14,7 @@ abstract final class AppRoutes {
 
   /// Home provisorio (se reemplaza en F3).
   static const String home = '/home';
+
+  /// Cambio de contraseña (sesión activa).
+  static const String cambiarContrasena = '/cuenta/cambiar-contrasena';
 }

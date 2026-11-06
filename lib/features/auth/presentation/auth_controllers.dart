@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/errors/app_failure.dart';
 import '../../../core/errors/failure_messages.dart';
+import '../../../core/network/token_store.dart';
 import '../data/dio_auth_repository.dart';
 import '../domain/auth_repository.dart';
 import '../domain/auth_session.dart';
@@ -75,6 +76,15 @@ class AuthSessionController extends Notifier<AuthSession> {
     } finally {
       state = const SessionUnauthenticated();
     }
+  }
+
+  /// Termina la sesión **sin llamar a `/auth/logout`**: el backend ya revocó
+  /// todos los tokens del usuario (cambio o restablecimiento de contraseña,
+  /// cuenta eliminada). Solo vacía el `TokenStore` y desaloja las rutas
+  /// privadas vía el router.
+  Future<void> endSessionLocally() async {
+    await ref.read(tokenStoreProvider).clear();
+    state = const SessionUnauthenticated();
   }
 }
 

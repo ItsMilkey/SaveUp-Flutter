@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../app/config.dart';
+import '../../../app/routes.dart';
 import '../domain/auth_session.dart';
 import '../domain/user_profile.dart';
 import 'auth_controllers.dart';
@@ -36,10 +38,22 @@ class HomeProvisoriaScreen extends ConsumerWidget {
       body: Center(
         child: user == null
             ? const CircularProgressIndicator.adaptive()
-            : Text(
-                'Hola, ${user.fullName}',
-                style: textTheme.headlineSmall,
-                textAlign: TextAlign.center,
+            : Column(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  Text(
+                    'Hola, ${user.fullName}',
+                    style: textTheme.headlineSmall,
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 24),
+                  FilledButton(
+                    onPressed: () => GoRouter.of(
+                      context,
+                    ).push(AppRoutes.cambiarContrasena),
+                    child: const Text('Cambiar contraseña'),
+                  ),
+                ],
               ),
       ),
     );
