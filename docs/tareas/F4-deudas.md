@@ -1,5 +1,24 @@
 # F4 — Deudas y simulador de crédito
 
+> **Avance (2026-11-06): implementada y verificada.**
+> - Commit `f9c12be`: dominio/data (DTOs a mano, `Decimal`, fechas
+>   calendario/instante), `/deudas` con progreso y segmentación
+>   activas/historial, detalle con ficha y cronograma, formulario de
+>   alta/edición (bloqueado si ya hay pagos).
+> - Commit `99e71d3`: `POST /deudas/{id}/pagar` (cuota calculada o monto
+>   libre, refresca deuda + movimiento + saldo), historial paginado
+>   (`/pagos`, size 20), `PATCH cancelar` con confirmación defensiva y
+>   `/simulador` (cuota, CAE, resumen educativo, tabla, comparación y
+>   advertencias).
+> - **Verificación manual (emulador, backend real): PASÓ.** Deuda «Credito»
+>   120.000 en 12 cuotas sin interés; pago de cuota → movimiento
+>   `PAGO_DEUDA -10.000` en BD y saldo del home `-$10.000`, ficha `1 de 12`
+>   y edición bloqueada; deuda «Tarjeta» cancelada → estado `CANCELADA` en
+>   BD; simulación 500.000 a 12 cuotas con 1,5 % con tabla y advertencia del
+>   CAE. 230 tests verdes y `flutter analyze` limpio.
+> - Datos demo dejados a propósito: una deuda activa (para vincular partidas
+>   en F6a) y una cancelada; el pago demo deja saldo `-$10.000`.
+
 ## Objetivo
 Gestionar los pasivos del usuario (listar, crear/editar condiciones, pagar cuotas o abonos, ver
 cronograma e historial, cancelar) y ofrecer un **simulador de crédito puro** para decidir antes
