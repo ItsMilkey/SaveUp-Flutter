@@ -175,6 +175,15 @@ class CambioMonto {
   final Decimal monto;
 }
 
+/// Grupo de partidas del plan (`GrupoPlanDTO`).
+class GrupoPlan {
+  const GrupoPlan({required this.id, required this.nombre, required this.orden});
+
+  final int id;
+  final String nombre;
+  final int orden;
+}
+
 /// Contrato de datos del plan mensual (F6a; el resto del CRUD llega después).
 abstract interface class PlanMensualRepository {
   /// `GET /planes/{mes}`.
@@ -188,4 +197,19 @@ abstract interface class PlanMensualRepository {
     String mes,
     List<CambioMonto> cambios,
   );
+
+  /// `POST /planes/{mes}/copiar-desde/{mesOrigen}` (200 con avisos).
+  Future<PlanMensual> copiarDesde(String mes, String mesOrigen);
+
+  /// `GET /planes/grupos`.
+  Future<List<GrupoPlan>> listarGrupos();
+
+  /// `POST /planes/grupos`.
+  Future<GrupoPlan> crearGrupo({required String nombre, int? orden});
+
+  /// `PUT /planes/grupos/{id}` (edición parcial).
+  Future<GrupoPlan> editarGrupo(int id, {String? nombre, int? orden});
+
+  /// `DELETE /planes/grupos/{id}` (204; las partidas quedan sin grupo).
+  Future<void> eliminarGrupo(int id);
 }

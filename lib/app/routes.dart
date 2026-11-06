@@ -47,4 +47,7 @@ abstract final class AppRoutes {
 
   /// Simulador de crédito (sin persistencia).
   static const String simulador = '/simulador';
+
+  /// Plan mensual (F6a).
+  static const String plan = '/plan';
 }

@@ -311,6 +311,7 @@ class CategoriaResultado {
     required this.diferencia,
     required this.porcentajeUsado,
     required this.estado,
+    this.referencia,
   });
 
   final int categoriaId;
@@ -321,6 +322,17 @@ class CategoriaResultado {
   final Decimal diferencia;
   final Decimal? porcentajeUsado;
   final EstadoEjecucion estado;
+
+  /// Solo con `?incluirReferencias=true`.
+  final ReferenciaCategoria? referencia;
+}
+
+/// Gasto histórico de referencia de una categoría.
+class ReferenciaCategoria {
+  const ReferenciaCategoria({this.mesAnterior, this.promedio3Meses});
+
+  final Decimal? mesAnterior;
+  final Decimal? promedio3Meses;
 }
 
 class RepartoTipoResultado {

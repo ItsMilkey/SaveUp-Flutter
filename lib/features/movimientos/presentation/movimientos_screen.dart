@@ -82,6 +82,11 @@ class _MovimientosScreenState extends ConsumerState<MovimientosScreen> {
             tooltip: 'Deudas',
             onPressed: () => GoRouter.of(context).push(AppRoutes.deudas),
           ),
+          IconButton(
+            icon: const Icon(Icons.calendar_month_outlined),
+            tooltip: 'Plan mensual',
+            onPressed: () => GoRouter.of(context).push(AppRoutes.plan),
+          ),
           _CuentaMenu(),
           IconButton(
             icon: const Icon(Icons.logout),

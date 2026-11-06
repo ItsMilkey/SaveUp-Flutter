@@ -21,8 +21,8 @@ Al terminar, marcar aquí con `[x]`.
 - [ ] **F6** presupuesto: configuración, ejecución, historial, límites por categoría,
   sugerencia-regla
 - [ ] **F6a** plan mensual: partidas, grupos, sliders con cálculo local (D6) y lote atómico
-  de montos — `F6a-plan-mensual.md` (ya redactada: se reservaron su contrato y sus fórmulas
-  en la misma pasada de análisis)
+  de montos — `F6a-plan-mensual.md` (motor + vectores, controlador/sliders y pantalla/copia/
+  grupos hechos; faltan CRUD de partidas e ingreso de referencia para cerrar)
 - [ ] **F7** metas de ahorro: crear, abonar, retirar
 - [ ] **F8** exportar reportes (guardar/compartir archivo)
 - [ ] **F9** notificaciones push (requiere proyecto Firebase y, para iOS, cuenta de Apple

@@ -97,6 +97,14 @@ class FakePlanMensualRepository implements PlanMensualRepository {
   PlanMensual plan;
   final List<List<CambioMonto>> lotes = <List<CambioMonto>>[];
   final List<String> consultas = <String>[];
+  final List<bool> consultasReferencias = <bool>[];
+  final List<(String destino, String origen)> copias =
+      <(String destino, String origen)>[];
+  final List<GrupoPlan> grupos = <GrupoPlan>[];
+  int siguienteGrupoId = 1;
+  List<AvisoPlan> avisosCopia = const <AvisoPlan>[];
+  AppFailure? errorGrupos;
+  AppFailure? errorCopia;
 
   /// Si no es null, la próxima llamada espera a que este completer se complete.
   Completer<PlanMensual>? pendiente;
@@ -112,6 +120,7 @@ class FakePlanMensualRepository implements PlanMensualRepository {
     bool incluirReferencias = false,
   }) async {
     consultas.add(mes);
+    consultasReferencias.add(incluirReferencias);
     return plan;
   }
 
@@ -142,6 +151,74 @@ class FakePlanMensualRepository implements PlanMensualRepository {
     );
     plan = plan.conCalculo(recalculado);
     return plan;
+  }
+
+  @override
+  Future<PlanMensual> copiarDesde(String mes, String mesOrigen) async {
+    if (errorCopia != null) {
+      throw errorCopia!;
+    }
+    copias.add((mes, mesOrigen));
+    plan = PlanMensual(
+      mes: plan.mes,
+      existe: true,
+      ingresoReferencia: plan.ingresoReferencia,
+      calculo: plan.calculo,
+      partidas: plan.partidas,
+      grupos: plan.grupos,
+      avisos: avisosCopia,
+    );
+    return plan;
+  }
+
+  @override
+  Future<List<GrupoPlan>> listarGrupos() async {
+    if (errorGrupos != null) {
+      throw errorGrupos!;
+    }
+    return List<GrupoPlan>.of(grupos);
+  }
+
+  @override
+  Future<GrupoPlan> crearGrupo({required String nombre, int? orden}) async {
+    if (errorGrupos != null) {
+      throw errorGrupos!;
+    }
+    final GrupoPlan grupo = GrupoPlan(
+      id: siguienteGrupoId++,
+      nombre: nombre,
+      orden: orden ?? 0,
+    );
+    grupos.add(grupo);
+    return grupo;
+  }
+
+  @override
+  Future<GrupoPlan> editarGrupo(
+    int id, {
+    String? nombre,
+    int? orden,
+  }) async {
+    if (errorGrupos != null) {
+      throw errorGrupos!;
+    }
+    final int index = grupos.indexWhere((GrupoPlan g) => g.id == id);
+    final GrupoPlan actual = grupos[index];
+    final GrupoPlan editado = GrupoPlan(
+      id: id,
+      nombre: nombre ?? actual.nombre,
+      orden: orden ?? actual.orden,
+    );
+    grupos[index] = editado;
+    return editado;
+  }
+
+  @override
+  Future<void> eliminarGrupo(int id) async {
+    if (errorGrupos != null) {
+      throw errorGrupos!;
+    }
+    grupos.removeWhere((GrupoPlan g) => g.id == id);
   }
 }
 

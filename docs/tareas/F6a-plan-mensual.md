@@ -22,6 +22,22 @@
 > (drag local, PATCH solo al soltar; vinculadas sin slider con badge y aviso).
 > Tests: 6 del controlador (local, lote único, concurrencia, vinculada, error +
 > reintento, máximo 100) y 2 del slider. Total 278 en verde.
+>
+> **Avance Bloque 3 (2026-11-06): pantalla del plan, referencias, copia y grupos.**
+> `/plan` con selector de mes (`BusinessMonth` de negocio, anterior/siguiente),
+> resumen (planificado, remanente, margen, excede ingreso, reparto por tipo vs
+> guía), secciones por grupo con subtotales y sliders, avisos de copia como
+> información, referencias históricas (`incluirReferencias=true`, mes anterior
+> y promedio 3M por categoría) y copia entre meses con selector de origen.
+> CRUD básico de grupos en diálogo (crear/renombrar/eliminar, 409 mostrado).
+> Tests de repositorio (referencias, copia, grupos, guía), controlador (copia
+> ok/error, referencias) y pantalla (resumen/grupos/sliders, navegación de mes,
+> referencias, avisos de copia, alta de grupo). 290 verdes.
+>
+> **Pendiente para cerrar F6a por completo:** formulario de alta/edición de
+> partidas (con sugeridor de categorías) y edición del ingreso de referencia
+> (`PUT /planes/{mes}/ingreso-referencia`), que la especificación incluye pero
+> no estaban en el alcance de los tres bloques directivos.
 
 ## Objetivo
 Que la persona vea y edite el plan del mes (partidas por categoría con grupos, ingreso de

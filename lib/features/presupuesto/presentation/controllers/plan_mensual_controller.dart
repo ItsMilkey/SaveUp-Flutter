@@ -19,6 +19,8 @@ class PlanMensualState {
     this.cambiosPendientes = const <int, Decimal>{},
     this.enviandoLote = false,
     this.errorLote,
+    this.incluirReferencias = false,
+    this.copiando = false,
   });
 
   final String mes;
@@ -36,6 +38,12 @@ class PlanMensualState {
   /// Error del último PATCH; la UI lo muestra inline y permite reintentar.
   final AppFailure? errorLote;
 
+  /// Si la vista pide referencias históricas (`incluirReferencias=true`).
+  final bool incluirReferencias;
+
+  /// `true` mientras corre la copia de un mes.
+  final bool copiando;
+
   bool get hayCambios => cambiosPendientes.isNotEmpty;
 
   PlanMensualState copyWith({
@@ -48,6 +56,8 @@ class PlanMensualState {
     bool? enviandoLote,
     AppFailure? errorLote,
     bool limpiarErrorLote = false,
+    bool? incluirReferencias,
+    bool? copiando,
   }) {
     return PlanMensualState(
       mes: mes ?? this.mes,
@@ -57,6 +67,8 @@ class PlanMensualState {
       cambiosPendientes: cambiosPendientes ?? this.cambiosPendientes,
       enviandoLote: enviandoLote ?? this.enviandoLote,
       errorLote: limpiarErrorLote ? null : (errorLote ?? this.errorLote),
+      incluirReferencias: incluirReferencias ?? this.incluirReferencias,
+      copiando: copiando ?? this.copiando,
     );
   }
 }
@@ -84,15 +96,55 @@ class PlanMensualController extends Notifier<PlanMensualState> {
   PlanMensualState build() => const PlanMensualState();
 
   /// Carga el plan del mes (calendario de negocio `yyyy-MM`).
-  Future<void> cargar(String mes, {bool incluirReferencias = false}) async {
-    state = PlanMensualState(mes: mes, cargando: true);
+  Future<void> cargar(String mes, {bool? incluirReferencias}) async {
+    final bool referencias =
+        incluirReferencias ?? state.incluirReferencias;
+    state = PlanMensualState(
+      mes: mes,
+      cargando: true,
+      incluirReferencias: referencias,
+    );
     try {
       final PlanMensual plan = await ref
           .read(planMensualRepositoryProvider)
-          .obtener(mes, incluirReferencias: incluirReferencias);
-      state = PlanMensualState(mes: mes, plan: plan);
+          .obtener(mes, incluirReferencias: referencias);
+      state = PlanMensualState(
+        mes: mes,
+        plan: plan,
+        incluirReferencias: referencias,
+      );
     } on AppFailure catch (failure) {
-      state = PlanMensualState(mes: mes, errorCarga: failure);
+      state = PlanMensualState(
+        mes: mes,
+        errorCarga: failure,
+        incluirReferencias: referencias,
+      );
+    }
+  }
+
+  /// Copia el plan de [mesOrigen] al mes actual. Devuelve la falla, si hubo.
+  ///
+  /// Los `avisos` del 200 quedan en el plan y se muestran como información,
+  /// nunca como errores.
+  Future<AppFailure?> copiarDesde(String mesOrigen) async {
+    if (state.plan == null) {
+      return null;
+    }
+    state = state.copyWith(copiando: true);
+    try {
+      final PlanMensual copiado = await ref
+          .read(planMensualRepositoryProvider)
+          .copiarDesde(state.mes, mesOrigen);
+      state = state.copyWith(
+        plan: copiado,
+        copiando: false,
+        cambiosPendientes: const <int, Decimal>{},
+        limpiarErrorLote: true,
+      );
+      return null;
+    } on AppFailure catch (failure) {
+      state = state.copyWith(copiando: false);
+      return failure;
     }
   }
 

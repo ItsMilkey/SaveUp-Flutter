@@ -259,4 +259,58 @@ void main() {
     expect(repo.lotes.first, hasLength(100));
     expect(repo.lotes[1], hasLength(1));
   });
+
+  testWidgets('copiarDesde reemplaza el plan y conserva los avisos', (
+    WidgetTester tester,
+  ) async {
+    montar(planBase());
+    await cargar();
+    repo.avisosCopia = const <AvisoPlan>[
+      AvisoPlan(motivo: 'SIN_COUOTA_EN_EL_MES', mensaje: 'aviso'),
+    ];
+
+    final AppFailure? failure = await container
+        .read(planMensualProvider.notifier)
+        .copiarDesde('2026-10');
+
+    expect(failure, isNull);
+    expect(repo.copias.single, ('2026-11', '2026-10'));
+    expect(
+      container.read(planMensualProvider).plan!.avisos.single.motivo,
+      'SIN_COUOTA_EN_EL_MES',
+    );
+  });
+
+  testWidgets('copia fallida devuelve la falla y no altera el plan', (
+    WidgetTester tester,
+  ) async {
+    montar(planBase());
+    await cargar();
+    repo.errorCopia = const ConflictFailure(
+      codigo: 'CONFLICTO_REGLA_NEGOCIO',
+      detail: 'El mes destino ya tiene partidas.',
+    );
+
+    final AppFailure? failure = await container
+        .read(planMensualProvider.notifier)
+        .copiarDesde('2026-10');
+
+    expect(failure, isA<ConflictFailure>());
+    expect(container.read(planMensualProvider).plan!.avisos, isEmpty);
+  });
+
+  testWidgets('cargar con incluirReferencias consulta el parámetro', (
+    WidgetTester tester,
+  ) async {
+    montar(planBase());
+    await container
+        .read(planMensualProvider.notifier)
+        .cargar('2026-11', incluirReferencias: true);
+
+    expect(repo.consultasReferencias.last, isTrue);
+    expect(
+      container.read(planMensualProvider).incluirReferencias,
+      isTrue,
+    );
+  });
 }

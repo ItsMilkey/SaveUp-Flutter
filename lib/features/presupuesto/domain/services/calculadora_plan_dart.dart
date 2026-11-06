@@ -413,6 +413,7 @@ class CalculadoraPlanDart {
       diferencia: _dinero(planificado - categoria.real),
       porcentajeUsado: _porcentajeUsado(categoria.real, planificado),
       estado: EstadoEjecucion.desde(categoria.real, planificado),
+      referencia: categoria.referencia,
     );
   }
 

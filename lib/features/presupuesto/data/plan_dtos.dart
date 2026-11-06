@@ -175,6 +175,9 @@ class PlanMensualDto {
         ? TipoPresupuesto.otros
         : TipoPresupuesto.parse(json['tipo'] as String);
     tipos[id] = tipo;
+    final Map<String, dynamic>? referenciaJson = json['referencia'] == null
+        ? null
+        : _map(json['referencia']);
     return CategoriaResultado(
       categoriaId: id,
       codigo: _string(json, 'codigo'),
@@ -184,6 +187,12 @@ class PlanMensualDto {
       diferencia: _money(json, 'diferencia'),
       porcentajeUsado: _moneyOpt(json, 'porcentajeUsado'),
       estado: EstadoEjecucion.parse(_string(json, 'estado')),
+      referencia: referenciaJson == null
+          ? null
+          : ReferenciaCategoria(
+              mesAnterior: _moneyOpt(referenciaJson, 'mesAnterior'),
+              promedio3Meses: _moneyOpt(referenciaJson, 'promedio3Meses'),
+            ),
     );
   }
 
@@ -274,4 +283,43 @@ class CambiosMontosDto {
       ],
     };
   }
+}
+
+/// `GrupoPlanDTO`.
+class GrupoPlanDto {
+  const GrupoPlanDto._();
+
+  static GrupoPlan fromJson(Map<String, dynamic> json) {
+    return GrupoPlan(
+      id: _int(json, 'id'),
+      nombre: _string(json, 'nombre'),
+      orden: _int(json, 'orden'),
+    );
+  }
+}
+
+/// Cuerpo de `POST /planes/grupos`.
+class GrupoPlanCreacionDto {
+  const GrupoPlanCreacionDto({required this.nombre, this.orden});
+
+  final String nombre;
+  final int? orden;
+
+  Map<String, Object?> toJson() => <String, Object?>{
+    'nombre': nombre,
+    if (orden != null) 'orden': orden,
+  };
+}
+
+/// Cuerpo de `PUT /planes/grupos/{id}` (parcial).
+class GrupoPlanEdicionDto {
+  const GrupoPlanEdicionDto({this.nombre, this.orden});
+
+  final String? nombre;
+  final int? orden;
+
+  Map<String, Object?> toJson() => <String, Object?>{
+    if (nombre != null) 'nombre': nombre,
+    if (orden != null) 'orden': orden,
+  };
 }

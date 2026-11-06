@@ -45,4 +45,58 @@ class DioPlanMensualRepository implements PlanMensualRepository {
     );
     return parseJson(() => PlanMensualDto.fromJson(body));
   }
+
+  @override
+  Future<PlanMensual> copiarDesde(String mes, String mesOrigen) async {
+    final Map<String, dynamic> body = await readObject(
+      () => client.post<dynamic>('/planes/$mes/copiar-desde/$mesOrigen'),
+    );
+    return parseJson(() => PlanMensualDto.fromJson(body));
+  }
+
+  @override
+  Future<List<GrupoPlan>> listarGrupos() async {
+    final List<dynamic> body = await readList(
+      () => client.get<dynamic>('/planes/grupos'),
+    );
+    return parseJson(
+      () => body
+          .map(
+            (Object? item) => GrupoPlanDto.fromJson(
+              (item as Map).map(
+                (Object? k, Object? v) => MapEntry(k.toString(), v),
+              ),
+            ),
+          )
+          .toList(growable: false),
+    );
+  }
+
+  @override
+  Future<GrupoPlan> crearGrupo({required String nombre, int? orden}) async {
+    final Map<String, dynamic> body = await readObject(
+      () => client.post<dynamic>(
+        '/planes/grupos',
+        data: GrupoPlanCreacionDto(nombre: nombre, orden: orden).toJson(),
+      ),
+    );
+    return parseJson(() => GrupoPlanDto.fromJson(body));
+  }
+
+  @override
+  Future<GrupoPlan> editarGrupo(int id, {String? nombre, int? orden}) async {
+    final Map<String, dynamic> body = await readObject(
+      () => client.put<dynamic>(
+        '/planes/grupos/$id',
+        data: GrupoPlanEdicionDto(nombre: nombre, orden: orden).toJson(),
+      ),
+    );
+    return parseJson(() => GrupoPlanDto.fromJson(body));
+  }
+
+  @override
+  Future<void> eliminarGrupo(int id) async {
+    // Contrato: 204 sin cuerpo.
+    await client.delete<dynamic>('/planes/grupos/$id');
+  }
 }
