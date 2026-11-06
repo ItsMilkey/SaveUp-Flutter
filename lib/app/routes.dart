@@ -44,4 +44,7 @@ abstract final class AppRoutes {
 
   /// Edición de una deuda (recibe la `Deuda` por `extra`).
   static String editarDeuda(int id) => '/deudas/$id/editar';
+
+  /// Simulador de crédito (sin persistencia).
+  static const String simulador = '/simulador';
 }

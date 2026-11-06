@@ -11,6 +11,7 @@ import '../../../core/time/calendar_date.dart';
 import '../../../core/time/instants.dart';
 import '../domain/deuda.dart';
 import '../domain/deudas_repository.dart';
+import '../domain/pago_deuda.dart';
 
 Decimal _money(Map<String, dynamic> json, String key) =>
     moneyFromJson(json[key]);
@@ -137,6 +138,76 @@ class CuotaAmortizacionDto {
       estado: EstadoCuota.parse(json['estado'] as String?),
       montoPagado: _moneyOpt(json, 'montoPagado'),
       previa: json['previa'] == true,
+    );
+  }
+}
+
+/// Cuerpo de `POST /deudas/{id}/pagar`.
+class PagoDeudaRequestDto {
+  const PagoDeudaRequestDto({
+    required this.modo,
+    required this.descripcion,
+    this.monto,
+  });
+
+  final ModoPago modo;
+  final String descripcion;
+  final Decimal? monto;
+
+  Map<String, Object?> toJson() {
+    return <String, Object?>{
+      if (monto != null) 'monto': moneyToJson(monto!),
+      'descripcion': descripcion,
+      'modoPago': modo.codigo,
+    };
+  }
+}
+
+/// `PagoDeudaResponseDTO`.
+class PagoDeudaDto {
+  const PagoDeudaDto._();
+
+  static PagoDeuda fromJson(Map<String, dynamic> json) {
+    return PagoDeuda(
+      id: _int(json, 'id'),
+      fecha: parseInstant(_string(json, 'fecha')),
+      monto: _money(json, 'monto'),
+      capital: _money(json, 'capital'),
+      interes: _money(json, 'interes'),
+      costos: _money(json, 'costos'),
+      descripcion: _string(json, 'descripcion'),
+    );
+  }
+}
+
+/// `PageResponseDTO<PagoDeudaResponseDTO>`.
+class PaginaPagosDto {
+  const PaginaPagosDto._();
+
+  static PaginaPagos fromJson(Map<String, dynamic> json) {
+    final Object? content = json['content'];
+    final Object? currentPage = json['currentPage'];
+    final Object? totalItems = json['totalItems'];
+    final Object? totalPages = json['totalPages'];
+    if (content is! List ||
+        currentPage is! int ||
+        totalItems is! int ||
+        totalPages is! int) {
+      throw const FormatException('Página de pagos incompleta.');
+    }
+    return PaginaPagos(
+      content: content
+          .map(
+            (Object? item) => PagoDeudaDto.fromJson(
+              (item as Map).map(
+                (Object? k, Object? v) => MapEntry(k.toString(), v),
+              ),
+            ),
+          )
+          .toList(growable: false),
+      currentPage: currentPage,
+      totalItems: totalItems,
+      totalPages: totalPages,
     );
   }
 }

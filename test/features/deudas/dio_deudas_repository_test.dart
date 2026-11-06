@@ -6,6 +6,7 @@ import 'package:saveup_app/core/time/calendar_date.dart';
 import 'package:saveup_app/features/deudas/data/dio_deudas_repository.dart';
 import 'package:saveup_app/features/deudas/domain/deuda.dart';
 import 'package:saveup_app/features/deudas/domain/deudas_repository.dart';
+import 'package:saveup_app/features/deudas/domain/pago_deuda.dart';
 
 import '../../support/fake_http_adapter.dart';
 
@@ -194,6 +195,90 @@ void main() {
       expect(cuota.estado, EstadoCuota.parcial);
       expect(cuota.previa, isFalse);
       expect(cuota.montoPagado.toString(), '20000');
+    });
+  });
+
+  group('pagar', () {
+    test('CUOTA_CALCULADA no envía monto', () async {
+      adapter.handler = (RequestOptions options) async {
+        expect(options.method, 'POST');
+        expect(options.path.endsWith('/deudas/1/pagar'), isTrue);
+        expect(jsonBodyOf(options), <String, Object?>{
+          'descripcion': 'Pago Cuota 1',
+          'modoPago': 'CUOTA_CALCULADA',
+        });
+        return jsonResponse(deudaJson(montoPagadoReal: 45000, cuotasPagadas: 1));
+      };
+
+      final Deuda deuda = await repository.pagar(
+        1,
+        modo: ModoPago.cuotaCalculada,
+        descripcion: 'Pago Cuota 1',
+      );
+      expect(deuda.cuotasPagadas, 1);
+    });
+
+    test('MONTO_PERSONALIZADO envía el monto como número', () async {
+      adapter.handler = (RequestOptions options) async {
+        expect(jsonBodyOf(options), <String, Object?>{
+          'monto': 20000,
+          'descripcion': 'Abono',
+          'modoPago': 'MONTO_PERSONALIZADO',
+        });
+        return jsonResponse(deudaJson(montoPagadoReal: 20000));
+      };
+
+      await repository.pagar(
+        1,
+        monto: Decimal.parse('20000'),
+        modo: ModoPago.montoPersonalizado,
+        descripcion: 'Abono',
+      );
+    });
+  });
+
+  group('pagos', () {
+    test('pide page/size=20 y parsea el desglose', () async {
+      adapter.handler = (RequestOptions options) async {
+        expect(options.queryParameters['page'], 1);
+        expect(options.queryParameters['size'], 20);
+        return jsonResponse(<String, Object?>{
+          'content': <Object?>[
+            <String, Object?>{
+              'id': 9,
+              'fecha': '2026-11-06T16:30:00.000Z',
+              'monto': 45000.00,
+              'capital': 37000.00,
+              'interes': 7500.00,
+              'costos': 500.00,
+              'descripcion': 'Pago Cuota 1',
+            },
+          ],
+          'currentPage': 1,
+          'totalItems': 21,
+          'totalPages': 2,
+        });
+      };
+
+      final PaginaPagos pagina = await repository.pagos(1, page: 1);
+      expect(pagina.currentPage, 1);
+      expect(pagina.esUltima, isTrue);
+      final PagoDeuda pago = pagina.content.single;
+      expect(pago.monto.toString(), '45000');
+      expect(pago.fecha, DateTime.utc(2026, 11, 6, 16, 30));
+    });
+  });
+
+  group('cancelar', () {
+    test('PATCH sin cuerpo devuelve la deuda cancelada', () async {
+      adapter.handler = (RequestOptions options) async {
+        expect(options.method, 'PATCH');
+        expect(options.path.endsWith('/deudas/1/cancelar'), isTrue);
+        return jsonResponse(deudaJson(estado: 'CANCELADA'));
+      };
+
+      final Deuda deuda = await repository.cancelar(1);
+      expect(deuda.estado, EstadoDeuda.cancelada);
     });
   });
 }

@@ -103,6 +103,14 @@ void main() {
     if (options.path.endsWith('/deudas/1/amortizacion')) {
       return amortizacionResponse();
     }
+    if (options.path.endsWith('/deudas/1/pagos')) {
+      return jsonResponse(<String, Object?>{
+        'content': <Object?>[],
+        'currentPage': 0,
+        'totalItems': 0,
+        'totalPages': 0,
+      });
+    }
     if (options.path.endsWith('/deudas/1')) {
       return jsonResponse(deudas?.isNotEmpty == true ? deudas!.first : deudaJson());
     }

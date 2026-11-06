@@ -1,10 +1,15 @@
+import 'package:decimal/decimal.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/errors/app_failure.dart';
 import '../../../core/errors/failure_messages.dart';
+import '../../movimientos/presentation/movimientos_controller.dart';
 import '../data/dio_deudas_repository.dart';
+import '../data/dio_simulador_repository.dart';
 import '../domain/deuda.dart';
 import '../domain/deudas_repository.dart';
+import '../domain/pago_deuda.dart';
+import '../domain/simulacion.dart';
 
 /// Listado de deudas (todas; la pantalla separa activas/historial).
 final AsyncNotifierProvider<DeudasController, List<Deuda>> deudasProvider =
@@ -110,8 +115,7 @@ class DeudaFormController extends Notifier<DeudaFormUiState> {
     }
   }
 
-  DeudaFormFieldErrors _fieldErrors(List<FieldError> errors) {
-    const Set<String> known = <String>{
+  DeudaFormFieldErrors _fieldErrors(List<FieldError> errors) {    const Set<String> known = <String>{
       'nombre',
       'descripcion',
       'tipoDeuda',
@@ -139,5 +143,207 @@ class DeudaFormController extends Notifier<DeudaFormUiState> {
       mapped,
       global: unknown.isEmpty ? null : unknown.join(' '),
     );
+  }
+}
+
+/// Acciones destructivas/de pago sobre una deuda.
+///
+/// Devuelve la falla para que el diálogo la muestre; `null` = éxito. Al pagar
+/// se invalida `movimientosProvider` porque el backend crea un `PAGO_DEUDA` y
+/// el home debe refrescar saldo y listado al volver.
+final NotifierProvider<DeudaAccionesController, AsyncValue<void>>
+deudaAccionesProvider =
+    NotifierProvider<DeudaAccionesController, AsyncValue<void>>(
+      DeudaAccionesController.new,
+    );
+
+class DeudaAccionesController extends Notifier<AsyncValue<void>> {
+  @override
+  AsyncValue<void> build() => const AsyncData<void>(null);
+
+  void reset() {
+    state = const AsyncData<void>(null);
+  }
+
+  Future<AppFailure?> pagar(
+    int id, {
+    Decimal? monto,
+    required ModoPago modo,
+    required String descripcion,
+  }) async {
+    state = const AsyncLoading<void>();
+    try {
+      await ref
+          .read(deudasRepositoryProvider)
+          .pagar(id, monto: monto, modo: modo, descripcion: descripcion);
+      state = const AsyncData<void>(null);
+      ref.invalidate(movimientosProvider);
+      return null;
+    } on AppFailure catch (failure, stack) {
+      state = AsyncError<void>(failure, stack);
+      return failure;
+    }
+  }
+
+  Future<AppFailure?> cancelar(int id) async {
+    state = const AsyncLoading<void>();
+    try {
+      await ref.read(deudasRepositoryProvider).cancelar(id);
+      state = const AsyncData<void>(null);
+      return null;
+    } on AppFailure catch (failure, stack) {
+      state = AsyncError<void>(failure, stack);
+      return failure;
+    }
+  }
+}
+
+/// Estado del historial paginado de pagos de una deuda.
+class PagosDeudaState {
+  const PagosDeudaState({
+    this.deudaId,
+    this.items = const <PagoDeuda>[],
+    this.page = 0,
+    this.totalPages = 0,
+    this.totalItems = 0,
+    this.cargando = false,
+    this.cargandoMas = false,
+    this.error,
+  });
+
+  final int? deudaId;
+  final List<PagoDeuda> items;
+  final int page;
+  final int totalPages;
+  final int totalItems;
+  final bool cargando;
+  final bool cargandoMas;
+  final AppFailure? error;
+
+  bool get hayMas => page + 1 < totalPages;
+}
+
+final NotifierProvider<PagosDeudaController, PagosDeudaState>
+pagosDeudaProvider =
+    NotifierProvider<PagosDeudaController, PagosDeudaState>(
+      PagosDeudaController.new,
+    );
+
+class PagosDeudaController extends Notifier<PagosDeudaState> {
+  @override
+  PagosDeudaState build() => const PagosDeudaState();
+
+  /// Carga la primera página (solo si cambió la deuda o se fuerza).
+  Future<void> cargar(int deudaId, {bool forzar = false}) async {
+    if (!forzar && state.deudaId == deudaId && state.items.isNotEmpty) {
+      return;
+    }
+    state = PagosDeudaState(deudaId: deudaId, cargando: true);
+    await _cargarPagina(deudaId, 0, reemplazar: true);
+  }
+
+  Future<void> cargarMas() async {
+    final int? deudaId = state.deudaId;
+    if (deudaId == null || !state.hayMas || state.cargando || state.cargandoMas) {
+      return;
+    }
+    await _cargarPagina(deudaId, state.page + 1, reemplazar: false);
+  }
+
+  Future<void> _cargarPagina(
+    int deudaId,
+    int page, {
+    required bool reemplazar,
+  }) async {
+    state = PagosDeudaState(
+      deudaId: deudaId,
+      items: state.items,
+      page: state.page,
+      totalPages: state.totalPages,
+      totalItems: state.totalItems,
+      cargando: page == 0,
+      cargandoMas: page > 0,
+    );
+    try {
+      final PaginaPagos pagina = await ref
+          .read(deudasRepositoryProvider)
+          .pagos(deudaId, page: page);
+      final List<PagoDeuda> items = reemplazar
+          ? pagina.content
+          : <PagoDeuda>[...state.items, ...pagina.content];
+      state = PagosDeudaState(
+        deudaId: deudaId,
+        items: items,
+        page: pagina.currentPage,
+        totalPages: pagina.totalPages,
+        totalItems: pagina.totalItems,
+      );
+    } on AppFailure catch (failure) {
+      state = PagosDeudaState(
+        deudaId: deudaId,
+        items: state.items,
+        page: state.page,
+        totalPages: state.totalPages,
+        totalItems: state.totalItems,
+        error: failure,
+      );
+    }
+  }
+}
+
+/// Estados del simulador.
+sealed class SimulacionUiState {
+  const SimulacionUiState();
+}
+
+class SimulacionIdle extends SimulacionUiState {
+  const SimulacionIdle();
+}
+
+class SimulacionSubmitting extends SimulacionUiState {
+  const SimulacionSubmitting();
+}
+
+class SimulacionError extends SimulacionUiState {
+  const SimulacionError({required this.failure});
+
+  final AppFailure failure;
+
+  String get message => failureMessage(failure);
+}
+
+class SimulacionSuccess extends SimulacionUiState {
+  const SimulacionSuccess(this.resultado);
+
+  final SimulacionResultado resultado;
+}
+
+final NotifierProvider<SimulacionController, SimulacionUiState>
+simulacionProvider =
+    NotifierProvider<SimulacionController, SimulacionUiState>(
+      SimulacionController.new,
+    );
+
+class SimulacionController extends Notifier<SimulacionUiState> {
+  @override
+  SimulacionUiState build() => const SimulacionIdle();
+
+  void reset() {
+    state = const SimulacionIdle();
+  }
+
+  Future<void> simular(SimulacionRequest request) async {
+    if (state is SimulacionSubmitting) {
+      return;
+    }
+    state = const SimulacionSubmitting();
+    try {
+      final SimulacionResultado resultado = await ref
+          .read(simuladorRepositoryProvider)
+          .simular(request);
+      state = SimulacionSuccess(resultado);
+    } on AppFailure catch (failure) {
+      state = SimulacionError(failure: failure);
+    }
   }
 }

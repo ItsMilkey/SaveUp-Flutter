@@ -1,9 +1,11 @@
+import 'package:decimal/decimal.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/network/api_client.dart';
 import '../../../core/network/json_reading.dart';
 import '../domain/deuda.dart';
 import '../domain/deudas_repository.dart';
+import '../domain/pago_deuda.dart';
 import 'deuda_dtos.dart';
 
 final Provider<DeudasRepository> deudasRepositoryProvider =
@@ -81,5 +83,48 @@ class DioDeudasRepository implements DeudasRepository {
           )
           .toList(growable: false),
     );
+  }
+
+  @override
+  Future<Deuda> pagar(
+    int id, {
+    Decimal? monto,
+    required ModoPago modo,
+    required String descripcion,
+  }) async {
+    final Map<String, dynamic> body = await readObject(
+      () => client.post<dynamic>(
+        '/deudas/$id/pagar',
+        data: PagoDeudaRequestDto(
+          modo: modo,
+          descripcion: descripcion,
+          monto: monto,
+        ).toJson(),
+      ),
+    );
+    return parseJson(() => DeudaDto.fromJson(body));
+  }
+
+  @override
+  Future<PaginaPagos> pagos(
+    int id, {
+    required int page,
+    int size = 20,
+  }) async {
+    final Map<String, dynamic> body = await readObject(
+      () => client.get<dynamic>(
+        '/deudas/$id/pagos',
+        queryParameters: <String, dynamic>{'page': page, 'size': size},
+      ),
+    );
+    return parseJson(() => PaginaPagosDto.fromJson(body));
+  }
+
+  @override
+  Future<Deuda> cancelar(int id) async {
+    final Map<String, dynamic> body = await readObject(
+      () => client.patch<dynamic>('/deudas/$id/cancelar'),
+    );
+    return parseJson(() => DeudaDto.fromJson(body));
   }
 }

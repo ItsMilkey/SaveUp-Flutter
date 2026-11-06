@@ -2,6 +2,7 @@ import 'package:decimal/decimal.dart';
 
 import '../../../core/time/calendar_date.dart';
 import 'deuda.dart';
+import 'pago_deuda.dart';
 
 /// Condiciones de un crédito para crear/editar una deuda
 /// (`CondicionesCreditoInput`).
@@ -68,4 +69,19 @@ abstract interface class DeudasRepository {
 
   /// `GET /deudas/{id}/amortizacion`.
   Future<List<CuotaAmortizacion>> amortizacion(int id);
+
+  /// `POST /deudas/{id}/pagar`. Crea un `PAGO_DEUDA` (monto negativo) en el
+  /// backend; devuelve la deuda actualizada.
+  Future<Deuda> pagar(
+    int id, {
+    Decimal? monto,
+    required ModoPago modo,
+    required String descripcion,
+  });
+
+  /// `GET /deudas/{id}/pagos?page&size` (orden fecha desc, `size` 20).
+  Future<PaginaPagos> pagos(int id, {required int page, int size = 20});
+
+  /// `PATCH /deudas/{id}/cancelar` (no mueve el saldo).
+  Future<Deuda> cancelar(int id);
 }

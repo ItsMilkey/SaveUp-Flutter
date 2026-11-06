@@ -1,14 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
+import 'package:timezone/timezone.dart' as tz;
 
 import '../../../app/routes.dart';
 import '../../../core/errors/app_failure.dart';
 import '../../../core/errors/failure_messages.dart';
 import '../../../core/money/money.dart';
+import '../../../core/time/time_zones.dart';
 import '../domain/deuda.dart';
+import '../domain/pago_deuda.dart';
+import 'cancelar_deuda_dialog.dart';
 import 'deuda_labels.dart';
 import 'deudas_controller.dart';
+import 'pago_deuda_dialog.dart';
 
 /// Detalle de una deuda: ficha, cronograma y (fase 2) pagos/cancelación.
 class DeudaDetalleScreen extends ConsumerWidget {
@@ -22,19 +28,46 @@ class DeudaDetalleScreen extends ConsumerWidget {
     final AsyncValue<List<CuotaAmortizacion>> cronograma = ref.watch(
       amortizacionProvider(id),
     );
+    final Deuda? deuda = detalle.value;
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Deuda'),
         actions: <Widget>[
-          if (detalle.value?.editable ?? false)
+          if (deuda?.editable ?? false)
             IconButton(
               icon: const Icon(Icons.edit_outlined),
               tooltip: 'Editar deuda',
-              onPressed: () => _abrirEdicion(context, ref, detalle.value!),
+              onPressed: () => _abrirEdicion(context, ref, deuda!),
             ),
         ],
       ),
+      bottomNavigationBar: deuda?.estado == EstadoDeuda.pendiente
+          ? SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+                child: Row(
+                  children: <Widget>[
+                    Expanded(
+                      child: FilledButton.icon(
+                        icon: const Icon(Icons.payments_outlined),
+                        label: const Text('Registrar pago'),
+                        onPressed: () => _pagar(context, ref, deuda!),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    TextButton(
+                      style: TextButton.styleFrom(
+                        foregroundColor: Theme.of(context).colorScheme.error,
+                      ),
+                      onPressed: () => _cancelar(context, ref, deuda!),
+                      child: const Text('Cancelar deuda'),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          : null,
       body: detalle.when(
         loading: () => const Center(child: CircularProgressIndicator.adaptive()),
         error: (Object error, StackTrace stack) => Center(
@@ -89,10 +122,51 @@ class DeudaDetalleScreen extends ConsumerWidget {
               data: (List<CuotaAmortizacion> cuotas) =>
                   _Cronograma(cuotas: cuotas),
             ),
+            const SizedBox(height: 16),
+            _HistorialPagosSection(deudaId: id),
           ],
         ),
       ),
     );
+  }
+
+  Future<void> _pagar(
+    BuildContext context,
+    WidgetRef ref,
+    Deuda deuda,
+  ) async {
+    final bool? pagado = await PagoDeudaDialog.show(context, deuda);
+    if (pagado ?? false) {
+      _refrescar(ref, deuda.id);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Pago registrado.')),
+        );
+      }
+    }
+  }
+
+  Future<void> _cancelar(
+    BuildContext context,
+    WidgetRef ref,
+    Deuda deuda,
+  ) async {
+    final bool? cancelada = await CancelarDeudaDialog.show(context, deuda);
+    if (cancelada ?? false) {
+      _refrescar(ref, deuda.id);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Deuda cancelada.')),
+        );
+      }
+    }
+  }
+
+  void _refrescar(WidgetRef ref, int deudaId) {
+    ref.invalidate(deudaDetalleProvider(deudaId));
+    ref.invalidate(amortizacionProvider(deudaId));
+    ref.invalidate(deudasProvider);
+    ref.read(pagosDeudaProvider.notifier).cargar(deudaId, forzar: true);
   }
 
   Future<void> _abrirEdicion(
@@ -299,5 +373,125 @@ class _Cronograma extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+/// Historial paginado de pagos (`GET /deudas/{id}/pagos`).
+class _HistorialPagosSection extends ConsumerStatefulWidget {
+  const _HistorialPagosSection({required this.deudaId});
+
+  final int deudaId;
+
+  @override
+  ConsumerState<_HistorialPagosSection> createState() =>
+      _HistorialPagosSectionState();
+}
+
+class _HistorialPagosSectionState
+    extends ConsumerState<_HistorialPagosSection> {
+  static final DateFormat _fecha = DateFormat('dd-MM-yyyy');
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        ref.read(pagosDeudaProvider.notifier).cargar(widget.deudaId);
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final PagosDeudaState estado = ref.watch(pagosDeudaProvider);
+    final ThemeData theme = Theme.of(context);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Text('Historial de pagos', style: theme.textTheme.titleMedium),
+        const SizedBox(height: 8),
+        if (estado.cargando && estado.items.isEmpty)
+          const Center(
+            child: Padding(
+              padding: EdgeInsets.all(16),
+              child: CircularProgressIndicator.adaptive(),
+            ),
+          )
+        else if (estado.error != null && estado.items.isEmpty)
+          Row(
+            children: <Widget>[
+              const Expanded(child: Text('No se pudo cargar el historial.')),
+              TextButton(
+                onPressed: () => ref
+                    .read(pagosDeudaProvider.notifier)
+                    .cargar(widget.deudaId, forzar: true),
+                child: const Text('Reintentar'),
+              ),
+            ],
+          )
+        else if (estado.items.isEmpty)
+          const Text('Todavía no hay pagos registrados.')
+        else
+          Card(
+            child: Column(
+              children: <Widget>[
+                for (final PagoDeuda pago in estado.items)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                    child: Row(
+                      children: <Widget>[
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: <Widget>[
+                              Text(pago.descripcion),
+                              Text(
+                                '${_fechaLocal(pago.fecha)} · '
+                                'Capital ${Money.formatClp(pago.capital)} · '
+                                'Interés ${Money.formatClp(pago.interes)}',
+                                style: theme.textTheme.bodySmall,
+                              ),
+                            ],
+                          ),
+                        ),
+                        Text(
+                          Money.formatClp(pago.monto),
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                if (estado.hayMas)
+                  TextButton(
+                    onPressed: estado.cargandoMas
+                        ? null
+                        : ref.read(pagosDeudaProvider.notifier).cargarMas,
+                    child: estado.cargandoMas
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : Text(
+                            'Cargar más (${estado.items.length} de '
+                            '${estado.totalItems})',
+                          ),
+                  ),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+
+  String _fechaLocal(DateTime instant) {
+    final tz.TZDateTime local = tz.TZDateTime.from(instant, businessTimeZone);
+    return _fecha.format(local);
   }
 }

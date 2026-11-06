@@ -12,9 +12,10 @@ import '../features/auth/presentation/auth_controllers.dart';
 import '../features/auth/presentation/login_screen.dart';
 import '../features/auth/presentation/register_screen.dart';
 import '../features/auth/presentation/splash_screen.dart';
-import '../features/deudas/presentation/deuda_detalle_screen.dart';
+import '../features/deudas/presentation/detalle_deuda_screen.dart';
 import '../features/deudas/presentation/deuda_form_screen.dart';
 import '../features/deudas/presentation/deudas_screen.dart';
+import '../features/deudas/presentation/simulador_screen.dart';
 import '../features/deudas/domain/deuda.dart';
 import '../features/movimientos/presentation/movimientos_screen.dart';
 import '../features/movimientos/presentation/movimiento_form_screen.dart';
@@ -123,6 +124,11 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
         builder: (_, GoRouterState state) => DeudaDetalleScreen(
           id: int.tryParse(state.pathParameters['id'] ?? '') ?? 0,
         ),
+      ),
+      GoRoute(
+        path: AppRoutes.simulador,
+        name: 'simulador',
+        builder: (_, _) => const SimuladorScreen(),
       ),
     ],
   );

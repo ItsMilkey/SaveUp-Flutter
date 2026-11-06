@@ -26,7 +26,16 @@ class _DeudasScreenState extends ConsumerState<DeudasScreen> {
     final AsyncValue<List<Deuda>> deudas = ref.watch(deudasProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Deudas')),
+      appBar: AppBar(
+        title: const Text('Deudas'),
+        actions: <Widget>[
+          IconButton(
+            icon: const Icon(Icons.calculate_outlined),
+            tooltip: 'Simular crédito',
+            onPressed: () => context.push<void>(AppRoutes.simulador),
+          ),
+        ],
+      ),
       body: Column(
         children: <Widget>[
           Padding(
