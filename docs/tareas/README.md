@@ -14,7 +14,9 @@ Al terminar, marcar aquí con `[x]`.
 - [ ] **F3** movimientos, saldo y categorías (primer corte vertical completo: listar, crear,
   filtrar, editar, eliminar; pantalla de inicio real) — **corte completo hecho**: saldo, listado
   con filtros, alta, sugeridor, edición y eliminación; verificación manual registrada.
-- [ ] **F4** deudas: lista, detalle, pagos flexibles, amortización, cancelar
+- [ ] **F4** deudas: lista, detalle, pagos flexibles, amortización, cancelar y simulador de
+  crédito — `F4-deudas.md` (redactada: se ejecuta antes de F6a para tener deudas reales que
+  vincular en el plan)
 - [ ] **F5** simulador de endeudamiento (`POST /simulaciones/credito`)
 - [ ] **F6** presupuesto: configuración, ejecución, historial, límites por categoría,
   sugerencia-regla
