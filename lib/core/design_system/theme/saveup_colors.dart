@@ -18,6 +18,9 @@ class SaveUpColors extends ThemeExtension<SaveUpColors> {
     required this.onWarning,
     required this.info,
     required this.onInfo,
+    required this.positiveText,
+    required this.negativeText,
+    required this.savingsText,
     required this.chartPalette,
     required this.categoryFallback,
   });
@@ -34,6 +37,9 @@ class SaveUpColors extends ThemeExtension<SaveUpColors> {
   final Color onWarning;
   final Color info;
   final Color onInfo;
+  final Color positiveText;
+  final Color negativeText;
+  final Color savingsText;
   final List<Color> chartPalette;
   final Color categoryFallback;
 
@@ -50,6 +56,9 @@ class SaveUpColors extends ThemeExtension<SaveUpColors> {
     onWarning: AppColors.ink,
     info: AppColors.cyan,
     onInfo: AppColors.ink,
+    positiveText: Color(0xFF1E7A4C),
+    negativeText: Color(0xFFB42318),
+    savingsText: Color(0xFF0E7490),
     chartPalette: <Color>[
       AppColors.magenta,
       AppColors.orange,
@@ -74,6 +83,9 @@ class SaveUpColors extends ThemeExtension<SaveUpColors> {
     onWarning: AppColors.ink,
     info: AppColors.cyan,
     onInfo: AppColors.ink,
+    positiveText: Color(0xFF6EE7B7),
+    negativeText: Color(0xFFFF8A80),
+    savingsText: Color(0xFF67E8F9),
     chartPalette: <Color>[
       AppColors.magenta,
       AppColors.orange,
@@ -99,6 +111,9 @@ class SaveUpColors extends ThemeExtension<SaveUpColors> {
     Color? onWarning,
     Color? info,
     Color? onInfo,
+    Color? positiveText,
+    Color? negativeText,
+    Color? savingsText,
     List<Color>? chartPalette,
     Color? categoryFallback,
   }) {
@@ -115,6 +130,9 @@ class SaveUpColors extends ThemeExtension<SaveUpColors> {
       onWarning: onWarning ?? this.onWarning,
       info: info ?? this.info,
       onInfo: onInfo ?? this.onInfo,
+      positiveText: positiveText ?? this.positiveText,
+      negativeText: negativeText ?? this.negativeText,
+      savingsText: savingsText ?? this.savingsText,
       chartPalette: chartPalette ?? this.chartPalette,
       categoryFallback: categoryFallback ?? this.categoryFallback,
     );
@@ -138,6 +156,9 @@ class SaveUpColors extends ThemeExtension<SaveUpColors> {
       onWarning: Color.lerp(onWarning, other.onWarning, t)!,
       info: Color.lerp(info, other.info, t)!,
       onInfo: Color.lerp(onInfo, other.onInfo, t)!,
+      positiveText: Color.lerp(positiveText, other.positiveText, t)!,
+      negativeText: Color.lerp(negativeText, other.negativeText, t)!,
+      savingsText: Color.lerp(savingsText, other.savingsText, t)!,
       chartPalette: _lerpColors(chartPalette, other.chartPalette, t),
       categoryFallback: Color.lerp(
         categoryFallback,

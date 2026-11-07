@@ -1,3 +1,4 @@
+import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 
 import '../design_system.dart';
@@ -15,6 +16,7 @@ class _DesignSystemShowcaseScreenState
     extends State<DesignSystemShowcaseScreen> {
   bool _dark = false;
   String _segment = 'Semana';
+  DateTime _periodo = DateTime(2026, 11);
 
   @override
   Widget build(BuildContext context) {
@@ -291,11 +293,244 @@ class _DesignSystemShowcaseScreenState
                     ],
                   ),
                 ),
+                _section(
+                  context,
+                  'Dinero y stat',
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      NeoMoneyText(
+                        amount: Decimal.fromInt(1234567),
+                        size: NeoMoneySize.display,
+                      ),
+                      const SizedBox(height: AppSpacing.sm),
+                      Wrap(
+                        spacing: AppSpacing.md,
+                        runSpacing: AppSpacing.sm,
+                        children: <Widget>[
+                          NeoMoneyText(
+                            amount: Decimal.fromInt(25000),
+                            tone: NeoMoneyTone.income,
+                            signed: true,
+                          ),
+                          NeoMoneyText(
+                            amount: Decimal.fromInt(-25000),
+                            tone: NeoMoneyTone.expense,
+                          ),
+                          NeoMoneyText(
+                            amount: Decimal.fromInt(120000),
+                            tone: NeoMoneyTone.savings,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: AppSpacing.md),
+                      Row(
+                        children: <Widget>[
+                          Expanded(
+                            child: NeoStat(
+                              label: 'Ingresos',
+                              icon: Icons.trending_up,
+                              value: NeoMoneyText(
+                                amount: Decimal.fromInt(1234567),
+                                size: NeoMoneySize.headline,
+                                tone: NeoMoneyTone.income,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: AppSpacing.sm),
+                          Expanded(
+                            child: NeoStat(
+                              label: 'Gastos',
+                              icon: Icons.trending_down,
+                              value: NeoMoneyText(
+                                amount: Decimal.fromInt(456789),
+                                size: NeoMoneySize.headline,
+                                tone: NeoMoneyTone.expense,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                _section(
+                  context,
+                  'List item y encabezado',
+                  Column(
+                    children: <Widget>[
+                      const NeoSectionHeader(
+                        title: 'Movimientos',
+                        subtitle: 'Últimos del mes',
+                        action: Text('Ver todo'),
+                      ),
+                      NeoListItem(
+                        leading: const Icon(Icons.shopping_bag_outlined),
+                        title: 'Supermercado',
+                        subtitle: 'Alimentación · Hoy',
+                        trailing: NeoMoneyText(
+                          amount: Decimal.fromInt(-25000),
+                          tone: NeoMoneyTone.expense,
+                        ),
+                        onTap: () {},
+                      ),
+                    ],
+                  ),
+                ),
+                _section(
+                  context,
+                  'Estados',
+                  Column(
+                    children: <Widget>[
+                      const NeoErrorState(
+                        message: 'No se pudieron cargar los datos.',
+                        onRetry: _noop,
+                      ),
+                      const SizedBox(height: AppSpacing.md),
+                      const NeoLoading(rows: 2),
+                    ],
+                  ),
+                ),
+                _section(
+                  context,
+                  'Patrones',
+                  Column(
+                    children: <Widget>[
+                      NeoMonthPicker(
+                        label: _mesLabel(_periodo),
+                        onPrevious: () => _moverMes(-1),
+                        onNext: () => _moverMes(1),
+                      ),
+                      const SizedBox(height: AppSpacing.md),
+                      NeoChartCard(
+                        title: 'Gastos por mes',
+                        subtitle: 'Últimos 6 meses',
+                        legend: const Wrap(
+                          spacing: 8,
+                          children: <Widget>[
+                            NeoBadge(label: 'Gastos', color: AppColors.orange),
+                            NeoBadge(label: 'Ahorro', color: AppColors.green),
+                          ],
+                        ),
+                        child: SizedBox(
+                          height: 120,
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: <Widget>[
+                              for (int i = 0; i < 6; i++)
+                                Expanded(
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 4,
+                                    ),
+                                    child: Container(
+                                      height: 40.0 + (i * 12),
+                                      decoration: BoxDecoration(
+                                        color: i.isEven
+                                            ? AppColors.orange
+                                            : AppColors.green,
+                                        borderRadius: const BorderRadius.vertical(
+                                          top: Radius.circular(AppRadii.sm),
+                                        ),
+                                        border: Border.all(
+                                          color: Theme.of(
+                                            context,
+                                          ).extension<SaveUpColors>()!.border,
+                                          width: AppBorders.regular,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                _section(
+                  context,
+                  'Diálogos y snackbar',
+                  Wrap(
+                    spacing: AppSpacing.md,
+                    runSpacing: AppSpacing.md,
+                    children: <Widget>[
+                      NeoButton(
+                        label: 'Abrir diálogo',
+                        variant: NeoButtonVariant.secondary,
+                        onPressed: () => NeoDialog.show<void>(
+                          context,
+                          title: 'Título del diálogo',
+                          child: const Text('Contenido de ejemplo.'),
+                          actions: <Widget>[
+                            NeoButton(
+                              label: 'Cerrar',
+                              variant: NeoButtonVariant.secondary,
+                              onPressed: () => Navigator.of(context).pop(),
+                            ),
+                          ],
+                        ),
+                      ),
+                      NeoButton(
+                        label: 'Confirmar',
+                        onPressed: () => _confirmar(context),
+                      ),
+                      NeoButton(
+                        label: 'Snack success',
+                        variant: NeoButtonVariant.secondary,
+                        onPressed: () => NeoSnackbar.show(
+                          context,
+                          'Guardado correctamente.',
+                          tone: NeoSnackbarTone.success,
+                        ),
+                      ),
+                      NeoButton(
+                        label: 'Snack error',
+                        variant: NeoButtonVariant.secondary,
+                        onPressed: () => NeoSnackbar.show(
+                          context,
+                          'No se pudo guardar.',
+                          tone: NeoSnackbarTone.danger,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ],
             ),
           );
         },
       ),
+    );
+  }
+
+  String _mesLabel(DateTime date) =>
+      '${date.year}-${date.month.toString().padLeft(2, '0')}';
+
+  void _moverMes(int delta) {
+    setState(() {
+      _periodo = DateTime(_periodo.year, _periodo.month + delta);
+    });
+  }
+
+  Future<void> _confirmar(BuildContext context) async {
+    final bool? confirmado = await NeoConfirmDialog.show(
+      context,
+      title: '¿Eliminar meta?',
+      message: 'Esta acción no se puede deshacer.',
+      confirmLabel: 'Eliminar',
+      destructive: true,
+    );
+    if (!mounted || !context.mounted) {
+      return;
+    }
+    NeoSnackbar.show(
+      context,
+      confirmado == true ? 'Confirmado.' : 'Cancelado.',
+      tone: confirmado == true
+          ? NeoSnackbarTone.success
+          : NeoSnackbarTone.neutral,
     );
   }
 
