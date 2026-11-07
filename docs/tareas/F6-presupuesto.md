@@ -17,6 +17,35 @@
 > Pantalla `/presupuestos/configuracion` con sugerencia aplicable, tres sliders
 > coordinados, suma visible y aviso de guardado; entrada desde el home.
 > Tests: 7 del controlador y 3 de pantalla. Total 324 verdes.
+>
+> **Avance Bloque 3 (2026-11-07): ejecución, historial, límites y preferencias.**
+> `EjecucionPresupuestoController` pide `month`/`year` del mes de negocio y
+> arma el historial de 6 meses (`desde`/`hasta` en `yyyy-MM`), conserva la
+> ejecución previa ante errores y separa la falla de historial de la global.
+> Pantalla `/presupuestos/ejecucion` con navegación de mes, bloques
+> necesidades/deseos/ahorro, ingresos y porcentajes, avance visual y
+> último historial. `LimitesCategoriasController` carga catálogo + límites,
+> edita el conjunto en memoria, valida `> 0`, hace el `PUT` completo e
+> invalida la ejecución por categoría. `PreferenciasCategoriaController`
+> cambia (`PUT`, solo NECESIDAD/DESEO) y quita (`DELETE`) la preferencia,
+> restringido a categorías reclasificables. Pantalla
+> `/presupuestos/categorias` con pestañas Límites (alta/edición/quitado,
+> guardado completo y ejecución por categoría) y Tipos (chips + quitar).
+> Accesos desde la AppBar de la configuración de la regla. Tras guardar la
+> regla se invalidan ejecución global y por categoría.
+> Tests: 4 de ejecución, 5 de límites, 5 de preferencias, 3 de pantalla de
+> ejecución y 3 de pantalla de categorías. Total 344 verdes.
+>
+> **Verificación manual (emulador, backend real): PASÓ.** Regla 50/30/20
+> guardada y visible como `Guía: 50 / 30 / 20` en el plan mensual. Ejecución
+> de noviembre: ingresos `$1.000.000`, necesidades `$120.000` de `$500.000`
+> (incluye Ocio reclasificado), deseos `$0` de `$300.000`, ahorro `$0` de
+> `$200.000` e historial de 6 meses. Límites `$100.000` / `$60.000`; edición
+> de Ocio a `$70.000` con aviso «Límites guardados.» y ejecución por categoría
+> refrescada (`$40.000` / `$70.000`, BAJO). Quitar la preferencia devolvió Ocio
+> a `DESEO`. Se detectó y corrigió un `409` del backend al reemplazar un
+> conjunto de límites ya existente (faltaba flush entre el `DELETE` y los
+> `INSERT`); ver el commit del backend y su test de regresión.
 
 ## Objetivo
 Configurar la regla 50/30/20 (o personalizada) del usuario, seguir su ejecución mensual frente

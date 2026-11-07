@@ -5,6 +5,8 @@ import '../../../../core/errors/app_failure.dart';
 import '../../data/dio_presupuesto_repository.dart';
 import '../../domain/presupuesto_repository.dart';
 import '../../domain/regla_presupuestaria.dart';
+import 'ejecucion_presupuesto_controller.dart';
+import 'limites_categorias_controller.dart';
 
 /// Estado editable de la regla presupuestaria.
 class ReglaPresupuestariaState {
@@ -311,6 +313,9 @@ class ReglaPresupuestariaController
             automatizarAhorroEnMetas: state.automatizarAhorroEnMetas,
           );
       state = state.copyWith(config: config, guardando: false, guardado: true);
+      // La regla cambia los presupuestos por bloque: la ejecución queda vieja.
+      ref.invalidate(ejecucionPresupuestoProvider);
+      ref.invalidate(ejecucionCategoriasProvider);
     } on AppFailure catch (failure) {
       state = state.copyWith(guardando: false, error: failure);
     }

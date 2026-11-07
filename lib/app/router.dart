@@ -19,6 +19,8 @@ import '../features/deudas/presentation/simulador_screen.dart';
 import '../features/deudas/domain/deuda.dart';
 import '../features/presupuesto/presentation/screens/plan_screen.dart';
 import '../features/presupuesto/presentation/screens/configuracion_regla_screen.dart';
+import '../features/presupuesto/presentation/screens/ejecucion_presupuesto_screen.dart';
+import '../features/presupuesto/presentation/screens/categorias_presupuesto_screen.dart';
 import '../features/movimientos/presentation/movimientos_screen.dart';
 import '../features/movimientos/presentation/movimiento_form_screen.dart';
 import '../features/auth/domain/auth_session.dart';
@@ -141,6 +143,16 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
         path: AppRoutes.presupuestoConfiguracion,
         name: 'presupuestoConfiguracion',
         builder: (_, _) => const ConfiguracionReglaScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.presupuestoEjecucion,
+        name: 'presupuestoEjecucion',
+        builder: (_, _) => const EjecucionPresupuestoScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.presupuestoCategorias,
+        name: 'presupuestoCategorias',
+        builder: (_, _) => const CategoriasPresupuestoScreen(),
       ),
     ],
   );

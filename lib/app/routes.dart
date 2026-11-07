@@ -53,4 +53,10 @@ abstract final class AppRoutes {
 
   /// Configuración de la regla de presupuesto (F6).
   static const String presupuestoConfiguracion = '/presupuestos/configuracion';
+
+  /// Ejecución mensual e historial (F6).
+  static const String presupuestoEjecucion = '/presupuestos/ejecucion';
+
+  /// Límites por categoría y tipos preferidos (F6).
+  static const String presupuestoCategorias = '/presupuestos/categorias';
 }

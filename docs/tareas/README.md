@@ -18,8 +18,10 @@ Al terminar, marcar aquí con `[x]`.
   crédito — `F4-deudas.md` (implementada y verificada manualmente; deja una deuda activa demo
   para vincular partidas en F6a)
 - [ ] **F5** simulador de endeudamiento (`POST /simulaciones/credito`)
-- [ ] **F6** presupuesto: configuración, ejecución, historial, límites por categoría,
-  sugerencia-regla — `F6-presupuesto.md` (redactada contra el contrato; 3 bloques)
+- [x] **F6** presupuesto: configuración, ejecución, historial, límites por categoría,
+  sugerencia-regla — `F6-presupuesto.md` (completa: regla con autobalanceo, ejecución/historial,
+  límites y tipos preferidos; verificada manualmente. Incluye fix de backend para reemplazar
+  límites existentes sin 409)
 - [x] **F6a** plan mensual: partidas, grupos, sliders con cálculo local (D6) y lote atómico
   de montos — `F6a-plan-mensual.md` (completa: motor validado por 33 vectores, controlador,
   pantalla, ingreso de referencia, CRUD de partidas/grupos, referencias y copia; verificada

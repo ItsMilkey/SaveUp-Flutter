@@ -18,6 +18,13 @@ Color estadoPlanColor(BuildContext context, EstadoEjecucion estado) {
   };
 }
 
+String tipoPresupuestoLabel(TipoPresupuesto tipo) => switch (tipo) {
+  TipoPresupuesto.necesidad => 'Necesidad',
+  TipoPresupuesto.deseo => 'Deseo',
+  TipoPresupuesto.ahorro => 'Ahorro',
+  TipoPresupuesto.otros => 'Otros',
+};
+
 String estadoCuotaPlanLabel(EstadoCuota? estado) => switch (estado) {
   EstadoCuota.pendiente => 'Cuota pendiente',
   EstadoCuota.parcial => 'Cuota parcial',

@@ -1,7 +1,9 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../../app/routes.dart';
 import '../../../../core/errors/failure_messages.dart';
 import '../../domain/regla_presupuestaria.dart';
 import '../controllers/regla_presupuestaria_controller.dart';
@@ -38,7 +40,21 @@ class _ConfiguracionReglaScreenState
     final ThemeData theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Presupuesto')),
+      appBar: AppBar(
+        title: const Text('Presupuesto'),
+        actions: <Widget>[
+          IconButton(
+            icon: const Icon(Icons.bar_chart_outlined),
+            tooltip: 'Ejecución e historial',
+            onPressed: () => context.push(AppRoutes.presupuestoEjecucion),
+          ),
+          IconButton(
+            icon: const Icon(Icons.category_outlined),
+            tooltip: 'Límites y tipos',
+            onPressed: () => context.push(AppRoutes.presupuestoCategorias),
+          ),
+        ],
+      ),
       body: estado.cargando
           ? const Center(child: CircularProgressIndicator.adaptive())
           : estado.errorCarga != null && estado.config == null
