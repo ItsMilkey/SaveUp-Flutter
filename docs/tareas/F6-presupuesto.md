@@ -150,8 +150,10 @@ F6a cerrada (commit `95b5340`).
 - Widget: sliders coordinados, sugerencia aplicada, paneles de ejecución e historial y límites.
 
 ## Fuera de alcance
-Asignación del ahorro a metas (`asignaciones[]`, F7), ejecución automática real de abonos,
-push/reportes y cualquier recálculo del plan mensual distinto de D6.
+Asignación del ahorro a metas (`asignaciones[]`): el contrato no las expone en ninguna lectura
+(`ConfiguracionPresupuestoResponseDTO` no las incluye), así que queda fuera hasta que exista un
+cambio de contrato previo (campo en el response o endpoint de lectura). Ejecución automática real
+de abonos, push/reportes y cualquier recálculo del plan mensual distinto de D6.
 
 ## Criterios de aceptación
 - `flutter analyze` sin issues y `flutter test` en verde.

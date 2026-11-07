@@ -11,13 +11,14 @@ Al terminar, marcar aquí con `[x]`.
 - [x] **F1** autenticación, sesión persistente y versión mínima — `F1-auth.md`
 - [x] **F2** cuenta: recuperar y cambiar contraseña, eliminar cuenta, legales (envío de correo
   pendiente en producción; cuerpo legal provisional hasta que exista su fuente)
-- [ ] **F3** movimientos, saldo y categorías (primer corte vertical completo: listar, crear,
-  filtrar, editar, eliminar; pantalla de inicio real) — **corte completo hecho**: saldo, listado
-  con filtros, alta, sugeridor, edición y eliminación; verificación manual registrada.
+- [x] **F3** movimientos, saldo y categorías (primer corte vertical completo: listar, crear,
+  filtrar, editar, eliminar; pantalla de inicio real) — implementada y verificada manualmente
+  (saldo, filtros, alta con sugeridor, edición y eliminación) — `F3-movimientos.md`
 - [x] **F4** deudas: lista, detalle, pagos flexibles, amortización, cancelar y simulador de
   crédito — `F4-deudas.md` (implementada y verificada manualmente; deja una deuda activa demo
   para vincular partidas en F6a)
-- [ ] **F5** simulador de endeudamiento (`POST /simulaciones/credito`)
+- [x] **F5** simulador de endeudamiento (`POST /simulaciones/credito`) — **absorbida por F4**:
+  el simulador se implementó y verificó dentro de F4 (no requiere tarea aparte)
 - [x] **F6** presupuesto: configuración, ejecución, historial, límites por categoría,
   sugerencia-regla — `F6-presupuesto.md` (completa: regla con autobalanceo, ejecución/historial,
   límites y tipos preferidos; verificada manualmente. Incluye fix de backend para reemplazar
