@@ -26,7 +26,10 @@ Al terminar, marcar aquí con `[x]`.
   de montos — `F6a-plan-mensual.md` (completa: motor validado por 33 vectores, controlador,
   pantalla, ingreso de referencia, CRUD de partidas/grupos, referencias y copia; verificada
   manualmente)
-- [ ] **F7** metas de ahorro: crear, abonar, retirar
+- [x] **F7** metas de ahorro: crear, abonar, retirar — `F7-metas-ahorro.md`
+  (completa: lista, alta/edición, abonos/retiros con movimientos reales, eliminación con
+  reintegro y meta base protegida; verificada manualmente. `asignaciones[]` queda fuera porque el
+  contrato no las expone en ninguna lectura)
 - [ ] **F8** exportar reportes (guardar/compartir archivo)
 - [ ] **F9** notificaciones push (requiere proyecto Firebase y, para iOS, cuenta de Apple
   Developer de pago; en producción el backend las tiene desactivadas)

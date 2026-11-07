@@ -10,6 +10,27 @@
 > con los seis endpoints; DTOs a mano (`montoObjetivo` y `fechaLimite` opcionales) y
 > repositorio Dio. Tests de contrato: 6 (parseo con y sin objetivo, cuerpos exactos de
 > alta/edición/abono/retiro, `DELETE 204` y `detail` del `409`). Total 350 verdes.
+>
+> **Avance Bloque 2 (2026-11-07): controladores, pantallas y verificación.**
+> `MetasController` (lista) y `MetaAccionesController` (abonar/retirar/eliminar
+> con refresco de la lista, del home y de la ejecución del presupuesto), más
+> `MetaFormController` con errores por campo. Pantallas `/metas` (tarjetas con
+> progreso, fecha, acciones y meta base protegida), alta/edición con selector de
+> fecha futura y diálogo de abono/retiro (valida monto y tope local; muestra el
+> `detail` del servidor). Rutas y entrada desde el home. Se corrigió el refresco
+> del home: invalidar `movimientosProvider` lo dejaba en «Cargando movimientos…»
+> porque solo se inicializa en `initState`; ahora se llama a `refrescar()`.
+> Tests: 19 nuevos (controladores, formulario, lista y diálogos); total 369
+> verdes y `flutter analyze` limpio.
+>
+> **Verificación manual (emulador, backend real): PASÓ.** Meta «Notebook» de
+> `$800.000` con fecha futura; abono de `$100.000` → `$100.000/$800.000` (12,5 %)
+> y saldo del home `$400.000` con movimiento `ABONO_META -$100.000`; retiro de
+> `$20.000` con saldo `$420.000`; edición del objetivo a `$900.000`
+> (`$80.000/$900.000`, 8,89 %); eliminación con confirmación → meta fuera, saldo
+> `$500.000` y movimiento de devolución `+$80.000`; meta base «Ahorros» sin
+> opción de eliminar. El retiro excesivo por API devuelve `409
+> CONFLICTO_REGLA_NEGOCIO` con su `detail`.
 
 ## Objetivo
 Que la persona cree metas de ahorro con objetivo y fecha, abone y retire dinero de ellas, las

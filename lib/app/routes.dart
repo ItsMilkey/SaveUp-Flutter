@@ -59,4 +59,13 @@ abstract final class AppRoutes {
 
   /// Límites por categoría y tipos preferidos (F6).
   static const String presupuestoCategorias = '/presupuestos/categorias';
+
+  /// Metas de ahorro (F7).
+  static const String metas = '/metas';
+
+  /// Alta de una meta de ahorro.
+  static const String nuevaMeta = '/metas/nueva';
+
+  /// Edición de una meta (recibe la `MetaAhorro` por `extra`).
+  static String editarMeta(int id) => '/metas/$id/editar';
 }

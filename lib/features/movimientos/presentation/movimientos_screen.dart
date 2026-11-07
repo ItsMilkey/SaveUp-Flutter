@@ -94,6 +94,11 @@ class _MovimientosScreenState extends ConsumerState<MovimientosScreen> {
               context,
             ).push(AppRoutes.presupuestoConfiguracion),
           ),
+          IconButton(
+            icon: const Icon(Icons.savings_outlined),
+            tooltip: 'Metas de ahorro',
+            onPressed: () => GoRouter.of(context).push(AppRoutes.metas),
+          ),
           _CuentaMenu(),
           IconButton(
             icon: const Icon(Icons.logout),

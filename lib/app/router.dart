@@ -21,6 +21,9 @@ import '../features/presupuesto/presentation/screens/plan_screen.dart';
 import '../features/presupuesto/presentation/screens/configuracion_regla_screen.dart';
 import '../features/presupuesto/presentation/screens/ejecucion_presupuesto_screen.dart';
 import '../features/presupuesto/presentation/screens/categorias_presupuesto_screen.dart';
+import '../features/metas/domain/meta_ahorro.dart';
+import '../features/metas/presentation/screens/metas_screen.dart';
+import '../features/metas/presentation/screens/meta_form_screen.dart';
 import '../features/movimientos/presentation/movimientos_screen.dart';
 import '../features/movimientos/presentation/movimiento_form_screen.dart';
 import '../features/auth/domain/auth_session.dart';
@@ -153,6 +156,26 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
         path: AppRoutes.presupuestoCategorias,
         name: 'presupuestoCategorias',
         builder: (_, _) => const CategoriasPresupuestoScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.metas,
+        name: 'metas',
+        builder: (_, _) => const MetasScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.nuevaMeta,
+        name: 'nuevaMeta',
+        builder: (_, _) => const MetaFormScreen(),
+      ),
+      GoRoute(
+        path: '/metas/:id/editar',
+        name: 'editarMeta',
+        builder: (_, GoRouterState state) {
+          final Object? extra = state.extra;
+          return extra is MetaAhorro
+              ? MetaFormScreen(meta: extra)
+              : const MetasScreen();
+        },
       ),
     ],
   );
