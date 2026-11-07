@@ -3,6 +3,11 @@
 > **Estado: backend y contrato listos (2026-11-07); data/UI pendientes.** La
 > pantalla se implementará con el rediseño UI/UX, igual que F10.
 
+> **Avance (2026-11-07): data, controlador y UI implementados.** Sección
+> «Distribución del ahorro» en la configuración de la regla, con `GET`/`POST`
+> de asignaciones, autobalanceo a 100.00, limpiar distribución y validación
+> del backend. Tests de repositorio, controlador y pantalla.
+
 ## Objetivo
 Que la persona decida **cómo repartir su porcentaje de ahorro entre sus metas**
 (por ejemplo 60 % viaje / 40 % notebook) y que la app pueda leer y editar ese

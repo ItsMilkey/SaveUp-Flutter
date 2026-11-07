@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/errors/app_failure.dart';
 import '../../data/dio_presupuesto_repository.dart';
+import '../../domain/asignacion_presupuesto.dart';
 import '../../domain/presupuesto_repository.dart';
 import '../../domain/regla_presupuestaria.dart';
 import 'ejecucion_presupuesto_controller.dart';
@@ -284,12 +285,25 @@ class ReglaPresupuestariaController
     );
   }
 
-  Future<void> guardar() async {
+  Future<void> guardar({List<AsignacionPresupuestoDatos>? asignaciones}) async {
     if (!state.sumaValida) {
       state = state.copyWith(
         mensajeValidacion: 'Los porcentajes deben sumar 100.00.',
       );
       return;
+    }
+    if (asignaciones != null && asignaciones.isNotEmpty) {
+      final Decimal total = asignaciones.fold(
+        Decimal.zero,
+        (Decimal suma, AsignacionPresupuestoDatos item) =>
+            suma + item.porcentaje,
+      );
+      if (total.compareTo(_cien) != 0) {
+        state = state.copyWith(
+          mensajeValidacion: 'Las asignaciones deben sumar 100.00.',
+        );
+        return;
+      }
     }
     if (state.guardando) {
       return;
@@ -311,6 +325,7 @@ class ReglaPresupuestariaController
             ),
             activo: state.activo,
             automatizarAhorroEnMetas: state.automatizarAhorroEnMetas,
+            asignaciones: asignaciones,
           );
       state = state.copyWith(config: config, guardando: false, guardado: true);
       // La regla cambia los presupuestos por bloque: la ejecución queda vieja.

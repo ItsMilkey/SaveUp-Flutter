@@ -72,6 +72,9 @@ abstract final class AppRoutes {
   /// Exportación de movimientos (F8).
   static const String reportes = '/reportes';
 
+  /// Analítica de gastos (F10).
+  static const String analitica = '/analitica';
+
   /// Galería interna del design system (solo debug).
   static const String designSystem = '/design-system';
 }

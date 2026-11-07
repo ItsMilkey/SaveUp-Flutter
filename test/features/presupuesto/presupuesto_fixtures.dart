@@ -3,6 +3,7 @@ import 'package:saveup_app/core/errors/app_failure.dart';
 import 'package:saveup_app/features/movimientos/domain/categoria.dart';
 import 'package:saveup_app/features/movimientos/domain/categorias_repository.dart';
 import 'package:saveup_app/features/movimientos/domain/sugerencia_categoria.dart';
+import 'package:saveup_app/features/presupuesto/domain/asignacion_presupuesto.dart';
 import 'package:saveup_app/features/presupuesto/domain/categorias_preferencias_repository.dart';
 import 'package:saveup_app/features/presupuesto/domain/ejecucion_presupuesto.dart';
 import 'package:saveup_app/features/presupuesto/domain/limite_categoria.dart';
@@ -167,11 +168,15 @@ class FakePresupuestoRepository implements PresupuestoRepository {
     List<EjecucionCategoria>? ejecucionCategorias,
     this.errorEjecucionCategorias,
     this.errorGuardarLimites,
+    List<AsignacionPresupuesto>? asignaciones,
+    this.errorAsignaciones,
   }) : ejecucionRespuesta = ejecucion ?? ejecucionDePrueba(),
        historialRespuesta = historial ?? const <HistorialPresupuesto>[],
        limitesRespuesta = limites ?? const <LimiteCategoria>[],
        ejecucionCategoriasRespuesta =
-           ejecucionCategorias ?? const <EjecucionCategoria>[];
+           ejecucionCategorias ?? const <EjecucionCategoria>[],
+       asignacionesRespuesta =
+           asignaciones ?? const <AsignacionPresupuesto>[];
 
   ConfiguracionPresupuesto? config;
   SugerenciaRegla? sugerencia;
@@ -188,9 +193,14 @@ class FakePresupuestoRepository implements PresupuestoRepository {
   AppFailure? errorEjecucionCategorias;
   AppFailure? errorGuardarLimites;
 
+  List<AsignacionPresupuesto> asignacionesRespuesta;
+  AppFailure? errorAsignaciones;
+
   PorcentajesRegla? guardados;
   bool? activoGuardado;
   bool? automatizarGuardado;
+  List<AsignacionPresupuestoDatos>? asignacionesGuardadas;
+  bool asignacionesEnviadas = false;
   int intentosGuardar = 0;
 
   int? monthSolicitado;
@@ -217,6 +227,7 @@ class FakePresupuestoRepository implements PresupuestoRepository {
     required PorcentajesRegla porcentajes,
     bool activo = true,
     bool automatizarAhorroEnMetas = false,
+    List<AsignacionPresupuestoDatos>? asignaciones,
   }) async {
     intentosGuardar += 1;
     if (errorGuardar != null) {
@@ -225,12 +236,22 @@ class FakePresupuestoRepository implements PresupuestoRepository {
     guardados = porcentajes;
     activoGuardado = activo;
     automatizarGuardado = automatizarAhorroEnMetas;
+    asignacionesGuardadas = asignaciones;
+    asignacionesEnviadas = true;
     config = configuracion(
       valores: porcentajes,
       activo: activo,
       automatizar: automatizarAhorroEnMetas,
     );
     return config!;
+  }
+
+  @override
+  Future<List<AsignacionPresupuesto>> listarAsignaciones() async {
+    if (errorAsignaciones != null) {
+      throw errorAsignaciones!;
+    }
+    return asignacionesRespuesta;
   }
 
   @override

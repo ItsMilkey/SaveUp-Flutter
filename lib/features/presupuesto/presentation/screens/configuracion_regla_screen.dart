@@ -7,7 +7,9 @@ import '../../../../app/routes.dart';
 import '../../../../core/design_system/design_system.dart';
 import '../../../../core/errors/failure_messages.dart';
 import '../../domain/regla_presupuestaria.dart';
+import '../controllers/asignaciones_presupuesto_controller.dart';
 import '../controllers/regla_presupuestaria_controller.dart';
+import '../widgets/distribucion_ahorro_section.dart';
 
 /// Configuración de la regla 50/30/20 (necesidades/deseos/ahorro).
 class ConfiguracionReglaScreen extends ConsumerStatefulWidget {
@@ -26,6 +28,7 @@ class _ConfiguracionReglaScreenState
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         ref.read(reglaPresupuestariaProvider.notifier).cargar();
+        ref.read(asignacionesPresupuestoProvider.notifier).cargar();
       }
     });
   }
@@ -152,7 +155,7 @@ class _ConfiguracionReglaScreenState
                         SwitchListTile(
                           title: const Text('Automatizar ahorro en metas'),
                           subtitle: const Text(
-                            'La ejecución automática de abonos llega con F7.',
+                            'Reparte el ahorro automático entre tus metas.',
                           ),
                           value: estado.automatizarAhorroEnMetas,
                           onChanged: controller.setAutomatizarAhorroEnMetas,
@@ -168,6 +171,10 @@ class _ConfiguracionReglaScreenState
                       message: failureMessage(estado.error!),
                     ),
                   ),
+                const SizedBox(height: AppSpacing.md),
+                DistribucionAhorroSection(
+                  automatizarAhorroEnMetas: estado.automatizarAhorroEnMetas,
+                ),
                 if (estado.guardado)
                   Padding(
                     padding: const EdgeInsets.only(top: AppSpacing.md),
@@ -201,10 +208,21 @@ class _ConfiguracionReglaScreenState
                   NeoButton(
                     label: 'Guardar regla',
                     expanded: true,
-                    onPressed: estado.sumaValida ? controller.guardar : null,
+                    onPressed: estado.sumaValida
+                        ? () => _guardar(controller)
+                        : null,
                   ),
               ],
             ),
+    );
+  }
+
+  Future<void> _guardar(ReglaPresupuestariaController controller) {
+    final AsignacionesPresupuestoState asignaciones = ref.read(
+      asignacionesPresupuestoProvider,
+    );
+    return controller.guardar(
+      asignaciones: asignaciones.cargadas ? asignaciones.datos : null,
     );
   }
 }

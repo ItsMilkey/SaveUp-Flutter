@@ -1,20 +1,31 @@
+import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:saveup_app/core/design_system/design_system.dart';
 import 'package:saveup_app/core/errors/app_failure.dart';
+import 'package:saveup_app/features/metas/data/dio_metas_repository.dart';
+import 'package:saveup_app/features/metas/domain/meta_ahorro.dart';
 import 'package:saveup_app/features/presupuesto/data/dio_presupuesto_repository.dart';
+import 'package:saveup_app/features/presupuesto/domain/asignacion_presupuesto.dart';
 import 'package:saveup_app/features/presupuesto/presentation/screens/configuracion_regla_screen.dart';
 
+import '../metas/metas_fixtures.dart';
 import 'presupuesto_fixtures.dart';
 
 Future<void> montar(
   WidgetTester tester,
-  FakePresupuestoRepository repo,
-) async {
+  FakePresupuestoRepository repo, {
+  FakeMetasRepository? metas,
+}) async {
   await tester.pumpWidget(
     ProviderScope(
-      overrides: [presupuestoRepositoryProvider.overrideWithValue(repo)],
+      overrides: [
+        presupuestoRepositoryProvider.overrideWithValue(repo),
+        metasRepositoryProvider.overrideWithValue(
+          metas ?? FakeMetasRepository(),
+        ),
+      ],
       child: MaterialApp(
         theme: SaveUpTheme.light(),
         home: const ConfiguracionReglaScreen(),
@@ -104,6 +115,106 @@ void main() {
 
     expect(
       find.textContaining('Los porcentajes deben sumar 100.00.'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('carga y guarda la distribución del ahorro', (
+    WidgetTester tester,
+  ) async {
+    final FakeMetasRepository metas = FakeMetasRepository(
+      metas: <MetaAhorro>[
+        metaDePrueba(id: 3, nombre: 'Viaje'),
+        metaDePrueba(id: 4, nombre: 'Notebook', objetivo: '800000'),
+      ],
+    );
+    final FakePresupuestoRepository repo = FakePresupuestoRepository(
+      config: configuracion(),
+      asignaciones: <AsignacionPresupuesto>[
+        AsignacionPresupuesto(
+          metaId: 3,
+          metaNombre: 'Viaje',
+          porcentaje: Decimal.parse('60'),
+        ),
+        AsignacionPresupuesto(
+          metaId: 4,
+          metaNombre: 'Notebook',
+          porcentaje: Decimal.parse('40'),
+        ),
+      ],
+    );
+    await montar(tester, repo, metas: metas);
+
+    await tester.scrollUntilVisible(
+      find.text('Distribución del ahorro'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Distribución del ahorro'), findsOneWidget);
+    expect(find.text('60.00 %'), findsOneWidget);
+    expect(find.text('40.00 %'), findsOneWidget);
+    expect(find.textContaining('Total: 100.00'), findsOneWidget);
+
+    await tester.scrollUntilVisible(
+      find.text('Guardar regla'),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Guardar regla'));
+    await tester.pumpAndSettle();
+
+    expect(repo.asignacionesGuardadas, isNotNull);
+    expect(repo.asignacionesGuardadas, hasLength(2));
+    expect(
+      repo.asignacionesGuardadas!
+          .map((AsignacionPresupuestoDatos a) => a.porcentaje)
+          .fold(Decimal.zero, (Decimal a, Decimal b) => a + b),
+      Decimal.parse('100'),
+    );
+  });
+
+  testWidgets('agrega una meta y limpia la distribución', (
+    WidgetTester tester,
+  ) async {
+    final FakeMetasRepository metas = FakeMetasRepository(
+      metas: <MetaAhorro>[metaDePrueba(id: 3, nombre: 'Viaje')],
+    );
+    final FakePresupuestoRepository repo = FakePresupuestoRepository(
+      config: configuracion(),
+    );
+    await montar(tester, repo, metas: metas);
+
+    await tester.scrollUntilVisible(
+      find.text('Distribución del ahorro'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('Sin distribución: el ahorro queda en la meta base.'),
+      findsOneWidget,
+    );
+    await tester.scrollUntilVisible(
+      find.text('Agregar meta'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(find.text('Agregar meta'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Viaje'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('100.00 %'), findsOneWidget);
+    expect(find.textContaining('Total: 100.00'), findsOneWidget);
+
+    await tester.tap(find.text('Limpiar distribución'));
+    await tester.pumpAndSettle();
+    expect(
+      find.text('Sin distribución: el ahorro queda en la meta base.'),
       findsOneWidget,
     );
   });

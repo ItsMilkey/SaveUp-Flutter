@@ -95,10 +95,10 @@ class AppShell extends ConsumerWidget {
           icon: Icons.savings_outlined,
           onTap: () => GoRouter.of(context).push(AppRoutes.metas),
         ),
-        const NeoMoreOption(
+        NeoMoreOption(
           label: 'Analítica',
           icon: Icons.insights_outlined,
-          badge: NeoBadge(label: 'Pronto', compact: true),
+          onTap: () => GoRouter.of(context).push(AppRoutes.analitica),
         ),
         NeoMoreOption(
           label: 'Reportes',

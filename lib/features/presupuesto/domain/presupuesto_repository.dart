@@ -1,4 +1,5 @@
 import 'ejecucion_presupuesto.dart';
+import 'asignacion_presupuesto.dart';
 import 'limite_categoria.dart';
 import 'regla_presupuestaria.dart';
 
@@ -8,11 +9,17 @@ abstract interface class PresupuestoRepository {
   Future<ConfiguracionPresupuesto> obtenerConfiguracion();
 
   /// `POST /presupuestos/me`.
+  ///
+  /// [asignaciones] `null` conserva las actuales; `[]` las elimina.
   Future<ConfiguracionPresupuesto> guardarConfiguracion({
     required PorcentajesRegla porcentajes,
     bool activo = true,
     bool automatizarAhorroEnMetas = false,
+    List<AsignacionPresupuestoDatos>? asignaciones,
   });
+
+  /// `GET /presupuestos/asignaciones/me`.
+  Future<List<AsignacionPresupuesto>> listarAsignaciones();
 
   /// `GET /presupuestos/sugerencia-regla`.
   Future<SugerenciaRegla> sugerenciaRegla();

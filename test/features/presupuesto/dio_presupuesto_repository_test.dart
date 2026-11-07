@@ -5,6 +5,7 @@ import 'package:saveup_app/core/errors/app_failure.dart';
 import 'package:saveup_app/core/errors/failure_messages.dart';
 import 'package:saveup_app/core/network/api_client.dart';
 import 'package:saveup_app/features/presupuesto/data/dio_presupuesto_repository.dart';
+import 'package:saveup_app/features/presupuesto/domain/asignacion_presupuesto.dart';
 import 'package:saveup_app/features/presupuesto/domain/ejecucion_presupuesto.dart';
 import 'package:saveup_app/features/presupuesto/domain/limite_categoria.dart';
 import 'package:saveup_app/features/presupuesto/domain/plan_calculo.dart';
@@ -283,6 +284,97 @@ void main() {
           .ejecucionCategorias(month: 11, year: 2026);
       expect(ejecucion.single.estado, EstadoEjecucion.cercaDelPlan);
       expect(ejecucion.single.porcentajeUsado.toString(), '86.66');
+    });
+  });
+
+  group('asignaciones', () {
+    test('GET /presupuestos/asignaciones/me parsea las metas', () async {
+      adapter.handler = (RequestOptions options) async {
+        expect(options.method, 'GET');
+        expect(
+          options.path.endsWith('/presupuestos/asignaciones/me'),
+          isTrue,
+        );
+        return jsonResponse(<Object?>[
+          <String, Object?>{
+            'metaId': 3,
+            'metaNombre': 'Viaje',
+            'porcentaje': 60.0,
+          },
+          <String, Object?>{
+            'metaId': 4,
+            'metaNombre': 'Notebook',
+            'porcentaje': 40.0,
+          },
+        ]);
+      };
+
+      final List<AsignacionPresupuesto> asignaciones = await repository
+          .listarAsignaciones();
+      expect(asignaciones, hasLength(2));
+      expect(asignaciones.first.metaId, 3);
+      expect(asignaciones.first.metaNombre, 'Viaje');
+      expect(asignaciones.first.porcentaje.toString(), '60');
+    });
+
+    test('POST envía el conjunto completo de asignaciones', () async {
+      adapter.handler = (RequestOptions options) async {
+        expect(options.method, 'POST');
+        expect(jsonBodyOf(options)['asignaciones'], <Object?>[
+          <String, Object?>{'metaId': 3, 'porcentaje': 60},
+          <String, Object?>{'metaId': 4, 'porcentaje': 40},
+        ]);
+        return jsonResponse(configJson());
+      };
+
+      await repository.guardarConfiguracion(
+        porcentajes: PorcentajesRegla(
+          necesidades: Decimal.fromInt(50),
+          deseos: Decimal.fromInt(30),
+          ahorro: Decimal.fromInt(20),
+        ),
+        asignaciones: <AsignacionPresupuestoDatos>[
+          AsignacionPresupuestoDatos(
+            metaId: 3,
+            porcentaje: Decimal.fromInt(60),
+          ),
+          AsignacionPresupuestoDatos(
+            metaId: 4,
+            porcentaje: Decimal.fromInt(40),
+          ),
+        ],
+      );
+    });
+
+    test('POST omite asignaciones cuando vienen en null', () async {
+      adapter.handler = (RequestOptions options) async {
+        expect(jsonBodyOf(options).containsKey('asignaciones'), isFalse);
+        return jsonResponse(configJson());
+      };
+
+      await repository.guardarConfiguracion(
+        porcentajes: PorcentajesRegla(
+          necesidades: Decimal.fromInt(50),
+          deseos: Decimal.fromInt(30),
+          ahorro: Decimal.fromInt(20),
+        ),
+      );
+    });
+
+    test('POST envía lista vacía para limpiar la distribución', () async {
+      adapter.handler = (RequestOptions options) async {
+        expect(jsonBodyOf(options)['asignaciones'], isEmpty);
+        return jsonResponse(configJson());
+      };
+
+      await repository.guardarConfiguracion(
+        porcentajes: PorcentajesRegla(
+          necesidades: Decimal.fromInt(50),
+          deseos: Decimal.fromInt(30),
+          ahorro: Decimal.fromInt(20),
+        ),
+        asignaciones: const <AsignacionPresupuestoDatos>[],
+      );
     });
   });
 }

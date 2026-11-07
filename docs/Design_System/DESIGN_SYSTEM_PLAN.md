@@ -332,16 +332,14 @@ No se agrega un séptimo icono al AppBar.
 Cada fase = un PR/commit; sin big-bang. Se puede usar un wrapper temporal
 (`NeoLegacyCard`) para migrar una pantalla sin reescribir su lógica.
 
-**Avance (2026-11-07):** Fases 1, 2, 3, 4, 5 y 6 completadas. Incluye
-tokens/theme, átomos, moléculas/patrones, la navegación B (`NeoScaffold`,
-`NeoAppBar`, `NeoBottomNav`, `NeoMoreMenu`) con barra inferior Inicio/Deudas/
-Plan/Presupuesto/Más y menú «Más» para Metas, Analítica (Pronto), Reportes,
-cuenta y Design System; Auth + Home; movimientos + deudas (formulario, listado,
-detalle, cronograma, historial, pagos, cancelación y simulador); y presupuesto +
-plan + metas + reportes (regla, ejecución, límites/tipos, plan mensual con
-grupos/partidas/referencias, metas con abonos/retiros y exportación CSV/PDF).
-Tests y goldens claro/oscuro (419 tests verdes). Las UIs de F10 y F11 con el
-sistema son la Fase 7; accesibilidad, dark mode y pulido, la Fase 8.
+**Avance (2026-11-07):** Fases 1 a 7 completadas. Incluye tokens/theme,
+átomos, moléculas/patrones, la navegación B (`NeoScaffold`, `NeoAppBar`,
+`NeoBottomNav`, `NeoMoreMenu`) con barra inferior Inicio/Deudas/Plan/Presupuesto/
+Más y menú «Más» para Metas, Analítica, Reportes, cuenta y Design System;
+Auth + Home; movimientos + deudas; presupuesto + plan + metas + reportes; y F10
+(analítica con `fl_chart`) + F11 (distribución del ahorro entre metas) con el
+sistema. Tests y goldens claro/oscuro (436 tests verdes). Queda la Fase 8:
+accesibilidad, dark mode y pulido.
 
 ## 11. Riesgos y mitigaciones
 

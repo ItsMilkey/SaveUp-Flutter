@@ -4,6 +4,7 @@ library;
 import 'package:decimal/decimal.dart';
 
 import '../../../core/money/money_json.dart';
+import '../domain/asignacion_presupuesto.dart';
 import '../domain/ejecucion_presupuesto.dart';
 import '../domain/limite_categoria.dart';
 import '../domain/plan_calculo.dart';
@@ -80,11 +81,15 @@ class ConfiguracionPresupuestoRequestDto {
     required this.porcentajes,
     required this.activo,
     required this.automatizarAhorroEnMetas,
+    this.asignaciones,
   });
 
   final PorcentajesRegla porcentajes;
   final bool activo;
   final bool automatizarAhorroEnMetas;
+
+  /// `null` = omitir el campo (conserva); `[]` = limpiar.
+  final List<AsignacionPresupuestoDatos>? asignaciones;
 
   Map<String, Object?> toJson() {
     return <String, Object?>{
@@ -93,7 +98,28 @@ class ConfiguracionPresupuestoRequestDto {
       'porcentajeAhorro': moneyToJson(porcentajes.ahorro),
       'activo': activo,
       'automatizarAhorroEnMetas': automatizarAhorroEnMetas,
+      if (asignaciones != null)
+        'asignaciones': <Map<String, Object?>>[
+          for (final AsignacionPresupuestoDatos item in asignaciones!)
+            <String, Object?>{
+              'metaId': item.metaId,
+              'porcentaje': moneyToJson(item.porcentaje),
+            },
+        ],
     };
+  }
+}
+
+/// `AsignacionPresupuestoDTO`.
+class AsignacionPresupuestoDto {
+  const AsignacionPresupuestoDto._();
+
+  static AsignacionPresupuesto fromJson(Map<String, dynamic> json) {
+    return AsignacionPresupuesto(
+      metaId: _int(json, 'metaId'),
+      metaNombre: _string(json, 'metaNombre'),
+      porcentaje: _money(json, 'porcentaje'),
+    );
   }
 }
 

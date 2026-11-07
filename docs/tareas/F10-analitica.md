@@ -14,6 +14,11 @@
 > de controlador. Total **394 verdes** y `flutter analyze` limpio. No se agregó
 > `fl_chart` ni ninguna pantalla/ruta todavía.
 
+> **Avance (2026-11-07): UI implementada con `fl_chart` y ruta `/analitica`,
+> accesible desde «Más».** La pantalla incluye KPIs, torta con «Sin categoría»,
+> tendencia de 6 meses, reparto por tipo y top de categorías, con tests de
+> pantalla y widgets.
+
 ## Objetivo
 Una pantalla que responda de un vistazo: **¿cuánto gasté, en qué categorías y
 cómo evoluciona mes a mes?** Debe ser rápida, legible y sin configurar nada

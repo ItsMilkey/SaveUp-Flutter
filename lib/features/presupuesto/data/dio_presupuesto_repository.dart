@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/network/api_client.dart';
 import '../../../core/network/json_reading.dart';
+import '../domain/asignacion_presupuesto.dart';
 import '../domain/ejecucion_presupuesto.dart';
 import '../domain/limite_categoria.dart';
 import '../domain/presupuesto_repository.dart';
@@ -32,6 +33,7 @@ class DioPresupuestoRepository implements PresupuestoRepository {
     required PorcentajesRegla porcentajes,
     bool activo = true,
     bool automatizarAhorroEnMetas = false,
+    List<AsignacionPresupuestoDatos>? asignaciones,
   }) async {
     final Map<String, dynamic> body = await readObject(
       () => client.post<dynamic>(
@@ -40,10 +42,29 @@ class DioPresupuestoRepository implements PresupuestoRepository {
           porcentajes: porcentajes,
           activo: activo,
           automatizarAhorroEnMetas: automatizarAhorroEnMetas,
+          asignaciones: asignaciones,
         ).toJson(),
       ),
     );
     return parseJson(() => ConfiguracionPresupuestoDto.fromJson(body));
+  }
+
+  @override
+  Future<List<AsignacionPresupuesto>> listarAsignaciones() async {
+    final List<dynamic> body = await readList(
+      () => client.get<dynamic>('/presupuestos/asignaciones/me'),
+    );
+    return parseJson(
+      () => body
+          .map(
+            (Object? item) => AsignacionPresupuestoDto.fromJson(
+              (item as Map).map(
+                (Object? k, Object? v) => MapEntry(k.toString(), v),
+              ),
+            ),
+          )
+          .toList(growable: false),
+    );
   }
 
   @override
