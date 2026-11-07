@@ -64,6 +64,25 @@ class ApiClient {
     return _run(() => _dio.get<T>(path, queryParameters: queryParameters));
   }
 
+  /// GET binario (reportes, adjuntos). El cuerpo de error sigue siendo
+  /// `problem+json`, que el mapeo global decodifica desde bytes.
+  Future<Response<List<int>>> getBytes(
+    String path, {
+    Map<String, dynamic>? queryParameters,
+    Map<String, dynamic>? headers,
+  }) {
+    return _run(
+      () => _dio.get<List<int>>(
+        path,
+        queryParameters: queryParameters,
+        options: Options(
+          responseType: ResponseType.bytes,
+          headers: headers ?? const <String, dynamic>{'Accept': '*/*'},
+        ),
+      ),
+    );
+  }
+
   Future<Response<T>> post<T>(
     String path, {
     Object? data,

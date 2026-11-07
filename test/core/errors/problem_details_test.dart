@@ -169,5 +169,18 @@ void main() {
 
       expect(failure, isA<NotFoundFailure>());
     });
+
+    test('decodifica un problem+json recibido como bytes', () {
+      final AppFailure failure = failureFromProblemDetails(
+        statusCode: 400,
+        body: utf8.encode(
+          _problem('DATOS_INVALIDOS', 400, detail: 'El mes debe estar entre 1 y 12.'),
+        ),
+      );
+
+      expect(failure, isA<BadRequestFailure>());
+      expect((failure as BadRequestFailure).codigo, 'DATOS_INVALIDOS');
+      expect(failure.detail, 'El mes debe estar entre 1 y 12.');
+    });
   });
 }

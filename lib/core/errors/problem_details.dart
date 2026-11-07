@@ -105,6 +105,23 @@ Map<String, dynamic>? _asMap(Object? body) {
       return null;
     }
   }
+  if (body is List<int>) {
+    // Endpoints binarios (p. ej. reportes) devuelven el problem+json como bytes.
+    final String text = utf8.decode(body, allowMalformed: true).trim();
+    if (text.isEmpty) {
+      return null;
+    }
+    try {
+      final Object? decoded = jsonDecode(text);
+      if (decoded is Map) {
+        return decoded.map(
+          (Object? key, Object? value) => MapEntry(key.toString(), value),
+        );
+      }
+    } on FormatException {
+      return null;
+    }
+  }
   return null;
 }
 
