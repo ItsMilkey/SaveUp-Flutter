@@ -2,6 +2,7 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/design_system/design_system.dart';
 import '../../../../core/errors/failure_messages.dart';
 import '../../../../core/money/money.dart';
 import '../../../../core/time/business_month.dart';
@@ -40,17 +41,18 @@ class _EjecucionPresupuestoScreenState
       ejecucionPresupuestoProvider.notifier,
     );
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Ejecución'),
+    return NeoScaffold(
+      appBar: NeoAppBar(
+        title: 'Ejecución',
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(44),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
-              IconButton(
-                icon: const Icon(Icons.chevron_left),
+              NeoIconButton(
+                icon: Icons.chevron_left,
                 tooltip: 'Mes anterior',
+                variant: NeoIconButtonVariant.ghost,
                 onPressed: estado.cargando
                     ? null
                     : () => controller.cambiarMes(-1),
@@ -59,9 +61,10 @@ class _EjecucionPresupuestoScreenState
                 _etiquetaMes(estado.mes),
                 style: Theme.of(context).textTheme.titleMedium,
               ),
-              IconButton(
-                icon: const Icon(Icons.chevron_right),
+              NeoIconButton(
+                icon: Icons.chevron_right,
                 tooltip: 'Mes siguiente',
+                variant: NeoIconButtonVariant.ghost,
                 onPressed: estado.cargando
                     ? null
                     : () => controller.cambiarMes(1),
@@ -79,62 +82,56 @@ class _EjecucionPresupuestoScreenState
     EjecucionPresupuestoController controller,
   ) {
     if (estado.cargando && estado.ejecucion == null) {
-      return const Center(child: CircularProgressIndicator.adaptive());
+      return const NeoLoading(rows: 3);
     }
     if (estado.error != null && estado.ejecucion == null) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            Text(failureMessage(estado.error!)),
-            const SizedBox(height: 8),
-            OutlinedButton(
-              onPressed: controller.cargar,
-              child: const Text('Reintentar'),
-            ),
-          ],
-        ),
+      return NeoErrorState(
+        message: failureMessage(estado.error!),
+        onRetry: controller.cargar,
       );
     }
     final EjecucionPresupuesto? ejecucion = estado.ejecucion;
     if (ejecucion == null) {
-      return const Center(child: Text('Sin datos de ejecución.'));
+      return const NeoEmptyState(
+        title: 'Sin datos',
+        message: 'Sin datos de ejecución.',
+      );
     }
 
     return RefreshIndicator(
       onRefresh: controller.cargar,
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.lg,
+          AppSpacing.lg,
+          AppSpacing.lg,
+          AppSpacing.xxl,
+        ),
         children: <Widget>[
           if (estado.error != null)
             Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: Text(
-                failureMessage(estado.error!),
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.error,
-                ),
-              ),
+              padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+              child: NeoErrorBand(message: failureMessage(estado.error!)),
             ),
           _Ingresos(ejecucion: ejecucion),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.sm),
           _BloqueGasto(
             titulo: 'Necesidades',
             presupuesto: ejecucion.presupuestoNecesidades,
             real: ejecucion.gastoNecesidades,
             porcentaje: ejecucion.porcentajeNecesidadesConfigurado,
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.sm),
           _BloqueGasto(
             titulo: 'Deseos',
             presupuesto: ejecucion.presupuestoDeseos,
             real: ejecucion.gastoDeseos,
             porcentaje: ejecucion.porcentajeDeseosConfigurado,
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.sm),
           _BloqueAhorro(ejecucion: ejecucion),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.sm),
           _Historial(historial: estado.historial),
         ],
       ),
@@ -150,35 +147,32 @@ class _Ingresos extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Text('Ingresos del mes', style: theme.textTheme.titleMedium),
-            const SizedBox(height: 4),
-            Text(
-              Money.formatClp(ejecucion.totalIngresos),
-              style: theme.textTheme.headlineSmall,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Regla: ${ejecucion.porcentajeNecesidadesConfigurado} / '
-              '${ejecucion.porcentajeDeseosConfigurado} / '
-              '${ejecucion.porcentajeAhorroConfigurado}',
-              style: theme.textTheme.bodySmall,
-            ),
-            if (ejecucion.automatizarAhorroEnMetas)
-              Padding(
-                padding: const EdgeInsets.only(top: 4),
-                child: Text(
-                  'Automatización del ahorro en metas activa.',
-                  style: theme.textTheme.bodySmall,
-                ),
+    return NeoSurface(
+      density: AppDensity.section,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          const NeoSectionHeader(title: 'Ingresos del mes'),
+          Text(
+            Money.formatClp(ejecucion.totalIngresos),
+            style: theme.textTheme.headlineSmall,
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Text(
+            'Regla: ${ejecucion.porcentajeNecesidadesConfigurado} / '
+            '${ejecucion.porcentajeDeseosConfigurado} / '
+            '${ejecucion.porcentajeAhorroConfigurado}',
+            style: theme.textTheme.bodySmall,
+          ),
+          if (ejecucion.automatizarAhorroEnMetas)
+            Padding(
+              padding: const EdgeInsets.only(top: AppSpacing.xs),
+              child: Text(
+                'Automatización del ahorro en metas activa.',
+                style: theme.textTheme.bodySmall,
               ),
-          ],
-        ),
+            ),
+        ],
       ),
     );
   }
@@ -201,44 +195,35 @@ class _BloqueGasto extends StatelessWidget {
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
     final EstadoEjecucion estado = EstadoEjecucion.desde(real, presupuesto);
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Row(
-              children: <Widget>[
-                Expanded(
-                  child: Text(titulo, style: theme.textTheme.titleMedium),
-                ),
-                Chip(
-                  label: Text(estadoPlanLabel(estado)),
-                  labelStyle: TextStyle(
-                    color: estadoPlanColor(context, estado),
-                    fontSize: 11,
-                  ),
-                  visualDensity: VisualDensity.compact,
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(4),
-              child: LinearProgressIndicator(
-                value: _avance(real, presupuesto),
-                minHeight: 8,
-                color: estadoPlanColor(context, estado),
+    return NeoSurface(
+      density: AppDensity.section,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              Expanded(
+                child: Text(titulo, style: theme.textTheme.titleMedium),
               ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              '${Money.formatClp(real)} de ${Money.formatClp(presupuesto)} '
-              '(plan $porcentaje %)',
-              style: theme.textTheme.bodyMedium,
-            ),
-          ],
-        ),
+              NeoBadge(
+                label: estadoPlanLabel(estado),
+                color: estadoPlanColor(context, estado),
+                compact: true,
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          NeoProgress(
+            value: _avance(real, presupuesto),
+            color: estadoPlanColor(context, estado),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Text(
+            '${Money.formatClp(real)} de ${Money.formatClp(presupuesto)} '
+            '(plan $porcentaje %)',
+            style: theme.textTheme.bodyMedium,
+          ),
+        ],
       ),
     );
   }
@@ -252,33 +237,27 @@ class _BloqueAhorro extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Text('Ahorro', style: theme.textTheme.titleMedium),
-            const SizedBox(height: 8),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(4),
-              child: LinearProgressIndicator(
-                value: _avance(
-                  ejecucion.ahorroRealizado,
-                  ejecucion.presupuestoAhorro,
-                ),
-                minHeight: 8,
-              ),
+    return NeoSurface(
+      density: AppDensity.section,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          const NeoSectionHeader(title: 'Ahorro'),
+          NeoProgress(
+            value: _avance(
+              ejecucion.ahorroRealizado,
+              ejecucion.presupuestoAhorro,
             ),
-            const SizedBox(height: 8),
-            Text(
-              '${Money.formatClp(ejecucion.ahorroRealizado)} de '
-              '${Money.formatClp(ejecucion.presupuestoAhorro)} '
-              '(plan ${ejecucion.porcentajeAhorroConfigurado} %)',
-              style: theme.textTheme.bodyMedium,
-            ),
-          ],
-        ),
+            color: Theme.of(context).extension<SaveUpColors>()!.success,
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Text(
+            '${Money.formatClp(ejecucion.ahorroRealizado)} de '
+            '${Money.formatClp(ejecucion.presupuestoAhorro)} '
+            '(plan ${ejecucion.porcentajeAhorroConfigurado} %)',
+            style: theme.textTheme.bodyMedium,
+          ),
+        ],
       ),
     );
   }
@@ -299,46 +278,43 @@ class _Historial extends StatelessWidget {
             return porAnio != 0 ? porAnio : b.mes.compareTo(a.mes);
           });
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Text('Historial', style: theme.textTheme.titleMedium),
-            const SizedBox(height: 8),
-            if (ordenado.isEmpty)
-              Text(
-                'Sin historial en los últimos 6 meses.',
-                style: theme.textTheme.bodySmall,
-              )
-            else
-              for (final HistorialPresupuesto fila in ordenado)
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 4),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      SizedBox(
-                        width: 76,
-                        child: Text(
-                          _etiquetaCorto(fila.anio, fila.mes),
-                          style: theme.textTheme.bodySmall,
-                        ),
+    return NeoSurface(
+      density: AppDensity.section,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          const NeoSectionHeader(title: 'Historial'),
+          if (ordenado.isEmpty)
+            Text(
+              'Sin historial en los últimos 6 meses.',
+              style: theme.textTheme.bodySmall,
+            )
+          else
+            for (final HistorialPresupuesto fila in ordenado)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    SizedBox(
+                      width: 76,
+                      child: Text(
+                        _etiquetaCorto(fila.anio, fila.mes),
+                        style: theme.textTheme.bodySmall,
                       ),
-                      Expanded(
-                        child: Text(
-                          'N ${Money.formatClp(fila.ejecucion.gastoNecesidades)}'
-                          ' · D ${Money.formatClp(fila.ejecucion.gastoDeseos)}'
-                          ' · A ${Money.formatClp(fila.ejecucion.ahorroRealizado)}',
-                          style: theme.textTheme.bodySmall,
-                        ),
+                    ),
+                    Expanded(
+                      child: Text(
+                        'N ${Money.formatClp(fila.ejecucion.gastoNecesidades)}'
+                        ' · D ${Money.formatClp(fila.ejecucion.gastoDeseos)}'
+                        ' · A ${Money.formatClp(fila.ejecucion.ahorroRealizado)}',
+                        style: theme.textTheme.bodySmall,
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-          ],
-        ),
+              ),
+        ],
       ),
     );
   }

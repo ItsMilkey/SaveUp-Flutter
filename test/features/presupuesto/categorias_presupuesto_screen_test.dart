@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:saveup_app/core/design_system/design_system.dart';
 import 'package:saveup_app/core/errors/app_failure.dart';
 import 'package:saveup_app/features/movimientos/data/dio_categorias_repository.dart';
 import 'package:saveup_app/features/presupuesto/data/dio_categorias_preferencias_repository.dart';
@@ -26,7 +27,10 @@ Future<void> montar(
           preferencias,
         ),
       ],
-      child: const MaterialApp(home: CategoriasPresupuestoScreen()),
+      child: MaterialApp(
+        theme: SaveUpTheme.light(),
+        home: const CategoriasPresupuestoScreen(),
+      ),
     ),
   );
   await tester.pumpAndSettle();

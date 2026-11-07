@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/design_system/design_system.dart';
 import '../../../../core/errors/failure_messages.dart';
 import '../../../../core/time/business_month.dart';
 import '../../domain/reporte_movimientos.dart';
@@ -34,18 +35,17 @@ class _ReportesScreenState extends ConsumerState<ReportesScreen> {
     final ThemeData theme = Theme.of(context);
     final ReporteExportState estado = ref.watch(reporteExportProvider);
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Reportes')),
+    return NeoScaffold(
+      appBar: const NeoAppBar(title: 'Reportes'),
       body: ListView(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(AppSpacing.lg),
         children: <Widget>[
           Text(
             'Descarga tus movimientos y compártelos desde el móvil.',
             style: theme.textTheme.bodyMedium,
           ),
-          const SizedBox(height: 20),
-          Text('Alcance', style: theme.textTheme.titleSmall),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.xl),
+          const NeoSectionHeader(title: 'Alcance'),
           SegmentedButton<ReporteAlcance>(
             segments: const <ButtonSegment<ReporteAlcance>>[
               ButtonSegment<ReporteAlcance>(
@@ -64,37 +64,36 @@ class _ReportesScreenState extends ConsumerState<ReportesScreen> {
             },
           ),
           if (_alcance == ReporteAlcance.mensual) ...<Widget>[
-            const SizedBox(height: 12),
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: <Widget>[
-                    IconButton(
-                      icon: const Icon(Icons.chevron_left),
-                      tooltip: 'Mes anterior',
-                      onPressed: estado.enviando
-                          ? null
-                          : () => _cambiarMes(-1),
-                    ),
-                    Text(
-                      '$_periodo',
-                      style: theme.textTheme.titleMedium,
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.chevron_right),
-                      tooltip: 'Mes siguiente',
-                      onPressed: estado.enviando ? null : () => _cambiarMes(1),
-                    ),
-                  ],
-                ),
+            const SizedBox(height: AppSpacing.md),
+            NeoSurface(
+              density: AppDensity.list,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  NeoIconButton(
+                    icon: Icons.chevron_left,
+                    tooltip: 'Mes anterior',
+                    variant: NeoIconButtonVariant.ghost,
+                    onPressed: estado.enviando
+                        ? null
+                        : () => _cambiarMes(-1),
+                  ),
+                  Text(
+                    '$_periodo',
+                    style: theme.textTheme.titleMedium,
+                  ),
+                  NeoIconButton(
+                    icon: Icons.chevron_right,
+                    tooltip: 'Mes siguiente',
+                    variant: NeoIconButtonVariant.ghost,
+                    onPressed: estado.enviando ? null : () => _cambiarMes(1),
+                  ),
+                ],
               ),
             ),
           ],
-          const SizedBox(height: 20),
-          Text('Formato', style: theme.textTheme.titleSmall),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.xl),
+          const NeoSectionHeader(title: 'Formato'),
           SegmentedButton<ReporteFormato>(
             segments: const <ButtonSegment<ReporteFormato>>[
               ButtonSegment<ReporteFormato>(
@@ -112,7 +111,7 @@ class _ReportesScreenState extends ConsumerState<ReportesScreen> {
               setState(() => _formato = seleccion.first);
             },
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.sm),
           Text(
             _formato == ReporteFormato.csv
                 ? 'Ideal para planillas (Excel, Google Sheets).'
@@ -121,28 +120,46 @@ class _ReportesScreenState extends ConsumerState<ReportesScreen> {
           ),
           if (estado.error != null)
             Padding(
-              padding: const EdgeInsets.only(top: 16),
-              child: Text(
-                failureMessage(estado.error!),
-                style: TextStyle(color: theme.colorScheme.error),
-              ),
+              padding: const EdgeInsets.only(top: AppSpacing.lg),
+              child: NeoErrorBand(message: failureMessage(estado.error!)),
             ),
           if (estado.archivo != null)
             Padding(
-              padding: const EdgeInsets.only(top: 16),
-              child: Text(
-                'Archivo listo: ${estado.archivo!.nombre}',
-                style: TextStyle(color: theme.colorScheme.primary),
+              padding: const EdgeInsets.only(top: AppSpacing.lg),
+              child: NeoSurface(
+                density: AppDensity.table,
+                color: theme.extension<SaveUpColors>()!.success,
+                child: Row(
+                  children: <Widget>[
+                    const Icon(
+                      Icons.check_circle_outline,
+                      size: 18,
+                      color: AppColors.ink,
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    Expanded(
+                      child: Text(
+                        'Archivo listo: ${estado.archivo!.nombre}',
+                        style: AppTypography.text(
+                          size: 13,
+                          weight: FontWeight.w600,
+                          color: AppColors.ink,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-          const SizedBox(height: 24),
+          const SizedBox(height: AppSpacing.xl),
           if (estado.enviando)
             const LinearProgressIndicator()
           else
-            FilledButton.icon(
+            NeoButton(
               onPressed: _exportar,
-              icon: const Icon(Icons.file_download_outlined),
-              label: const Text('Exportar'),
+              icon: Icons.file_download_outlined,
+              label: 'Exportar',
+              expanded: true,
             ),
         ],
       ),
@@ -177,14 +194,14 @@ class _ReportesScreenState extends ConsumerState<ReportesScreen> {
       return;
     }
     final ReporteArchivo? archivo = ref.read(reporteExportProvider).archivo;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          failure == null
-              ? 'Reporte listo: ${archivo?.nombre ?? 'archivo'}'
-              : failureMessage(failure),
-        ),
-      ),
+    NeoSnackbar.show(
+      context,
+      failure == null
+          ? 'Reporte listo: ${archivo?.nombre ?? 'archivo'}'
+          : failureMessage(failure),
+      tone: failure == null
+          ? NeoSnackbarTone.success
+          : NeoSnackbarTone.danger,
     );
   }
 }

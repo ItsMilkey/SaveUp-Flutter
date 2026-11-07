@@ -2,6 +2,7 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/design_system/design_system.dart';
 import '../../../../core/money/money.dart';
 import '../../../../core/time/calendar_date.dart';
 import '../../domain/meta_ahorro.dart';
@@ -72,68 +73,69 @@ class _MetaFormScreenState extends ConsumerState<MetaFormScreen> {
       _ => null,
     };
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.esEdicion ? 'Editar meta' : 'Nueva meta'),
+    return NeoScaffold(
+      appBar: NeoAppBar(
+        title: widget.esEdicion ? 'Editar meta' : 'Nueva meta',
       ),
       body: SafeArea(
         child: Form(
           key: _formKey,
           autovalidateMode: AutovalidateMode.onUserInteraction,
           child: ListView(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.all(AppSpacing.lg),
             children: <Widget>[
               if (ui is MetaFormError)
-                _error(context, ui.message)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: AppSpacing.md),
+                  child: NeoErrorBand(message: ui.message),
+                )
               else if (ui is MetaFormFieldErrors && ui.global != null)
-                _error(context, ui.global!),
-              TextFormField(
+                Padding(
+                  padding: const EdgeInsets.only(bottom: AppSpacing.md),
+                  child: NeoErrorBand(message: ui.global!),
+                ),
+              NeoInput(
                 controller: _nombre,
                 textInputAction: TextInputAction.next,
                 validator: (String? v) =>
                     (v == null || v.trim().isEmpty) ? 'Ponle un nombre.' : null,
-                decoration: InputDecoration(
-                  labelText: 'Nombre',
-                  prefixIcon: const Icon(Icons.label_outline),
-                  errorText: errorFor('nombre'),
-                ),
+                label: 'Nombre',
+                prefixIcon: Icons.label_outline,
+                error: errorFor('nombre'),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: AppSpacing.md),
               if (_esPorDefecto)
-                Card(
+                NeoSurface(
+                  density: AppDensity.list,
                   color: theme.colorScheme.surfaceContainerHighest,
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Text(
-                      'La meta base no tiene objetivo ni fecha: solo puedes '
-                      'cambiar su nombre.',
-                      style: theme.textTheme.bodySmall,
-                    ),
+                  child: Text(
+                    'La meta base no tiene objetivo ni fecha: solo puedes '
+                    'cambiar su nombre.',
+                    style: theme.textTheme.bodySmall,
                   ),
                 )
               else ...<Widget>[
-                TextFormField(
+                NeoInput(
                   controller: _montoObjetivo,
                   keyboardType: const TextInputType.numberWithOptions(
                     decimal: true,
                   ),
                   validator: _validarMonto,
-                  decoration: InputDecoration(
-                    labelText: 'Monto objetivo',
-                    prefixText: r'$ ',
-                    prefixIcon: const Icon(Icons.flag_outlined),
-                    errorText: errorFor('montoObjetivo'),
-                  ),
+                  label: 'Monto objetivo',
+                  prefixIcon: Icons.flag_outlined,
+                  error: errorFor('montoObjetivo'),
                 ),
-                const SizedBox(height: 12),
-                OutlinedButton.icon(
-                  icon: const Icon(Icons.event, size: 18),
-                  label: Text(
-                    _fechaLimite == null
+                const SizedBox(height: AppSpacing.md),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: NeoButton(
+                    icon: Icons.event,
+                    label: _fechaLimite == null
                         ? 'Fecha límite (opcional)'
                         : 'Fecha límite: $_fechaLimite',
+                    variant: NeoButtonVariant.secondary,
+                    onPressed: _elegirFecha,
                   ),
-                  onPressed: _elegirFecha,
                 ),
                 if (_fechaLimite != null)
                   Align(
@@ -147,23 +149,18 @@ class _MetaFormScreenState extends ConsumerState<MetaFormScreen> {
                     ),
                   ),
                 if (_errorFecha != null)
-                  Text(
-                    _errorFecha!,
-                    style: TextStyle(color: theme.colorScheme.error),
-                  ),
+                  NeoErrorBand(message: _errorFecha!),
                 if (errorFor('fechaLimite') != null)
-                  Text(
-                    errorFor('fechaLimite')!,
-                    style: TextStyle(color: theme.colorScheme.error),
-                  ),
+                  NeoErrorBand(message: errorFor('fechaLimite')!),
               ],
-              const SizedBox(height: 24),
+              const SizedBox(height: AppSpacing.xl),
               if (enviando)
                 const LinearProgressIndicator()
               else
-                FilledButton(
+                NeoButton(
+                  label: 'Guardar meta',
+                  expanded: true,
                   onPressed: _guardar,
-                  child: const Text('Guardar meta'),
                 ),
             ],
           ),
@@ -247,15 +244,5 @@ class _MetaFormScreenState extends ConsumerState<MetaFormScreen> {
     final DateTime ahora = DateTime.now();
     final CalendarDate hoy = CalendarDate(ahora.year, ahora.month, ahora.day);
     return fecha.compareTo(hoy) > 0;
-  }
-
-  Widget _error(BuildContext context, String mensaje) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Text(
-        mensaje,
-        style: TextStyle(color: Theme.of(context).colorScheme.error),
-      ),
-    );
   }
 }

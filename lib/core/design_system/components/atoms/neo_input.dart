@@ -22,6 +22,7 @@ class NeoInput extends StatelessWidget {
     this.enabled = true,
     this.autofocus = false,
     this.errorMaxLines,
+    this.maxLength,
   });
 
   final TextEditingController? controller;
@@ -42,6 +43,7 @@ class NeoInput extends StatelessWidget {
   final bool enabled;
   final bool autofocus;
   final int? errorMaxLines;
+  final int? maxLength;
 
   @override
   Widget build(BuildContext context) {
@@ -57,6 +59,7 @@ class NeoInput extends StatelessWidget {
       validator: validator,
       enabled: enabled,
       autofocus: autofocus,
+      maxLength: maxLength,
       decoration: InputDecoration(
         labelText: label,
         hintText: hint,

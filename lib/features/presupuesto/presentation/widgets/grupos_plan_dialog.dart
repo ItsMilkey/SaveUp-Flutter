@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/design_system/design_system.dart';
 import '../../../../core/errors/app_failure.dart';
 import '../../../../core/errors/failure_messages.dart';
 import '../../domain/plan_mensual.dart';
@@ -14,84 +15,82 @@ class GruposPlanDialog extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final AsyncValue<List<GrupoPlan>> grupos = ref.watch(gruposPlanProvider);
 
-    return AlertDialog(
-      title: const Text('Grupos del plan'),
-      content: SizedBox(
+    return NeoDialog(
+      title: 'Grupos del plan',
+      actions: <Widget>[
+        NeoButton(
+          label: 'Cerrar',
+          variant: NeoButtonVariant.secondary,
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+      ],
+      child: SizedBox(
         width: 420,
         height: 380,
         child: grupos.when(
-          loading: () => const Center(
-            child: CircularProgressIndicator.adaptive(),
+          loading: () => const NeoLoading(rows: 2),
+          error: (Object error, StackTrace stack) => NeoErrorState(
+            message: error is AppFailure
+                ? failureMessage(error)
+                : 'No se pudieron cargar los grupos.',
+            onRetry: () => ref.read(gruposPlanProvider.notifier).refrescar(),
           ),
-          error: (Object error, StackTrace stack) => Center(
+          data: (List<GrupoPlan> lista) => Material(
+            type: MaterialType.transparency,
             child: Column(
-              mainAxisSize: MainAxisSize.min,
               children: <Widget>[
-                Text(
-                  error is AppFailure
-                      ? failureMessage(error)
-                      : 'No se pudieron cargar los grupos.',
+                Expanded(
+                  child: lista.isEmpty
+                      ? const Center(
+                          child: Text('Todavía no hay grupos.'),
+                        )
+                      : ListView.separated(
+                          itemCount: lista.length,
+                          separatorBuilder: (_, _) =>
+                              const SizedBox(height: AppSpacing.sm),
+                          itemBuilder: (BuildContext context, int index) {
+                            final GrupoPlan grupo = lista[index];
+                            return NeoListItem(
+                              density: AppDensity.list,
+                              title: grupo.nombre,
+                              subtitle: 'Orden ${grupo.orden}',
+                              trailing: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: <Widget>[
+                                  NeoIconButton(
+                                    icon: Icons.edit_outlined,
+                                    tooltip: 'Renombrar',
+                                    variant: NeoIconButtonVariant.ghost,
+                                    onPressed: () =>
+                                        _editar(context, ref, grupo),
+                                  ),
+                                  NeoIconButton(
+                                    icon: Icons.delete_outline,
+                                    tooltip: 'Eliminar grupo',
+                                    variant: NeoIconButtonVariant.ghost,
+                                    onPressed: () =>
+                                        _eliminar(context, ref, grupo),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
                 ),
-                TextButton(
-                  onPressed: () =>
-                      ref.read(gruposPlanProvider.notifier).refrescar(),
-                  child: const Text('Reintentar'),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: NeoButton(
+                    icon: Icons.add,
+                    label: 'Nuevo grupo',
+                    variant: NeoButtonVariant.secondary,
+                    onPressed: () => _crear(context, ref),
+                  ),
                 ),
               ],
             ),
           ),
-          data: (List<GrupoPlan> lista) => Column(
-            children: <Widget>[
-              Expanded(
-                child: lista.isEmpty
-                    ? const Center(
-                        child: Text('Todavía no hay grupos.'),
-                      )
-                    : ListView.builder(
-                        itemCount: lista.length,
-                        itemBuilder: (BuildContext context, int index) {
-                          final GrupoPlan grupo = lista[index];
-                          return ListTile(
-                            dense: true,
-                            title: Text(grupo.nombre),
-                            subtitle: Text('Orden ${grupo.orden}'),
-                            trailing: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: <Widget>[
-                                IconButton(
-                                  icon: const Icon(Icons.edit_outlined),
-                                  tooltip: 'Renombrar',
-                                  onPressed: () => _editar(context, ref, grupo),
-                                ),
-                                IconButton(
-                                  icon: const Icon(Icons.delete_outline),
-                                  tooltip: 'Eliminar grupo',
-                                  onPressed: () => _eliminar(context, ref, grupo),
-                                ),
-                              ],
-                            ),
-                          );
-                        },
-                      ),
-              ),
-              Align(
-                alignment: Alignment.centerRight,
-                child: TextButton.icon(
-                  icon: const Icon(Icons.add),
-                  label: const Text('Nuevo grupo'),
-                  onPressed: () => _crear(context, ref),
-                ),
-              ),
-            ],
-          ),
         ),
       ),
-      actions: <Widget>[
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cerrar'),
-        ),
-      ],
     );
   }
 
@@ -136,28 +135,12 @@ class GruposPlanDialog extends ConsumerWidget {
     WidgetRef ref,
     GrupoPlan grupo,
   ) async {
-    final bool? confirmado = await showDialog<bool>(
-      context: context,
-      builder: (BuildContext dialogContext) => AlertDialog(
-        title: Text('¿Eliminar «${grupo.nombre}»?'),
-        content: const Text(
-          'Las partidas del grupo quedarán sin grupo (no se borran).',
-        ),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('Cancelar'),
-          ),
-          FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.error,
-              foregroundColor: Theme.of(context).colorScheme.onError,
-            ),
-            onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text('Eliminar'),
-          ),
-        ],
-      ),
+    final bool? confirmado = await NeoConfirmDialog.show(
+      context,
+      title: '¿Eliminar «${grupo.nombre}»?',
+      message: 'Las partidas del grupo quedarán sin grupo (no se borran).',
+      confirmLabel: 'Eliminar',
+      destructive: true,
     );
     if (confirmado != true) {
       return;
@@ -181,23 +164,16 @@ class GruposPlanDialog extends ConsumerWidget {
     );
     final String? resultado = await showDialog<String>(
       context: context,
-      builder: (BuildContext dialogContext) => AlertDialog(
-        title: Text(titulo),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          maxLength: 60,
-          decoration: const InputDecoration(
-            labelText: 'Nombre',
-            helperText: 'Entre 1 y 60 caracteres',
-          ),
-        ),
+      builder: (BuildContext dialogContext) => NeoDialog(
+        title: titulo,
         actions: <Widget>[
-          TextButton(
+          NeoButton(
+            label: 'Cancelar',
+            variant: NeoButtonVariant.secondary,
             onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text('Cancelar'),
           ),
-          FilledButton(
+          NeoButton(
+            label: 'Guardar',
             onPressed: () {
               final String valor = controller.text.trim();
               if (valor.isEmpty) {
@@ -205,9 +181,15 @@ class GruposPlanDialog extends ConsumerWidget {
               }
               Navigator.of(dialogContext).pop(valor);
             },
-            child: const Text('Guardar'),
           ),
         ],
+        child: NeoInput(
+          controller: controller,
+          autofocus: true,
+          maxLength: 60,
+          label: 'Nombre',
+          helper: 'Entre 1 y 60 caracteres',
+        ),
       ),
     );
     // El diálogo interno sigue en su animación de salida cuando `showDialog`
@@ -222,8 +204,10 @@ class GruposPlanDialog extends ConsumerWidget {
     if (failure == null) {
       return;
     }
-    ScaffoldMessenger.of(
+    NeoSnackbar.show(
       context,
-    ).showSnackBar(SnackBar(content: Text(failureMessage(failure))));
+      failureMessage(failure),
+      tone: NeoSnackbarTone.danger,
+    );
   }
 }

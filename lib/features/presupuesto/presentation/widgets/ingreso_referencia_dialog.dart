@@ -1,7 +1,7 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
+import '../../../../core/design_system/design_system.dart';
 import '../../../../core/money/money.dart';
 
 /// Resultado del diálogo de ingreso de referencia: [monto] nulo = quitarlo.
@@ -52,22 +52,43 @@ class _IngresoReferenciaDialogState extends State<IngresoReferenciaDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: const Text('Ingreso de referencia'),
-      content: Form(
+    return NeoDialog(
+      title: 'Ingreso de referencia',
+      actions: <Widget>[
+        NeoButton(
+          label: 'Cancelar',
+          variant: NeoButtonVariant.secondary,
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        NeoButton(
+          label: 'Quitar',
+          variant: NeoButtonVariant.ghost,
+          onPressed: () =>
+              Navigator.of(context).pop(const IngresoReferenciaValor(null)),
+        ),
+        NeoButton(
+          label: 'Guardar',
+          onPressed: () {
+            if (!(_formKey.currentState?.validate() ?? false)) {
+              return;
+            }
+            Navigator.of(context).pop(
+              IngresoReferenciaValor(Money.parseUserInput(_monto.text)),
+            );
+          },
+        ),
+      ],
+      child: Form(
         key: _formKey,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            TextFormField(
+            NeoInput(
               controller: _monto,
               autofocus: true,
               keyboardType: const TextInputType.numberWithOptions(
                 decimal: true,
               ),
-              inputFormatters: <TextInputFormatter>[
-                FilteringTextInputFormatter.allow(RegExp(r'[0-9.,\s$]')),
-              ],
               validator: (String? value) {
                 final String text = value?.trim() ?? '';
                 if (text.isEmpty) {
@@ -83,12 +104,10 @@ class _IngresoReferenciaDialogState extends State<IngresoReferenciaDialog> {
                 }
                 return null;
               },
-              decoration: const InputDecoration(
-                labelText: 'Ingreso mensual',
-                prefixIcon: Icon(Icons.attach_money),
-              ),
+              label: 'Ingreso mensual',
+              prefixIcon: Icons.attach_money,
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.sm),
             const Text(
               'Se usa para calcular el remanente y el margen de seguridad.',
               style: TextStyle(fontSize: 12),
@@ -96,28 +115,6 @@ class _IngresoReferenciaDialogState extends State<IngresoReferenciaDialog> {
           ],
         ),
       ),
-      actions: <Widget>[
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancelar'),
-        ),
-        TextButton(
-          onPressed: () =>
-              Navigator.of(context).pop(const IngresoReferenciaValor(null)),
-          child: const Text('Quitar'),
-        ),
-        FilledButton(
-          onPressed: () {
-            if (!(_formKey.currentState?.validate() ?? false)) {
-              return;
-            }
-            Navigator.of(context).pop(
-              IngresoReferenciaValor(Money.parseUserInput(_monto.text)),
-            );
-          },
-          child: const Text('Guardar'),
-        ),
-      ],
     );
   }
 }

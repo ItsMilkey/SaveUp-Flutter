@@ -2,6 +2,7 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/design_system/design_system.dart';
 import '../../../../core/errors/app_failure.dart';
 import '../../../../core/errors/failure_messages.dart';
 import '../../../../core/money/money.dart';
@@ -107,9 +108,21 @@ class _PartidaFormDialogState extends ConsumerState<PartidaFormDialog> {
     );
     final AsyncValue<List<GrupoPlan>> grupos = ref.watch(gruposPlanProvider);
 
-    return AlertDialog(
-      title: Text(widget.esEdicion ? 'Editar partida' : 'Nueva partida'),
-      content: SizedBox(
+    return NeoDialog(
+      title: widget.esEdicion ? 'Editar partida' : 'Nueva partida',
+      actions: <Widget>[
+        NeoButton(
+          label: 'Cancelar',
+          variant: NeoButtonVariant.secondary,
+          onPressed: _guardando ? null : () => Navigator.of(context).pop(false),
+        ),
+        NeoButton(
+          label: 'Guardar',
+          loading: _guardando,
+          onPressed: _guardando ? null : _guardar,
+        ),
+      ],
+      child: SizedBox(
         width: 420,
         child: Form(
           key: _formKey,
@@ -120,18 +133,12 @@ class _PartidaFormDialogState extends ConsumerState<PartidaFormDialog> {
               children: <Widget>[
                 if (_error != null)
                   Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: Text(
-                      _error!,
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.error,
-                      ),
-                    ),
+                    padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                    child: NeoErrorBand(message: _error!),
                   ),
-                TextFormField(
+                NeoInput(
                   controller: _nombre,
                   autofocus: !widget.esEdicion,
-                  maxLength: 80,
                   onChanged: (_) {
                     if (!widget.esEdicion) {
                       ref
@@ -149,12 +156,10 @@ class _PartidaFormDialogState extends ConsumerState<PartidaFormDialog> {
                     }
                     return null;
                   },
-                  decoration: const InputDecoration(
-                    labelText: 'Nombre',
-                    prefixIcon: Icon(Icons.label_outline),
-                  ),
+                  label: 'Nombre',
+                  prefixIcon: Icons.label_outline,
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: AppSpacing.sm),
                 if (_vinculada)
                   InputDecorator(
                     decoration: const InputDecoration(
@@ -169,7 +174,7 @@ class _PartidaFormDialogState extends ConsumerState<PartidaFormDialog> {
                 else
                   _selectorCategoria(categorias),
                 if (!_vinculada && _sugerencias.isNotEmpty) ...<Widget>[
-                  const SizedBox(height: 6),
+                  const SizedBox(height: AppSpacing.xs),
                   Text(
                     _ambigua
                         ? 'Hay más de una categoría posible: elige la correcta.'
@@ -177,7 +182,7 @@ class _PartidaFormDialogState extends ConsumerState<PartidaFormDialog> {
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                   Wrap(
-                    spacing: 8,
+                    spacing: AppSpacing.sm,
                     children: <Widget>[
                       for (final SugerenciaCategoria s in _sugerencias)
                         ChoiceChip(
@@ -192,8 +197,8 @@ class _PartidaFormDialogState extends ConsumerState<PartidaFormDialog> {
                   ),
                 ],
                 if (!widget.esEdicion) ...<Widget>[
-                  const SizedBox(height: 8),
-                  TextFormField(
+                  const SizedBox(height: AppSpacing.sm),
+                  NeoInput(
                     controller: _monto,
                     keyboardType: const TextInputType.numberWithOptions(
                       decimal: true,
@@ -212,13 +217,11 @@ class _PartidaFormDialogState extends ConsumerState<PartidaFormDialog> {
                       }
                       return null;
                     },
-                    decoration: const InputDecoration(
-                      labelText: 'Monto planificado',
-                      prefixIcon: Icon(Icons.attach_money),
-                    ),
+                    label: 'Monto planificado',
+                    prefixIcon: Icons.attach_money,
                   ),
                 ],
-                const SizedBox(height: 8),
+                const SizedBox(height: AppSpacing.sm),
                 grupos.when(
                   loading: () => const LinearProgressIndicator(),
                   error: (Object error, StackTrace stack) => Text(
@@ -253,22 +256,6 @@ class _PartidaFormDialogState extends ConsumerState<PartidaFormDialog> {
           ),
         ),
       ),
-      actions: <Widget>[
-        TextButton(
-          onPressed: _guardando ? null : () => Navigator.of(context).pop(false),
-          child: const Text('Cancelar'),
-        ),
-        FilledButton(
-          onPressed: _guardando ? null : _guardar,
-          child: _guardando
-              ? const SizedBox(
-                  width: 18,
-                  height: 18,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : const Text('Guardar'),
-        ),
-      ],
     );
   }
 

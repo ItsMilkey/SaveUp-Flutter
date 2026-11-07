@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:saveup_app/core/design_system/design_system.dart';
 import 'package:saveup_app/core/errors/app_failure.dart';
 import 'package:saveup_app/features/reportes/data/dio_reportes_repository.dart';
 import 'package:saveup_app/features/reportes/data/reporte_sharer.dart';
@@ -20,7 +21,10 @@ Future<void> montar(
         reportesRepositoryProvider.overrideWithValue(repo),
         reporteSharerProvider.overrideWithValue(sharer),
       ],
-      child: const MaterialApp(home: ReportesScreen()),
+      child: MaterialApp(
+        theme: SaveUpTheme.light(),
+        home: const ReportesScreen(),
+      ),
     ),
   );
   await tester.pumpAndSettle();

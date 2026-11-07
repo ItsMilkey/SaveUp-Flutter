@@ -2,6 +2,7 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:saveup_app/core/design_system/design_system.dart';
 import 'package:saveup_app/features/presupuesto/data/dio_plan_mensual_repository.dart';
 import 'package:saveup_app/features/presupuesto/domain/plan_calculo.dart';
 import 'package:saveup_app/features/presupuesto/domain/plan_mensual.dart';
@@ -98,7 +99,10 @@ Future<void> montar(
   await tester.pumpWidget(
     ProviderScope(
       overrides: [planMensualRepositoryProvider.overrideWithValue(repo)],
-      child: const MaterialApp(home: PlanScreen()),
+      child: MaterialApp(
+        theme: SaveUpTheme.light(),
+        home: const PlanScreen(),
+      ),
     ),
   );
   await tester.pumpAndSettle();

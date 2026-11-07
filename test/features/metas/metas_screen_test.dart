@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:saveup_app/core/design_system/design_system.dart';
 import 'package:saveup_app/features/metas/data/dio_metas_repository.dart';
 import 'package:saveup_app/features/metas/domain/meta_ahorro.dart';
 import 'package:saveup_app/features/metas/presentation/screens/metas_screen.dart';
@@ -18,7 +19,10 @@ Future<void> montar(
         metasRepositoryProvider.overrideWithValue(repo),
         movimientosProvider.overrideWith(FakeMovimientosController.new),
       ],
-      child: const MaterialApp(home: MetasScreen()),
+      child: MaterialApp(
+        theme: SaveUpTheme.light(),
+        home: const MetasScreen(),
+      ),
     ),
   );
   await tester.pumpAndSettle();

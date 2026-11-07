@@ -2,6 +2,7 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/design_system/design_system.dart';
 import '../../../../core/money/money.dart';
 import '../../domain/plan_mensual.dart';
 import '../controllers/plan_mensual_controller.dart';
@@ -48,9 +49,11 @@ class PartidaMontoSlider extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
               Text(partida.nombre, style: theme.textTheme.titleSmall),
-              Text(
-                estadoPlanLabel(partida.estado),
-                style: theme.textTheme.bodySmall?.copyWith(color: color),
+              const SizedBox(height: 2),
+              NeoBadge(
+                label: estadoPlanLabel(partida.estado),
+                color: color,
+                compact: true,
               ),
             ],
           ),
@@ -69,21 +72,21 @@ class PartidaMontoSlider extends ConsumerWidget {
           ],
         ),
         if (onEditar != null || onEliminar != null)
-          Column(
+          Row(
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
               if (onEditar != null)
-                IconButton(
-                  visualDensity: VisualDensity.compact,
-                  icon: const Icon(Icons.edit_outlined, size: 20),
+                NeoIconButton(
+                  icon: Icons.edit_outlined,
                   tooltip: 'Editar partida',
+                  variant: NeoIconButtonVariant.ghost,
                   onPressed: onEditar,
                 ),
               if (onEliminar != null)
-                IconButton(
-                  visualDensity: VisualDensity.compact,
-                  icon: const Icon(Icons.delete_outline, size: 20),
+                NeoIconButton(
+                  icon: Icons.delete_outline,
                   tooltip: 'Eliminar partida',
+                  variant: NeoIconButtonVariant.ghost,
                   onPressed: onEliminar,
                 ),
             ],
@@ -92,46 +95,41 @@ class PartidaMontoSlider extends ConsumerWidget {
     );
 
     if (partida.vinculadaADeuda) {
-      return Card(
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              encabezado,
-              const SizedBox(height: 6),
-              Row(
-                children: <Widget>[
-                  const Icon(Icons.link, size: 16),
-                  const SizedBox(width: 4),
-                  Expanded(
-                    child: Text(
-                      'El monto lo define la cuota de la deuda.',
-                      style: theme.textTheme.bodySmall,
-                    ),
-                  ),
-                  if (partida.estadoCuota != null)
-                    Chip(
-                      label: Text(
-                        estadoCuotaPlanLabel(partida.estadoCuota),
-                        style: const TextStyle(fontSize: 11),
-                      ),
-                      visualDensity: VisualDensity.compact,
-                    ),
-                ],
-              ),
-              if (partida.vinculoDesactualizado)
-                Padding(
-                  padding: const EdgeInsets.only(top: 4),
+      return NeoSurface(
+        density: AppDensity.list,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            encabezado,
+            const SizedBox(height: AppSpacing.xs),
+            Row(
+              children: <Widget>[
+                const Icon(Icons.link, size: 16),
+                const SizedBox(width: AppSpacing.xs),
+                Expanded(
                   child: Text(
-                    'El vínculo ya no calcula; se muestra el último monto.',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.error,
-                    ),
+                    'El monto lo define la cuota de la deuda.',
+                    style: theme.textTheme.bodySmall,
                   ),
                 ),
-            ],
-          ),
+                if (partida.estadoCuota != null)
+                  NeoBadge(
+                    label: estadoCuotaPlanLabel(partida.estadoCuota),
+                    compact: true,
+                  ),
+              ],
+            ),
+            if (partida.vinculoDesactualizado)
+              Padding(
+                padding: const EdgeInsets.only(top: AppSpacing.xs),
+                child: Text(
+                  'El vínculo ya no calcula; se muestra el último monto.',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.error,
+                  ),
+                ),
+              ),
+          ],
         ),
       );
     }
@@ -147,42 +145,40 @@ class PartidaMontoSlider extends ConsumerWidget {
       maximo = actual + 1000;
     }
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            encabezado,
-            Slider(
-              value: actual.clamp(0, maximo),
-              max: maximo,
-              onChanged: (double value) => ref
-                  .read(planMensualProvider.notifier)
-                  .moverPartida(
-                    partidaId,
-                    Decimal.parse(value.round().toString()),
-                  ),
-              onChangeEnd: (_) =>
-                  ref.read(planMensualProvider.notifier).soltar(),
-            ),
-            Row(
-              children: <Widget>[
-                Expanded(
-                  child: Text(
-                    'Diferencia ${Money.formatClp(partida.diferencia)}',
-                    style: theme.textTheme.bodySmall,
-                  ),
+    return NeoSurface(
+      density: AppDensity.list,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          encabezado,
+          Slider(
+            value: actual.clamp(0, maximo),
+            max: maximo,
+            onChanged: (double value) => ref
+                .read(planMensualProvider.notifier)
+                .moverPartida(
+                  partidaId,
+                  Decimal.parse(value.round().toString()),
                 ),
-                if (partida.porcentajeUsado != null)
-                  Text(
-                    '${partida.porcentajeUsado} % usado',
-                    style: theme.textTheme.bodySmall,
-                  ),
-              ],
-            ),
-          ],
-        ),
+            onChangeEnd: (_) =>
+                ref.read(planMensualProvider.notifier).soltar(),
+          ),
+          Row(
+            children: <Widget>[
+              Expanded(
+                child: Text(
+                  'Diferencia ${Money.formatClp(partida.diferencia)}',
+                  style: theme.textTheme.bodySmall,
+                ),
+              ),
+              if (partida.porcentajeUsado != null)
+                Text(
+                  '${partida.porcentajeUsado} % usado',
+                  style: theme.textTheme.bodySmall,
+                ),
+            ],
+          ),
+        ],
       ),
     );
   }

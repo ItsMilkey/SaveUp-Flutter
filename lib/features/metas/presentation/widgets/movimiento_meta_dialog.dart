@@ -1,6 +1,7 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 
+import '../../../../core/design_system/design_system.dart';
 import '../../../../core/money/money.dart';
 import '../../domain/meta_ahorro.dart';
 
@@ -102,13 +103,22 @@ class _MovimientoMetaDialogState extends State<MovimientoMetaDialog> {
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
-    return AlertDialog(
-      title: Text(
-        _esAbono
-            ? 'Abonar a ${widget.meta.nombre}'
-            : 'Retirar de ${widget.meta.nombre}',
-      ),
-      content: SingleChildScrollView(
+    return NeoDialog(
+      title: _esAbono
+          ? 'Abonar a ${widget.meta.nombre}'
+          : 'Retirar de ${widget.meta.nombre}',
+      actions: <Widget>[
+        NeoButton(
+          label: 'Cancelar',
+          variant: NeoButtonVariant.secondary,
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        NeoButton(
+          label: _esAbono ? 'Abonar' : 'Retirar',
+          onPressed: _confirmar,
+        ),
+      ],
+      child: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -117,41 +127,25 @@ class _MovimientoMetaDialogState extends State<MovimientoMetaDialog> {
               'Ahorrado: ${Money.formatClp(widget.meta.montoActual)}',
               style: theme.textTheme.bodySmall,
             ),
-            const SizedBox(height: 12),
-            TextField(
+            const SizedBox(height: AppSpacing.md),
+            NeoInput(
               controller: _monto,
               autofocus: true,
               keyboardType: const TextInputType.numberWithOptions(
                 decimal: true,
               ),
-              decoration: InputDecoration(
-                labelText: 'Monto',
-                prefixText: r'$ ',
-                errorText: _errorMonto,
-              ),
-              onSubmitted: (_) => _confirmar(),
+              label: 'Monto',
+              error: _errorMonto,
             ),
-            const SizedBox(height: 12),
-            TextField(
+            const SizedBox(height: AppSpacing.md),
+            NeoInput(
               controller: _descripcion,
-              decoration: InputDecoration(
-                labelText: 'Descripción',
-                errorText: _errorDescripcion,
-              ),
+              label: 'Descripción',
+              error: _errorDescripcion,
             ),
           ],
         ),
       ),
-      actions: <Widget>[
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancelar'),
-        ),
-        FilledButton(
-          onPressed: _confirmar,
-          child: Text(_esAbono ? 'Abonar' : 'Retirar'),
-        ),
-      ],
     );
   }
 }

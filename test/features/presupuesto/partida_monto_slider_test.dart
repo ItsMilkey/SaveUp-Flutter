@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:saveup_app/core/design_system/design_system.dart';
 import 'package:saveup_app/features/presupuesto/data/dio_plan_mensual_repository.dart';
 import 'package:saveup_app/features/presupuesto/domain/plan_calculo.dart';
 import 'package:saveup_app/features/presupuesto/domain/plan_mensual.dart';
@@ -39,6 +40,7 @@ void main() {
       UncontrolledProviderScope(
         container: container,
         child: MaterialApp(
+          theme: SaveUpTheme.light(),
           home: Scaffold(
             body: Column(
               children: <Widget>[
@@ -115,8 +117,9 @@ void main() {
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,
-        child: const MaterialApp(
-          home: Scaffold(
+        child: MaterialApp(
+          theme: SaveUpTheme.light(),
+          home: const Scaffold(
             body: PartidaMontoSlider(partidaId: 20),
           ),
         ),

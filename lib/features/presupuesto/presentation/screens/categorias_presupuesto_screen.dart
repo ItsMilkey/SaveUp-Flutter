@@ -2,6 +2,7 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/design_system/design_system.dart';
 import '../../../../core/errors/failure_messages.dart';
 import '../../../../core/money/money.dart';
 import '../../../movimientos/domain/categoria.dart';
@@ -39,9 +40,9 @@ class _CategoriasPresupuestoScreenState
   Widget build(BuildContext context) {
     return DefaultTabController(
       length: 2,
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Categorías'),
+      child: NeoScaffold(
+        appBar: NeoAppBar(
+          title: 'Categorías',
           bottom: const TabBar(
             tabs: <Widget>[
               Tab(text: 'Límites'),
@@ -71,21 +72,12 @@ class _LimitesTab extends ConsumerWidget {
     final ThemeData theme = Theme.of(context);
 
     if (estado.cargando && estado.categorias.isEmpty) {
-      return const Center(child: CircularProgressIndicator.adaptive());
+      return const NeoLoading(rows: 3);
     }
     if (estado.errorCarga != null) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            Text(failureMessage(estado.errorCarga!)),
-            const SizedBox(height: 8),
-            OutlinedButton(
-              onPressed: controller.cargar,
-              child: const Text('Reintentar'),
-            ),
-          ],
-        ),
+      return NeoErrorState(
+        message: failureMessage(estado.errorCarga!),
+        onRetry: controller.cargar,
       );
     }
 
@@ -113,51 +105,59 @@ class _LimitesTab extends ConsumerWidget {
           ),
           const SizedBox(height: 12),
           if (filas.isEmpty)
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Text(
-                  'Aún no hay límites configurados.',
-                  style: theme.textTheme.bodyMedium,
-                ),
+            NeoSurface(
+              density: AppDensity.list,
+              child: Text(
+                'Aún no hay límites configurados.',
+                style: theme.textTheme.bodyMedium,
               ),
             )
           else
-            for (final MapEntry<int, Decimal> fila in filas)
-              Card(
-                child: ListTile(
-                  title: Text(
-                    porId[fila.key]?.nombre ?? 'Categoría ${fila.key}',
-                  ),
-                  subtitle: Text(Money.formatClp(fila.value)),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: <Widget>[
-                      IconButton(
-                        icon: const Icon(Icons.edit_outlined),
-                        tooltip: 'Editar límite',
-                        onPressed: () => _editar(
-                          context,
-                          ref,
-                          categoriaId: fila.key,
-                        ),
+            for (final MapEntry<int, Decimal> fila in filas) ...<Widget>[
+              NeoListItem(
+                density: AppDensity.list,
+                title: porId[fila.key]?.nombre ?? 'Categoría ${fila.key}',
+                subtitle: Money.formatClp(fila.value),
+                onTap: () => _editar(
+                  context,
+                  ref,
+                  categoriaId: fila.key,
+                ),
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    NeoIconButton(
+                      icon: Icons.edit_outlined,
+                      tooltip: 'Editar límite',
+                      variant: NeoIconButtonVariant.ghost,
+                      onPressed: () => _editar(
+                        context,
+                        ref,
+                        categoriaId: fila.key,
                       ),
-                      IconButton(
-                        icon: const Icon(Icons.delete_outline),
-                        tooltip: 'Quitar límite',
-                        onPressed: () => controller.quitar(fila.key),
-                      ),
-                    ],
-                  ),
+                    ),
+                    NeoIconButton(
+                      icon: Icons.delete_outline,
+                      tooltip: 'Quitar límite',
+                      variant: NeoIconButtonVariant.ghost,
+                      onPressed: () => controller.quitar(fila.key),
+                    ),
+                  ],
                 ),
               ),
-          const SizedBox(height: 8),
+              const SizedBox(height: AppSpacing.sm),
+            ],
+          const SizedBox(height: AppSpacing.sm),
           if (estado.categorias.isNotEmpty &&
               estado.valores.length < estado.categorias.length)
-            OutlinedButton.icon(
-              icon: const Icon(Icons.add),
-              label: const Text('Agregar límite'),
-              onPressed: () => _editar(context, ref),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: NeoButton(
+                icon: Icons.add,
+                label: 'Agregar límite',
+                variant: NeoButtonVariant.secondary,
+                onPressed: () => _editar(context, ref),
+              ),
             )
           else if (estado.categorias.isEmpty)
             Text(
@@ -171,37 +171,52 @@ class _LimitesTab extends ConsumerWidget {
             ),
           if (estado.mensajeValidacion != null)
             Padding(
-              padding: const EdgeInsets.only(top: 12),
-              child: Text(
-                estado.mensajeValidacion!,
-                style: TextStyle(color: theme.colorScheme.error),
-              ),
+              padding: const EdgeInsets.only(top: AppSpacing.md),
+              child: NeoErrorBand(message: estado.mensajeValidacion!),
             ),
           if (estado.error != null)
             Padding(
-              padding: const EdgeInsets.only(top: 12),
-              child: Text(
-                failureMessage(estado.error!),
-                style: TextStyle(color: theme.colorScheme.error),
+              padding: const EdgeInsets.only(top: AppSpacing.md),
+              child: NeoErrorBand(
+                message: failureMessage(estado.error!),
               ),
             ),
           if (estado.guardado)
             Padding(
-              padding: const EdgeInsets.only(top: 12),
-              child: Text(
-                'Límites guardados.',
-                style: TextStyle(color: theme.colorScheme.primary),
+              padding: const EdgeInsets.only(top: AppSpacing.md),
+              child: NeoSurface(
+                density: AppDensity.table,
+                color: theme.extension<SaveUpColors>()!.success,
+                child: Row(
+                  children: <Widget>[
+                    const Icon(
+                      Icons.check_circle_outline,
+                      size: 18,
+                      color: AppColors.ink,
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    Text(
+                      'Límites guardados.',
+                      style: AppTypography.text(
+                        size: 13,
+                        weight: FontWeight.w600,
+                        color: AppColors.ink,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSpacing.lg),
           if (estado.guardando)
             const LinearProgressIndicator()
           else
-            FilledButton(
+            NeoButton(
+              label: 'Guardar límites',
+              expanded: true,
               onPressed: controller.guardar,
-              child: const Text('Guardar límites'),
             ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSpacing.lg),
           const _EjecucionCategorias(),
         ],
       ),
@@ -252,75 +267,72 @@ class _EjecucionCategorias extends ConsumerWidget {
       ejecucionCategoriasProvider,
     );
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Text(
-              'Ejecución por categoría (mes actual)',
-              style: theme.textTheme.titleSmall,
+    return NeoSurface(
+      density: AppDensity.section,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            'Ejecución por categoría (mes actual)',
+            style: theme.textTheme.titleSmall,
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          ejecucion.when(
+            loading: () => const Padding(
+              padding: EdgeInsets.symmetric(vertical: AppSpacing.sm),
+              child: LinearProgressIndicator(),
             ),
-            const SizedBox(height: 8),
-            ejecucion.when(
-              loading: () => const Padding(
-                padding: EdgeInsets.symmetric(vertical: 8),
-                child: LinearProgressIndicator(),
-              ),
-              error: (Object error, StackTrace stack) => Row(
-                children: <Widget>[
-                  Expanded(
-                    child: Text(
-                      'No se pudo cargar la ejecución por categoría.',
-                      style: theme.textTheme.bodySmall,
-                    ),
-                  ),
-                  TextButton(
-                    onPressed: () =>
-                        ref.invalidate(ejecucionCategoriasProvider),
-                    child: const Text('Reintentar'),
-                  ),
-                ],
-              ),
-              data: (List<EjecucionCategoria> lista) {
-                if (lista.isEmpty) {
-                  return Text(
-                    'Sin límites para ejecutar este mes.',
+            error: (Object error, StackTrace stack) => Row(
+              children: <Widget>[
+                Expanded(
+                  child: Text(
+                    'No se pudo cargar la ejecución por categoría.',
                     style: theme.textTheme.bodySmall,
-                  );
-                }
-                return Column(
-                  children: <Widget>[
-                    for (final EjecucionCategoria fila in lista)
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 4),
-                        child: Row(
-                          children: <Widget>[
-                            Expanded(child: Text(fila.categoria)),
-                            Text(
-                              '${Money.formatClp(fila.gastado)} / '
-                              '${Money.formatClp(fila.limite)}',
-                              style: theme.textTheme.bodySmall,
-                            ),
-                            const SizedBox(width: 8),
-                            Chip(
-                              label: Text(estadoPlanLabel(fila.estado)),
-                              labelStyle: TextStyle(
-                                color: estadoPlanColor(context, fila.estado),
-                                fontSize: 10,
-                              ),
-                              visualDensity: VisualDensity.compact,
-                            ),
-                          ],
-                        ),
-                      ),
-                  ],
-                );
-              },
+                  ),
+                ),
+                TextButton(
+                  onPressed: () =>
+                      ref.invalidate(ejecucionCategoriasProvider),
+                  child: const Text('Reintentar'),
+                ),
+              ],
             ),
-          ],
-        ),
+            data: (List<EjecucionCategoria> lista) {
+              if (lista.isEmpty) {
+                return Text(
+                  'Sin límites para ejecutar este mes.',
+                  style: theme.textTheme.bodySmall,
+                );
+              }
+              return Column(
+                children: <Widget>[
+                  for (final EjecucionCategoria fila in lista)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        vertical: AppSpacing.xs,
+                      ),
+                      child: Row(
+                        children: <Widget>[
+                          Expanded(child: Text(fila.categoria)),
+                          Text(
+                            '${Money.formatClp(fila.gastado)} / '
+                            '${Money.formatClp(fila.limite)}',
+                            style: theme.textTheme.bodySmall,
+                          ),
+                          const SizedBox(width: AppSpacing.sm),
+                          NeoBadge(
+                            label: estadoPlanLabel(fila.estado),
+                            color: estadoPlanColor(context, fila.estado),
+                            compact: true,
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
+              );
+            },
+          ),
+        ],
       ),
     );
   }
@@ -395,11 +407,17 @@ class _LimiteDialogState extends State<_LimiteDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Text(
-        widget.categoriaInicial == null ? 'Agregar límite' : 'Editar límite',
-      ),
-      content: Column(
+    return NeoDialog(
+      title: widget.categoriaInicial == null ? 'Agregar límite' : 'Editar límite',
+      actions: <Widget>[
+        NeoButton(
+          label: 'Cancelar',
+          variant: NeoButtonVariant.secondary,
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        NeoButton(label: 'Guardar', onPressed: _guardar),
+      ],
+      child: Column(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
           DropdownButtonFormField<int>(
@@ -416,27 +434,16 @@ class _LimiteDialogState extends State<_LimiteDialog> {
                 ? (int? value) => setState(() => _categoriaId = value)
                 : null,
           ),
-          const SizedBox(height: 12),
-          TextField(
+          const SizedBox(height: AppSpacing.md),
+          NeoInput(
             controller: _monto,
             autofocus: true,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            decoration: InputDecoration(
-              labelText: 'Límite mensual',
-              prefixText: r'$ ',
-              errorText: _error,
-            ),
-            onSubmitted: (_) => _guardar(),
+            label: 'Límite mensual',
+            error: _error,
           ),
         ],
       ),
-      actions: <Widget>[
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancelar'),
-        ),
-        FilledButton(onPressed: _guardar, child: const Text('Guardar')),
-      ],
     );
   }
 }
@@ -455,21 +462,12 @@ class _TiposTab extends ConsumerWidget {
     final ThemeData theme = Theme.of(context);
 
     if (estado.cargando && estado.preferencias.isEmpty) {
-      return const Center(child: CircularProgressIndicator.adaptive());
+      return const NeoLoading(rows: 3);
     }
     if (estado.errorCarga != null) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            Text(failureMessage(estado.errorCarga!)),
-            const SizedBox(height: 8),
-            OutlinedButton(
-              onPressed: controller.cargar,
-              child: const Text('Reintentar'),
-            ),
-          ],
-        ),
+      return NeoErrorState(
+        message: failureMessage(estado.errorCarga!),
+        onRetry: controller.cargar,
       );
     }
 
@@ -487,15 +485,15 @@ class _TiposTab extends ConsumerWidget {
           const SizedBox(height: 8),
           if (estado.error != null)
             Padding(
-              padding: const EdgeInsets.only(bottom: 8),
+              padding: const EdgeInsets.only(bottom: AppSpacing.sm),
               child: Row(
                 children: <Widget>[
                   Expanded(
-                    child: Text(
-                      failureMessage(estado.error!),
-                      style: TextStyle(color: theme.colorScheme.error),
+                    child: NeoErrorBand(
+                      message: failureMessage(estado.error!),
                     ),
                   ),
+                  const SizedBox(width: AppSpacing.sm),
                   TextButton(
                     onPressed: controller.limpiarError,
                     child: const Text('Cerrar'),
@@ -504,12 +502,15 @@ class _TiposTab extends ConsumerWidget {
               ),
             ),
           for (final PreferenciaCategoria preferencia in estado.preferencias)
-            _FilaPreferencia(
-              preferencia: preferencia,
-              guardando: estado.guardando.contains(preferencia.id),
-              onEstablecer: (TipoPresupuesto tipo) =>
-                  controller.establecer(preferencia.id, tipo),
-              onQuitar: () => controller.quitar(preferencia.id),
+            Padding(
+              padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+              child: _FilaPreferencia(
+                preferencia: preferencia,
+                guardando: estado.guardando.contains(preferencia.id),
+                onEstablecer: (TipoPresupuesto tipo) =>
+                    controller.establecer(preferencia.id, tipo),
+                onQuitar: () => controller.quitar(preferencia.id),
+              ),
             ),
         ],
       ),
@@ -536,67 +537,65 @@ class _FilaPreferencia extends StatelessWidget {
     final String subtitulo =
         'Por defecto: ${tipoPresupuestoLabel(preferencia.tipoPorDefecto)} · '
         'Efectivo: ${tipoPresupuestoLabel(preferencia.tipoEfectivo)}';
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Row(
-              children: <Widget>[
-                Expanded(
-                  child: Text(
-                    preferencia.nombre,
-                    style: theme.textTheme.titleSmall,
-                  ),
+    return NeoSurface(
+      density: AppDensity.list,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              Expanded(
+                child: Text(
+                  preferencia.nombre,
+                  style: theme.textTheme.titleSmall,
                 ),
-                if (guardando)
-                  const SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+              if (guardando)
+                const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+            ],
+          ),
+          const SizedBox(height: 2),
+          Text(subtitulo, style: theme.textTheme.bodySmall),
+          const SizedBox(height: AppSpacing.xs),
+          if (!preferencia.reclasificable)
+            Text(
+              'No reclasificable (${tipoPresupuestoLabel(preferencia.tipoPorDefecto)})',
+              style: theme.textTheme.bodySmall,
+            )
+          else
+            Wrap(
+              spacing: AppSpacing.sm,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: <Widget>[
+                ChoiceChip(
+                  label: const Text('Necesidad'),
+                  selected:
+                      preferencia.tipoPreferido ==
+                      TipoPresupuesto.necesidad,
+                  onSelected: guardando
+                      ? null
+                      : (_) => onEstablecer(TipoPresupuesto.necesidad),
+                ),
+                ChoiceChip(
+                  label: const Text('Deseo'),
+                  selected:
+                      preferencia.tipoPreferido == TipoPresupuesto.deseo,
+                  onSelected: guardando
+                      ? null
+                      : (_) => onEstablecer(TipoPresupuesto.deseo),
+                ),
+                if (preferencia.tipoPreferido != null)
+                  TextButton(
+                    onPressed: guardando ? null : onQuitar,
+                    child: const Text('Quitar preferencia'),
                   ),
               ],
             ),
-            const SizedBox(height: 2),
-            Text(subtitulo, style: theme.textTheme.bodySmall),
-            const SizedBox(height: 6),
-            if (!preferencia.reclasificable)
-              Text(
-                'No reclasificable (${tipoPresupuestoLabel(preferencia.tipoPorDefecto)})',
-                style: theme.textTheme.bodySmall,
-              )
-            else
-              Wrap(
-                spacing: 8,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                children: <Widget>[
-                  ChoiceChip(
-                    label: const Text('Necesidad'),
-                    selected:
-                        preferencia.tipoPreferido ==
-                        TipoPresupuesto.necesidad,
-                    onSelected: guardando
-                        ? null
-                        : (_) => onEstablecer(TipoPresupuesto.necesidad),
-                  ),
-                  ChoiceChip(
-                    label: const Text('Deseo'),
-                    selected:
-                        preferencia.tipoPreferido == TipoPresupuesto.deseo,
-                    onSelected: guardando
-                        ? null
-                        : (_) => onEstablecer(TipoPresupuesto.deseo),
-                  ),
-                  if (preferencia.tipoPreferido != null)
-                    TextButton(
-                      onPressed: guardando ? null : onQuitar,
-                      child: const Text('Quitar preferencia'),
-                    ),
-                ],
-              ),
-          ],
-        ),
+        ],
       ),
     );
   }

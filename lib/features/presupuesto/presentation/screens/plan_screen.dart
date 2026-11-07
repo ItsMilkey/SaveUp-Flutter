@@ -2,6 +2,7 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/design_system/design_system.dart';
 import '../../../../core/errors/app_failure.dart';
 import '../../../../core/errors/failure_messages.dart';
 import '../../../../core/money/money.dart';
@@ -40,49 +41,55 @@ class _PlanScreenState extends ConsumerState<PlanScreen> {
   Widget build(BuildContext context) {
     final PlanMensualState estado = ref.watch(planMensualProvider);
 
-    return Scaffold(
+    return NeoScaffold(
       floatingActionButton: estado.plan?.existe ?? false
-          ? FloatingActionButton.extended(
+          ? NeoButton(
               onPressed: _nuevaPartida,
-              icon: const Icon(Icons.add),
-              label: const Text('Nueva partida'),
+              icon: Icons.add,
+              label: 'Nueva partida',
             )
           : null,
-      appBar: AppBar(
-        title: const Text('Plan'),
+      appBar: NeoAppBar(
+        title: 'Plan',
         actions: <Widget>[
-          IconButton(
-            icon: Icon(
-              estado.incluirReferencias ? Icons.history : Icons.history_toggle_off,
-            ),
+          NeoIconButton(
+            icon: estado.incluirReferencias
+                ? Icons.history
+                : Icons.history_toggle_off,
             tooltip: 'Referencias históricas',
+            variant: NeoIconButtonVariant.ghost,
             onPressed: _alternarReferencias,
           ),
-          IconButton(
-            icon: const Icon(Icons.folder_outlined),
+          NeoIconButton(
+            icon: Icons.folder_outlined,
             tooltip: 'Grupos',
+            variant: NeoIconButtonVariant.ghost,
             onPressed: _abrirGrupos,
           ),
-          IconButton(
-            icon: const Icon(Icons.copy_all_outlined),
+          NeoIconButton(
+            icon: Icons.copy_all_outlined,
             tooltip: 'Copiar desde otro mes',
+            variant: NeoIconButtonVariant.ghost,
             onPressed: estado.copiando ? null : _copiarMes,
           ),
+          const SizedBox(width: AppSpacing.xs),
         ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(44),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
-              IconButton(
-                icon: const Icon(Icons.chevron_left),
+              NeoIconButton(
+                icon: Icons.chevron_left,
                 tooltip: 'Mes anterior',
+                variant: NeoIconButtonVariant.ghost,
                 onPressed: () => _cambiarMes(-1),
               ),
               Text('$_mes', style: Theme.of(context).textTheme.titleMedium),
-              IconButton(
-                icon: const Icon(Icons.chevron_right),
+              NeoIconButton(
+                icon: Icons.chevron_right,
                 tooltip: 'Mes siguiente',
+                variant: NeoIconButtonVariant.ghost,
                 onPressed: () => _cambiarMes(1),
               ),
             ],
@@ -95,28 +102,22 @@ class _PlanScreenState extends ConsumerState<PlanScreen> {
 
   Widget _cuerpo(PlanMensualState estado) {
     if (estado.cargando && estado.plan == null) {
-      return const Center(child: CircularProgressIndicator.adaptive());
+      return const NeoLoading(rows: 3);
     }
     if (estado.errorCarga != null && estado.plan == null) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            Text(failureMessage(estado.errorCarga!)),
-            const SizedBox(height: 8),
-            OutlinedButton(
-              onPressed: () => ref
-                  .read(planMensualProvider.notifier)
-                  .cargar(_mes.toString()),
-              child: const Text('Reintentar'),
-            ),
-          ],
-        ),
+      return NeoErrorState(
+        message: failureMessage(estado.errorCarga!),
+        onRetry: () => ref
+            .read(planMensualProvider.notifier)
+            .cargar(_mes.toString()),
       );
     }
     final PlanMensual? plan = estado.plan;
     if (plan == null) {
-      return const Center(child: Text('Sin datos del plan.'));
+      return const NeoEmptyState(
+        title: 'Sin datos',
+        message: 'Sin datos del plan.',
+      );
     }
 
     return RefreshIndicator(
@@ -125,40 +126,42 @@ class _PlanScreenState extends ConsumerState<PlanScreen> {
           .cargar(_mes.toString()),
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.lg,
+          AppSpacing.lg,
+          AppSpacing.lg,
+          AppSpacing.xxxl * 2,
+        ),
         children: <Widget>[
           if (!plan.existe)
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  children: <Widget>[
-                    const Text('Aún no hay un plan para este mes.'),
-                    const SizedBox(height: 8),
-                    OutlinedButton.icon(
-                      icon: const Icon(Icons.copy_all_outlined),
-                      label: const Text('Copiar desde otro mes'),
-                      onPressed: estado.copiando ? null : _copiarMes,
-                    ),
-                  ],
-                ),
+            NeoSurface(
+              density: AppDensity.section,
+              child: Column(
+                children: <Widget>[
+                  const Text('Aún no hay un plan para este mes.'),
+                  const SizedBox(height: AppSpacing.sm),
+                  NeoButton(
+                    icon: Icons.copy_all_outlined,
+                    label: 'Copiar desde otro mes',
+                    variant: NeoButtonVariant.secondary,
+                    onPressed: estado.copiando ? null : _copiarMes,
+                  ),
+                ],
               ),
             ),
           if (plan.avisos.isNotEmpty) _Avisos(avisos: plan.avisos),
           _Resumen(plan: plan, onEditarIngreso: _editarIngreso),
           if (estado.errorLote != null)
             Padding(
-              padding: const EdgeInsets.only(top: 8),
+              padding: const EdgeInsets.only(top: AppSpacing.sm),
               child: Row(
                 children: <Widget>[
                   Expanded(
-                    child: Text(
-                      failureMessage(estado.errorLote!),
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.error,
-                      ),
+                    child: NeoErrorBand(
+                      message: failureMessage(estado.errorLote!),
                     ),
                   ),
+                  const SizedBox(width: AppSpacing.sm),
                   TextButton(
                     onPressed: () =>
                         ref.read(planMensualProvider.notifier).reintentar(),
@@ -169,11 +172,11 @@ class _PlanScreenState extends ConsumerState<PlanScreen> {
             ),
           if (estado.enviandoLote)
             const Padding(
-              padding: EdgeInsets.symmetric(vertical: 8),
+              padding: EdgeInsets.symmetric(vertical: AppSpacing.sm),
               child: LinearProgressIndicator(),
             ),
           if (estado.incluirReferencias) _Referencias(plan: plan),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.sm),
           if (plan.grupos.isEmpty && plan.partidas.isNotEmpty)
             _SeccionGrupo(
               titulo: 'Sin grupo',
@@ -241,21 +244,21 @@ class _PlanScreenState extends ConsumerState<PlanScreen> {
       return;
     }
     if (failure != null) {
-      ScaffoldMessenger.of(
+      NeoSnackbar.show(
         context,
-      ).showSnackBar(SnackBar(content: Text(failureMessage(failure))));
+        failureMessage(failure),
+        tone: NeoSnackbarTone.danger,
+      );
       return;
     }
     final PlanMensualState estado = ref.read(planMensualProvider);
     final List<AvisoPlan> avisos = estado.plan?.avisos ?? const <AvisoPlan>[];
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          avisos.isEmpty
-              ? 'Plan copiado desde $origen.'
-              : 'Plan copiado con ${avisos.length} aviso(s).',
-        ),
-      ),
+    NeoSnackbar.show(
+      context,
+      avisos.isEmpty
+          ? 'Plan copiado desde $origen.'
+          : 'Plan copiado con ${avisos.length} aviso(s).',
+      tone: NeoSnackbarTone.success,
     );
   }
 
@@ -275,9 +278,11 @@ class _PlanScreenState extends ConsumerState<PlanScreen> {
         .read(planMensualProvider.notifier)
         .actualizarIngreso(valor.monto);
     if (failure != null && mounted) {
-      ScaffoldMessenger.of(
+      NeoSnackbar.show(
         context,
-      ).showSnackBar(SnackBar(content: Text(failureMessage(failure))));
+        failureMessage(failure),
+        tone: NeoSnackbarTone.danger,
+      );
     }
   }
 
@@ -311,29 +316,14 @@ class _PlanScreenState extends ConsumerState<PlanScreen> {
     if (partida == null) {
       return;
     }
-    final bool? confirmado = await showDialog<bool>(
-      context: context,
-      builder: (BuildContext dialogContext) => AlertDialog(
-        title: const Text('¿Eliminar partida?'),
-        content: Text(
+    final bool? confirmado = await NeoConfirmDialog.show(
+      context,
+      title: '¿Eliminar partida?',
+      message:
           '«${partida.nombre}» se quitará del plan y su monto volverá al '
           'remanente libre.',
-        ),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('Cancelar'),
-          ),
-          FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.error,
-              foregroundColor: Theme.of(context).colorScheme.onError,
-            ),
-            onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text('Eliminar'),
-          ),
-        ],
-      ),
+      confirmLabel: 'Eliminar',
+      destructive: true,
     );
     if (confirmado != true || !mounted) {
       return;
@@ -342,9 +332,11 @@ class _PlanScreenState extends ConsumerState<PlanScreen> {
         .read(planMensualProvider.notifier)
         .eliminarPartida(id);
     if (failure != null && mounted) {
-      ScaffoldMessenger.of(
+      NeoSnackbar.show(
         context,
-      ).showSnackBar(SnackBar(content: Text(failureMessage(failure))));
+        failureMessage(failure),
+        tone: NeoSnackbarTone.danger,
+      );
     }
   }
 }
@@ -366,98 +358,92 @@ class _Resumen extends StatelessWidget {
         ? '—'
         : '${resumen.margenSeguridadPct} %';
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Row(
-              children: <Widget>[
-                Expanded(
-                  child: Text('Resumen', style: theme.textTheme.titleMedium),
+    return NeoSurface(
+      density: AppDensity.section,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              const Expanded(child: NeoSectionHeader(title: 'Resumen')),
+              if (resumen.excedeIngreso)
+                NeoBadge(
+                  label: 'Excede el ingreso',
+                  color: theme.colorScheme.error,
+                  compact: true,
                 ),
-                if (resumen.excedeIngreso)
-                  Chip(
-                    label: const Text('Excede el ingreso'),
-                    labelStyle: TextStyle(
-                      color: theme.colorScheme.error,
-                      fontSize: 11,
-                    ),
-                    visualDensity: VisualDensity.compact,
-                  ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: <Widget>[
-                Expanded(
-                  child: _fila(
-                    theme,
-                    'Ingreso de referencia',
-                    plan.ingresoReferencia == null
-                        ? 'Sin definir'
-                        : Money.formatClp(plan.ingresoReferencia!),
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.edit_outlined, size: 18),
-                  tooltip: 'Editar ingreso de referencia',
-                  onPressed: onEditarIngreso,
-                ),
-              ],
-            ),
-            _fila(theme, 'Planificado', Money.formatClp(resumen.planificadoTotal)),
-            _fila(theme, 'Remanente libre', remanente),
-            _fila(theme, 'Margen de seguridad', margen),
-            const Divider(),
-            for (final RepartoTipoResultado fila in plan.calculo.repartoPorTipo)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 3),
-                child: Row(
-                  children: <Widget>[
-                    SizedBox(
-                      width: 110,
-                      child: Text(
-                        switch (fila.tipo) {
-                          TipoPresupuesto.necesidad => 'Necesidades',
-                          TipoPresupuesto.deseo => 'Deseos',
-                          TipoPresupuesto.otros => 'Otros',
-                          TipoPresupuesto.ahorro => 'Ahorro',
-                        },
-                        style: theme.textTheme.bodySmall,
-                      ),
-                    ),
-                    Expanded(
-                      child: Text(
-                        '${Money.formatClp(fila.planificado)} '
-                        '(${fila.porcentajeDelIngreso ?? '—'} %)',
-                      ),
-                    ),
-                    if (fila.diferenciaPuntos != null)
-                      Text(
-                        '${fila.diferenciaPuntos! >= Decimal.zero ? '+' : ''}'
-                        '${fila.diferenciaPuntos} pts',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: fila.diferenciaPuntos! > Decimal.zero
-                              ? theme.colorScheme.error
-                              : theme.colorScheme.primary,
-                        ),
-                      ),
-                  ],
+            ],
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Row(
+            children: <Widget>[
+              Expanded(
+                child: _fila(
+                  theme,
+                  'Ingreso de referencia',
+                  plan.ingresoReferencia == null
+                      ? 'Sin definir'
+                      : Money.formatClp(plan.ingresoReferencia!),
                 ),
               ),
-            if (plan.calculo.guia != null)
-              Padding(
-                padding: const EdgeInsets.only(top: 6),
-                child: Text(
-                  'Guía: ${plan.calculo.guia!.necesidades} / '
-                  '${plan.calculo.guia!.deseos} / ${plan.calculo.guia!.ahorro}',
-                  style: theme.textTheme.bodySmall,
-                ),
+              NeoIconButton(
+                icon: Icons.edit_outlined,
+                tooltip: 'Editar ingreso de referencia',
+                variant: NeoIconButtonVariant.ghost,
+                onPressed: onEditarIngreso,
               ),
-          ],
-        ),
+            ],
+          ),
+          _fila(theme, 'Planificado', Money.formatClp(resumen.planificadoTotal)),
+          _fila(theme, 'Remanente libre', remanente),
+          _fila(theme, 'Margen de seguridad', margen),
+          const Divider(),
+          for (final RepartoTipoResultado fila in plan.calculo.repartoPorTipo)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 3),
+              child: Row(
+                children: <Widget>[
+                  SizedBox(
+                    width: 110,
+                    child: Text(
+                      switch (fila.tipo) {
+                        TipoPresupuesto.necesidad => 'Necesidades',
+                        TipoPresupuesto.deseo => 'Deseos',
+                        TipoPresupuesto.otros => 'Otros',
+                        TipoPresupuesto.ahorro => 'Ahorro',
+                      },
+                      style: theme.textTheme.bodySmall,
+                    ),
+                  ),
+                  Expanded(
+                    child: Text(
+                      '${Money.formatClp(fila.planificado)} '
+                      '(${fila.porcentajeDelIngreso ?? '—'} %)',
+                    ),
+                  ),
+                  if (fila.diferenciaPuntos != null)
+                    Text(
+                      '${fila.diferenciaPuntos! >= Decimal.zero ? '+' : ''}'
+                      '${fila.diferenciaPuntos} pts',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: fila.diferenciaPuntos! > Decimal.zero
+                            ? theme.colorScheme.error
+                            : theme.colorScheme.primary,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          if (plan.calculo.guia != null)
+            Padding(
+              padding: const EdgeInsets.only(top: AppSpacing.xs),
+              child: Text(
+                'Guía: ${plan.calculo.guia!.necesidades} / '
+                '${plan.calculo.guia!.deseos} / ${plan.calculo.guia!.ahorro}',
+                style: theme.textTheme.bodySmall,
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -497,36 +483,29 @@ class _SeccionGrupo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        Padding(
-          padding: const EdgeInsets.only(top: 12, bottom: 4),
-          child: Row(
-            children: <Widget>[
-              Expanded(
-                child: Text(titulo, style: theme.textTheme.titleMedium),
-              ),
-              Text(
-                '${Money.formatClp(planificado)} · real '
-                '${Money.formatClp(real)}',
-                style: theme.textTheme.bodySmall,
-              ),
-            ],
-          ),
+        NeoSectionHeader(
+          title: titulo,
+          subtitle:
+              '${Money.formatClp(planificado)} · real '
+              '${Money.formatClp(real)}',
         ),
         if (partidaIds.isEmpty)
           const Padding(
-            padding: EdgeInsets.only(bottom: 8),
+            padding: EdgeInsets.only(bottom: AppSpacing.sm),
             child: Text('Sin partidas en este mes.'),
           )
         else
           for (final int id in partidaIds)
-            PartidaMontoSlider(
-              partidaId: id,
-              onEditar: () => onEditar(id),
-              onEliminar: () => onEliminar(id),
+            Padding(
+              padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+              child: PartidaMontoSlider(
+                partidaId: id,
+                onEditar: () => onEditar(id),
+                onEliminar: () => onEliminar(id),
+              ),
             ),
       ],
     );
@@ -548,30 +527,27 @@ class _Referencias extends StatelessWidget {
       return const SizedBox.shrink();
     }
     final ThemeData theme = Theme.of(context);
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Text('Referencias históricas', style: theme.textTheme.titleMedium),
-            const SizedBox(height: 8),
-            for (final CategoriaResultado c in conReferencia)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 3),
-                child: Row(
-                  children: <Widget>[
-                    Expanded(child: Text(c.codigo)),
-                    Text(
-                      'Mes anterior ${c.referencia!.mesAnterior == null ? '—' : Money.formatClp(c.referencia!.mesAnterior!)}'
-                      ' · Promedio 3M ${c.referencia!.promedio3Meses == null ? '—' : Money.formatClp(c.referencia!.promedio3Meses!)}',
-                      style: theme.textTheme.bodySmall,
-                    ),
-                  ],
-                ),
+    return NeoSurface(
+      density: AppDensity.section,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          const NeoSectionHeader(title: 'Referencias históricas'),
+          for (final CategoriaResultado c in conReferencia)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 3),
+              child: Row(
+                children: <Widget>[
+                  Expanded(child: Text(c.codigo)),
+                  Text(
+                    'Mes anterior ${c.referencia!.mesAnterior == null ? '—' : Money.formatClp(c.referencia!.mesAnterior!)}'
+                    ' · Promedio 3M ${c.referencia!.promedio3Meses == null ? '—' : Money.formatClp(c.referencia!.promedio3Meses!)}',
+                    style: theme.textTheme.bodySmall,
+                  ),
+                ],
               ),
-          ],
-        ),
+            ),
+        ],
       ),
     );
   }
@@ -585,31 +561,29 @@ class _Avisos extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
-    return Card(
+    return NeoSurface(
+      density: AppDensity.section,
       color: theme.colorScheme.tertiaryContainer,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Row(
-              children: <Widget>[
-                const Icon(Icons.info_outline, size: 18),
-                const SizedBox(width: 6),
-                Text(
-                  'Avisos de la copia',
-                  style: theme.textTheme.titleSmall,
-                ),
-              ],
-            ),
-            const SizedBox(height: 6),
-            for (final AvisoPlan aviso in avisos)
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              const Icon(Icons.info_outline, size: 18),
+              const SizedBox(width: AppSpacing.xs),
               Text(
-                '• ${aviso.mensaje ?? aviso.motivo}',
-                style: theme.textTheme.bodySmall,
+                'Avisos de la copia',
+                style: theme.textTheme.titleSmall,
               ),
-          ],
-        ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          for (final AvisoPlan aviso in avisos)
+            Text(
+              '• ${aviso.mensaje ?? aviso.motivo}',
+              style: theme.textTheme.bodySmall,
+            ),
+        ],
       ),
     );
   }
