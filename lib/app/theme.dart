@@ -1,26 +1,15 @@
 import 'package:flutter/material.dart';
 
-/// Tema Material 3 de la aplicación (claro y oscuro).
-///
-/// Ambos esquemas se derivan de la misma paleta semilla para mantener
-/// coherencia de marca entre modos.
+import '../core/design_system/design_system.dart';
+
+/// Tema de la aplicación: delega en el design system.
 class AppTheme {
   const AppTheme._();
 
-  /// Color semilla de la marca SaveUp.
-  static const Color seedColor = Color(0xFF00695C);
+  /// Color de marca (amarillo neo-brutalista).
+  static const Color seedColor = AppColors.yellow;
 
-  static ThemeData light() => _build(Brightness.light);
+  static ThemeData light() => SaveUpTheme.light();
 
-  static ThemeData dark() => _build(Brightness.dark);
-
-  static ThemeData _build(Brightness brightness) {
-    return ThemeData(
-      useMaterial3: true,
-      colorScheme: ColorScheme.fromSeed(
-        seedColor: seedColor,
-        brightness: brightness,
-      ),
-    );
-  }
+  static ThemeData dark() => SaveUpTheme.dark();
 }

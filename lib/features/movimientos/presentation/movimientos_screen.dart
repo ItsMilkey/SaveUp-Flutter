@@ -1,4 +1,5 @@
 import 'package:decimal/decimal.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -524,28 +525,36 @@ class _CuentaMenu extends ConsumerWidget {
             EliminarCuentaDialog.show(context);
           case 'legales':
             GoRouter.of(context).push(AppRoutes.legales);
+          case 'design':
+            GoRouter.of(context).push(AppRoutes.designSystem);
           case 'salir':
             ref.read(authSessionProvider.notifier).logout();
         }
       },
-      itemBuilder: (BuildContext context) => const <PopupMenuEntry<String>>[
+      itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
         PopupMenuItem<String>(
           value: 'cambiar',
-          child: Text('Cambiar contraseña'),
+          child: const Text('Cambiar contraseña'),
         ),
         PopupMenuItem<String>(
           value: 'eliminar',
-          child: Text('Eliminar cuenta'),
+          child: const Text('Eliminar cuenta'),
         ),
         PopupMenuItem<String>(
           value: 'legales',
-          child: Text('Términos y privacidad'),
+          child: const Text('Términos y privacidad'),
         ),
-        PopupMenuDivider(),
+        const PopupMenuDivider(),
         PopupMenuItem<String>(
           value: 'salir',
-          child: Text('Cerrar sesión'),
+          child: const Text('Cerrar sesión'),
         ),
+        if (kDebugMode) const PopupMenuDivider(),
+        if (kDebugMode)
+          const PopupMenuItem<String>(
+            value: 'design',
+            child: Text('Design System'),
+          ),
       ],
     );
   }

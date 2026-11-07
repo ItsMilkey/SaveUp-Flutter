@@ -71,4 +71,7 @@ abstract final class AppRoutes {
 
   /// Exportación de movimientos (F8).
   static const String reportes = '/reportes';
+
+  /// Galería interna del design system (solo debug).
+  static const String designSystem = '/design-system';
 }

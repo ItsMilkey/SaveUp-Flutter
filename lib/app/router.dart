@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -25,6 +26,7 @@ import '../features/metas/domain/meta_ahorro.dart';
 import '../features/metas/presentation/screens/metas_screen.dart';
 import '../features/metas/presentation/screens/meta_form_screen.dart';
 import '../features/reportes/presentation/screens/reportes_screen.dart';
+import '../core/design_system/design_system.dart';
 import '../features/movimientos/presentation/movimientos_screen.dart';
 import '../features/movimientos/presentation/movimiento_form_screen.dart';
 import '../features/auth/domain/auth_session.dart';
@@ -183,6 +185,12 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
         name: 'reportes',
         builder: (_, _) => const ReportesScreen(),
       ),
+      if (kDebugMode)
+        GoRoute(
+          path: AppRoutes.designSystem,
+          name: 'designSystem',
+          builder: (_, _) => const DesignSystemShowcaseScreen(),
+        ),
     ],
   );
 
