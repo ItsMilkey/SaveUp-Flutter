@@ -45,7 +45,7 @@ void main() {
     await tester.pumpWidget(testApp(adapter: adapter, tokenStore: tokenStore));
     await tester.pumpAndSettle();
     // Home con sesión: el cambio de contraseña vive en el menú de cuenta.
-    await tester.tap(find.byIcon(Icons.account_circle_outlined));
+    await tester.tap(find.text('Más'));
     await tester.pumpAndSettle();
     expect(find.text('Cambiar contraseña'), findsOneWidget);
     await tester.tap(find.text('Cambiar contraseña'));

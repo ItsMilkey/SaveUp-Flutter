@@ -17,6 +17,7 @@ class _DesignSystemShowcaseScreenState
   bool _dark = false;
   String _segment = 'Semana';
   DateTime _periodo = DateTime(2026, 11);
+  int _navIndex = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -447,6 +448,69 @@ class _DesignSystemShowcaseScreenState
                         ),
                       ),
                     ],
+                  ),
+                ),
+                _section(
+                  context,
+                  'Navegación',
+                  NeoBottomNav(
+                    destinations: const <NeoBottomDestination>[
+                      NeoBottomDestination(
+                        label: 'Inicio',
+                        icon: Icons.home_outlined,
+                        selectedIcon: Icons.home,
+                      ),
+                      NeoBottomDestination(
+                        label: 'Deudas',
+                        icon: Icons.account_balance_wallet_outlined,
+                        selectedIcon: Icons.account_balance_wallet,
+                      ),
+                      NeoBottomDestination(
+                        label: 'Plan',
+                        icon: Icons.calendar_month_outlined,
+                        selectedIcon: Icons.calendar_month,
+                      ),
+                      NeoBottomDestination(
+                        label: 'Presupuesto',
+                        icon: Icons.pie_chart_outline,
+                        selectedIcon: Icons.pie_chart,
+                      ),
+                      NeoBottomDestination(
+                        label: 'Más',
+                        icon: Icons.grid_view_outlined,
+                        selectedIcon: Icons.grid_view,
+                      ),
+                    ],
+                    selectedIndex: _navIndex,
+                    onSelected: (int index) {
+                      if (index == 4) {
+                        NeoMoreMenu.show(
+                          context,
+                          options: <NeoMoreOption>[
+                            NeoMoreOption(
+                              label: 'Metas',
+                              icon: Icons.savings_outlined,
+                              onTap: () {},
+                            ),
+                            const NeoMoreOption(
+                              label: 'Analítica',
+                              icon: Icons.insights_outlined,
+                              badge: NeoBadge(
+                                label: 'Pronto',
+                                compact: true,
+                              ),
+                            ),
+                            NeoMoreOption(
+                              label: 'Reportes',
+                              icon: Icons.file_download_outlined,
+                              onTap: () {},
+                            ),
+                          ],
+                        );
+                        return;
+                      }
+                      setState(() => _navIndex = index);
+                    },
                   ),
                 ),
                 _section(

@@ -1,5 +1,4 @@
 import 'package:decimal/decimal.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -13,8 +12,6 @@ import '../../../core/errors/failure_messages.dart';
 import '../../../core/money/money.dart';
 import '../../../core/time/calendar_date.dart';
 import '../../../core/time/time_zones.dart';
-import '../../account/presentation/eliminar_cuenta_dialog.dart';
-import '../../auth/presentation/auth_controllers.dart';
 import '../domain/movimiento.dart';
 import '../domain/movimiento_filtro.dart';
 import '../domain/movimiento_tipo.dart';
@@ -75,39 +72,7 @@ class _MovimientosScreenState extends ConsumerState<MovimientosScreen> {
     final MovimientosState estado = ref.watch(movimientosProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(AppConfig.appName),
-        actions: <Widget>[
-          IconButton(
-            icon: const Icon(Icons.account_balance_wallet_outlined),
-            tooltip: 'Deudas',
-            onPressed: () => GoRouter.of(context).push(AppRoutes.deudas),
-          ),
-          IconButton(
-            icon: const Icon(Icons.calendar_month_outlined),
-            tooltip: 'Plan mensual',
-            onPressed: () => GoRouter.of(context).push(AppRoutes.plan),
-          ),
-          IconButton(
-            icon: const Icon(Icons.pie_chart_outline),
-            tooltip: 'Presupuesto',
-            onPressed: () => GoRouter.of(
-              context,
-            ).push(AppRoutes.presupuestoConfiguracion),
-          ),
-          IconButton(
-            icon: const Icon(Icons.savings_outlined),
-            tooltip: 'Metas de ahorro',
-            onPressed: () => GoRouter.of(context).push(AppRoutes.metas),
-          ),
-          IconButton(
-            icon: const Icon(Icons.file_download_outlined),
-            tooltip: 'Reportes',
-            onPressed: () => GoRouter.of(context).push(AppRoutes.reportes),
-          ),
-          _CuentaMenu(),
-        ],
-      ),
+      appBar: AppBar(title: const Text(AppConfig.appName)),
       body: RefreshIndicator(
         onRefresh: () => ref.read(movimientosProvider.notifier).refrescar(),
         child: ListView(
@@ -509,53 +474,3 @@ class _ErrorConReintento extends StatelessWidget {
 }
 
 /// Menú con las entradas de cuenta que vivían en el home provisorio (F2).
-class _CuentaMenu extends ConsumerWidget {
-  const _CuentaMenu();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return PopupMenuButton<String>(
-      icon: const Icon(Icons.account_circle_outlined),
-      tooltip: 'Cuenta',
-      onSelected: (String opcion) {
-        switch (opcion) {
-          case 'cambiar':
-            GoRouter.of(context).push(AppRoutes.cambiarContrasena);
-          case 'eliminar':
-            EliminarCuentaDialog.show(context);
-          case 'legales':
-            GoRouter.of(context).push(AppRoutes.legales);
-          case 'design':
-            GoRouter.of(context).push(AppRoutes.designSystem);
-          case 'salir':
-            ref.read(authSessionProvider.notifier).logout();
-        }
-      },
-      itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-        PopupMenuItem<String>(
-          value: 'cambiar',
-          child: const Text('Cambiar contraseña'),
-        ),
-        PopupMenuItem<String>(
-          value: 'eliminar',
-          child: const Text('Eliminar cuenta'),
-        ),
-        PopupMenuItem<String>(
-          value: 'legales',
-          child: const Text('Términos y privacidad'),
-        ),
-        const PopupMenuDivider(),
-        PopupMenuItem<String>(
-          value: 'salir',
-          child: const Text('Cerrar sesión'),
-        ),
-        if (kDebugMode) const PopupMenuDivider(),
-        if (kDebugMode)
-          const PopupMenuItem<String>(
-            value: 'design',
-            child: Text('Design System'),
-          ),
-      ],
-    );
-  }
-}

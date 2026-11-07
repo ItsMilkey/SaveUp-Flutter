@@ -44,7 +44,7 @@ void main() {
 
     await tester.pumpWidget(testApp(adapter: adapter, tokenStore: tokenStore));
     await tester.pumpAndSettle();
-    await tester.tap(find.byIcon(Icons.account_circle_outlined));
+    await tester.tap(find.text('Más'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Eliminar cuenta'));
     await tester.pumpAndSettle();

@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -27,6 +28,7 @@ import '../features/metas/presentation/screens/metas_screen.dart';
 import '../features/metas/presentation/screens/meta_form_screen.dart';
 import '../features/reportes/presentation/screens/reportes_screen.dart';
 import '../core/design_system/design_system.dart';
+import 'app_shell.dart';
 import '../features/movimientos/presentation/movimientos_screen.dart';
 import '../features/movimientos/presentation/movimiento_form_screen.dart';
 import '../features/auth/domain/auth_session.dart';
@@ -69,11 +71,6 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
         builder: (_, _) => const RegisterScreen(),
       ),
       GoRoute(
-        path: AppRoutes.home,
-        name: 'home',
-        builder: (_, _) => const MovimientosScreen(),
-      ),
-      GoRoute(
         path: AppRoutes.cambiarContrasena,
         name: 'cambiarContrasena',
         builder: (_, _) => const CambiarContrasenaScreen(),
@@ -109,11 +106,6 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
         },
       ),
       GoRoute(
-        path: AppRoutes.deudas,
-        name: 'deudas',
-        builder: (_, _) => const DeudasScreen(),
-      ),
-      GoRoute(
         path: AppRoutes.nuevaDeuda,
         name: 'nuevaDeuda',
         builder: (_, _) => const DeudaFormScreen(),
@@ -139,16 +131,6 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
         path: AppRoutes.simulador,
         name: 'simulador',
         builder: (_, _) => const SimuladorScreen(),
-      ),
-      GoRoute(
-        path: AppRoutes.plan,
-        name: 'plan',
-        builder: (_, _) => const PlanScreen(),
-      ),
-      GoRoute(
-        path: AppRoutes.presupuestoConfiguracion,
-        name: 'presupuestoConfiguracion',
-        builder: (_, _) => const ConfiguracionReglaScreen(),
       ),
       GoRoute(
         path: AppRoutes.presupuestoEjecucion,
@@ -191,6 +173,32 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
           name: 'designSystem',
           builder: (_, _) => const DesignSystemShowcaseScreen(),
         ),
+      ShellRoute(
+        builder: (BuildContext context, GoRouterState state, Widget child) =>
+            AppShell(location: state.matchedLocation, child: child),
+        routes: <RouteBase>[
+          GoRoute(
+            path: AppRoutes.home,
+            name: 'home',
+            builder: (_, _) => const MovimientosScreen(),
+          ),
+          GoRoute(
+            path: AppRoutes.deudas,
+            name: 'deudas',
+            builder: (_, _) => const DeudasScreen(),
+          ),
+          GoRoute(
+            path: AppRoutes.plan,
+            name: 'plan',
+            builder: (_, _) => const PlanScreen(),
+          ),
+          GoRoute(
+            path: AppRoutes.presupuestoConfiguracion,
+            name: 'presupuestoConfiguracion',
+            builder: (_, _) => const ConfiguracionReglaScreen(),
+          ),
+        ],
+      ),
     ],
   );
 

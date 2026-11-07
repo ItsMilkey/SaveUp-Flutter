@@ -58,7 +58,7 @@ Future<void> abrirLegales(
 
   if (conSesion) {
     // Con sesión el visor vive en el menú de cuenta del home real.
-    await tester.tap(find.byIcon(Icons.account_circle_outlined));
+    await tester.tap(find.text('Más'));
     await tester.pumpAndSettle();
   }
   await tester.tap(find.text('Términos y privacidad'));
