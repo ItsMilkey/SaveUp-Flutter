@@ -3,9 +3,9 @@
 Aplicación móvil de **SaveUp** (finanzas personales) para iOS y Android. Consume
 un backend RESTful ya existente, versionado en `/api/v1`.
 
-Este repositorio contiene **solo el proyecto base**: estructura, configuración,
-tema, router y utilidades transversales. No hay funcionalidades de negocio
-implementadas todavía.
+Este repositorio contiene la app completa de SaveUp: autenticación y cuenta,
+movimientos, deudas, presupuesto/regla 50/30/20, plan mensual, metas de ahorro y
+exportación de reportes (CSV/PDF).
 
 ## Requisitos
 
@@ -37,6 +37,7 @@ falla al arrancar con un mensaje explícito (`AppConfig.ensureConfigured()`).
 | --- | --- |
 | Emulador Android | `http://10.0.2.2:8080/api/v1` |
 | Simulador iOS | `http://localhost:8080/api/v1` |
+| Producción | `https://lite-backend-1wn9.onrender.com/api/v1` |
 
 Ejemplos:
 
@@ -59,6 +60,59 @@ En VS Code están las configuraciones **Android emulador** e **iOS simulador** e
 
 Ninguno de los dos habilita tráfico inseguro en producción.
 
+## Release
+
+### Android
+
+```sh
+flutter build apk --release \
+  --dart-define=API_BASE_URL=https://lite-backend-1wn9.onrender.com/api/v1
+
+# Formato preferido para Play Store
+flutter build appbundle --release \
+  --dart-define=API_BASE_URL=https://lite-backend-1wn9.onrender.com/api/v1
+```
+
+El manifest principal declara `INTERNET` para que release tenga red (debug/profile
+lo heredan de sus propios manifests). El label visible es **SaveUp**.
+
+### Firma Android
+
+`android/app/build.gradle.kts` lee `android/key.properties` (no commiteado). Si el
+archivo no existe, la build release cae a la firma **debug** para no romper builds
+locales: ese APK **no** se publica.
+
+```
+# android/key.properties
+storePassword=<password>
+keyPassword=<password>
+keyAlias=upload
+storeFile=upload-keystore.jks
+```
+
+El keystore se guarda en `android/app/upload-keystore.jks` (ignorado por Git).
+Crear uno nuevo:
+
+```sh
+keytool -genkeypair -v -keystore android/app/upload-keystore.jks \
+  -keyalg RSA -keysize 2048 -validity 10000 -alias upload
+```
+
+Verificar la firma:
+
+```sh
+apksigner verify --print-certs build/app/outputs/flutter-apk/app-release.apk
+```
+
+### iOS
+
+`CFBundleDisplayName` es **SaveUp**. La build de distribución se genera en macOS
+con la cuenta de Apple Developer:
+
+```sh
+flutter build ipa --dart-define=API_BASE_URL=https://lite-backend-1wn9.onrender.com/api/v1
+```
+
 ## Pruebas
 
 ```sh
@@ -80,7 +134,9 @@ lib/
 │   ├── auth/            # {data, domain, presentation}
 │   ├── movimientos/
 │   ├── deudas/
-│   └── presupuesto/
+│   ├── presupuesto/
+│   ├── metas/
+│   └── reportes/
 └── main.dart
 ```
 

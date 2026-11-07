@@ -54,13 +54,17 @@ class DioAppVersionRepository implements AppVersionRepository {
     required AppPlatform platform,
     required String version,
   }) async {
-    final Response<dynamic> response = await client.get<dynamic>(
-      '/app/version',
-      queryParameters: <String, dynamic>{
-        'plataforma': platform.apiValue,
-        'version': version,
-      },
-    );
+    final Response<dynamic> response = await client
+        .get<dynamic>(
+          '/app/version',
+          queryParameters: <String, dynamic>{
+            'plataforma': platform.apiValue,
+            'version': version,
+          },
+        )
+        // El arranque no debe quedar bloqueado si el backend está dormido:
+        // a los 10 s el controlador degrada y la app sigue al login.
+        .timeout(const Duration(seconds: 10));
 
     final Object? data = response.data;
     if (data is! Map) {

@@ -1,6 +1,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Red: API de SaveUp en todos los build types (debug la hereda de
+         debug/AndroidManifest.xml, pero release necesita declararla aquí). -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+
     <application
-        android:label="saveup_app"
+        android:label="SaveUp"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
