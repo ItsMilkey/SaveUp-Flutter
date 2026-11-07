@@ -1,8 +1,18 @@
 # F10 — Analítica de gastos (propuesta)
 
-> **Estado: propuesta de diseño (2026-11-07), sin implementar.** No requiere
-> cambios de contrato ni endpoints nuevos: se alimenta de endpoints existentes,
-> verificados contra el backend local y producción.
+> **Estado: dominio/controller implementados; UI pendiente del rediseño
+> (2026-11-07).** No requiere cambios de contrato ni endpoints nuevos: se
+> alimenta de endpoints existentes, verificados contra el backend local y
+> producción.
+>
+> **Avance (2026-11-07): dominio + controller implementados; UI pendiente del
+> rediseño.** `analitica.dart` construye el resumen desde el plan del mes, el
+> historial de 6 meses y el catálogo, con top 6 + «Otros» + «Sin categoría» y
+> porcentajes que suman 100. `AnaliticaController` carga plan/historial/catálogo,
+> maneja error de plan vs. error de historial, mes anterior/siguiente, reintento
+> y descarta respuestas viejas al cambiar de mes rápido. Tests: 6 de dominio y 6
+> de controlador. Total **394 verdes** y `flutter analyze` limpio. No se agregó
+> `fl_chart` ni ninguna pantalla/ruta todavía.
 
 ## Objetivo
 Una pantalla que responda de un vistazo: **¿cuánto gasté, en qué categorías y
@@ -113,12 +123,11 @@ angostas. Para el MVP:
   movimientos); el catálogo se puede cachear en el provider.
 
 ## Plan sugerido (si se aprueba)
-1. Dominio agregador + controlador + tests (sin UI).
-2. Pantalla con `fl_chart` + tests de widget.
+1. ~~Dominio agregador + controlador + tests (sin UI).~~ **Hecho (2026-11-07).**
+2. Pantalla con `fl_chart` + tests de widget — **pendiente del rediseño UI/UX**.
 3. Verificación manual con un mes con datos, un mes vacío y un gasto sin
    categoría.
 
-**Recomendación de secuencia:** si el plan de rediseño UI/UX está cerca,
-implementar F10 **con el nuevo diseño** (evita rehacer la pantalla); si se quiere
-valor inmediato, hacer solo el dominio/controlador ahora y dejar la UI para el
-rediseño.
+**Recomendación de secuencia:** implementar la UI de F10 **con el nuevo diseño**
+para evitar rehacer la pantalla. El dominio/controlador ya está listo para que
+la pantalla solo consuma `analiticaProvider`.
