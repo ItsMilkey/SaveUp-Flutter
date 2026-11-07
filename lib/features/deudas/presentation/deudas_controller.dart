@@ -177,7 +177,9 @@ class DeudaAccionesController extends Notifier<AsyncValue<void>> {
           .read(deudasRepositoryProvider)
           .pagar(id, monto: monto, modo: modo, descripcion: descripcion);
       state = const AsyncData<void>(null);
-      ref.invalidate(movimientosProvider);
+      // Refrescar (no invalidar): el home solo se inicializa en su initState y
+      // quedaría en "Cargando movimientos..." al volver.
+      await ref.read(movimientosProvider.notifier).refrescar();
       return null;
     } on AppFailure catch (failure, stack) {
       state = AsyncError<void>(failure, stack);
