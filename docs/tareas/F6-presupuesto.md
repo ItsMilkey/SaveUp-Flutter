@@ -80,7 +80,7 @@ F6a cerrada (commit `95b5340`).
    **necesidades / deseos / ahorro** y suman 100.00.
 2. El request admite además `activo` (default `true`),
    `automatizarAhorroEnMetas` (default `false`) y `asignaciones[]` (asignación del ahorro a
-   metas: **F7**, fuera de F6). El response devuelve `id`, `usuarioRut`, porcentajes,
+   metas: tarea aparte **F11**, no se implementa en F6). El response devuelve `id`, `usuarioRut`, porcentajes,
    `activo` y `automatizarAhorroEnMetas`.
 3. **No existen** los códigos `SUMA_PORCENTAJES_INVALIDA` ni `LIMITE_INVALIDO`: los rechazos
    son `400 DATOS_INVALIDOS` con mensaje en `detail` (porcentajes faltantes/negativos/suma
@@ -150,10 +150,10 @@ F6a cerrada (commit `95b5340`).
 - Widget: sliders coordinados, sugerencia aplicada, paneles de ejecución e historial y límites.
 
 ## Fuera de alcance
-Asignación del ahorro a metas (`asignaciones[]`): el contrato no las expone en ninguna lectura
-(`ConfiguracionPresupuestoResponseDTO` no las incluye), así que queda fuera hasta que exista un
-cambio de contrato previo (campo en el response o endpoint de lectura). Ejecución automática real
-de abonos, push/reportes y cualquier recálculo del plan mensual distinto de D6.
+Asignación del ahorro a metas (`asignaciones[]`): el contrato ya expone
+`GET /presupuestos/asignaciones/me` y el `POST /presupuestos/me` valida suma exacta 100.00; los DTOs,
+controlador y UI de la app son la tarea **F11** (`F11-asignaciones-presupuesto.md`). Ejecución automática
+real de abonos, push/reportes y cualquier recálculo del plan mensual distinto de D6.
 
 ## Criterios de aceptación
 - `flutter analyze` sin issues y `flutter test` en verde.

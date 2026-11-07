@@ -38,5 +38,7 @@ Al terminar, marcar aquí con `[x]`.
   Developer de pago; en producción el backend las tiene desactivadas)
 - [ ] **F10** analítica de gastos: torta por categoría y barras mensuales — propuesta en
   `F10-analitica.md` (dominio y controller listos; UI pendiente del rediseño UI/UX)
+- [ ] **F11** asignaciones del ahorro a metas — `F11-asignaciones-presupuesto.md` (backend y
+  contrato listos: `GET /presupuestos/asignaciones/me` + suma 100 en el POST; data/UI pendientes)
 
 Las tareas F2 en adelante se redactan cuando se acerque su turno, con el contrato real a mano.

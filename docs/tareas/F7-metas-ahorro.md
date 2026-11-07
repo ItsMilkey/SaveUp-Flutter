@@ -127,10 +127,9 @@ F6 cerrada (commits `e85848a` backend / `f9ef17c` frontend). No depende de F6a.
 
 ## Fuera de alcance
 - `asignaciones[]` del `POST /presupuestos/me` (asignación automática del ahorro a metas). **No se
-  implementa en F7**: el contrato no expone las asignaciones en ninguna lectura
-  (`ConfiguracionPresupuestoResponseDTO` no las incluye), así que sería una escritura sin forma de
-  mostrar el estado actual. Requiere un cambio de contrato previo (campo en el response o endpoint
-  de lectura) y se hará cuando exista.
+  implementa en F7**: ya existe la lectura (`GET /presupuestos/asignaciones/me`) y la validación de
+  suma 100 en el backend, pero sus DTOs, controlador y UI son la tarea aparte **F11**
+  (`F11-asignaciones-presupuesto.md`).
 - Smart-Split/automatización de abonos y reportes.
 
 ## Criterios de aceptación
