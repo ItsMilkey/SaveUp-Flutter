@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:timezone/timezone.dart' as tz;
 
 import '../../../app/routes.dart';
+import '../../../core/design_system/design_system.dart';
 import '../../../core/errors/app_failure.dart';
 import '../../../core/errors/failure_messages.dart';
 import '../../../core/money/money.dart';
@@ -30,32 +31,42 @@ class DeudaDetalleScreen extends ConsumerWidget {
     );
     final Deuda? deuda = detalle.value;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Deuda'),
+    return NeoScaffold(
+      appBar: NeoAppBar(
+        title: 'Deuda',
         actions: <Widget>[
           if (deuda?.editable ?? false)
-            IconButton(
-              icon: const Icon(Icons.edit_outlined),
-              tooltip: 'Editar deuda',
-              onPressed: () => _abrirEdicion(context, ref, deuda!),
+            Padding(
+              padding: const EdgeInsets.only(right: AppSpacing.sm),
+              child: NeoIconButton(
+                icon: Icons.edit_outlined,
+                tooltip: 'Editar deuda',
+                variant: NeoIconButtonVariant.secondary,
+                onPressed: () => _abrirEdicion(context, ref, deuda!),
+              ),
             ),
         ],
       ),
       bottomNavigationBar: deuda?.estado == EstadoDeuda.pendiente
           ? SafeArea(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.lg,
+                  AppSpacing.sm,
+                  AppSpacing.lg,
+                  AppSpacing.md,
+                ),
                 child: Row(
                   children: <Widget>[
                     Expanded(
-                      child: FilledButton.icon(
-                        icon: const Icon(Icons.payments_outlined),
-                        label: const Text('Registrar pago'),
+                      child: NeoButton(
+                        label: 'Registrar pago',
+                        icon: Icons.payments_outlined,
+                        expanded: true,
                         onPressed: () => _pagar(context, ref, deuda!),
                       ),
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: AppSpacing.sm),
                     TextButton(
                       style: TextButton.styleFrom(
                         foregroundColor: Theme.of(context).colorScheme.error,
@@ -69,44 +80,29 @@ class DeudaDetalleScreen extends ConsumerWidget {
             )
           : null,
       body: detalle.when(
-        loading: () => const Center(child: CircularProgressIndicator.adaptive()),
-        error: (Object error, StackTrace stack) => Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              Text(
-                error is AppFailure
-                    ? failureMessage(error)
-                    : 'No se pudo cargar la deuda.',
-              ),
-              const SizedBox(height: 8),
-              OutlinedButton(
-                onPressed: () {
-                  ref.invalidate(deudaDetalleProvider(id));
-                  ref.invalidate(amortizacionProvider(id));
-                },
-                child: const Text('Reintentar'),
-              ),
-            ],
-          ),
+        loading: () => const NeoLoading(rows: 4),
+        error: (Object error, StackTrace stack) => NeoErrorState(
+          message: error is AppFailure
+              ? failureMessage(error)
+              : 'No se pudo cargar la deuda.',
+          onRetry: () {
+            ref.invalidate(deudaDetalleProvider(id));
+            ref.invalidate(amortizacionProvider(id));
+          },
         ),
         data: (Deuda deuda) => ListView(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.lg,
+            AppSpacing.lg,
+            AppSpacing.lg,
+            AppSpacing.xxxl * 2,
+          ),
           children: <Widget>[
             _Ficha(deuda: deuda),
-            const SizedBox(height: 16),
-            Text(
-              'Cronograma de cuotas',
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.lg),
+            const NeoSectionHeader(title: 'Cronograma de cuotas'),
             cronograma.when(
-              loading: () => const Center(
-                child: Padding(
-                  padding: EdgeInsets.all(24),
-                  child: CircularProgressIndicator.adaptive(),
-                ),
-              ),
+              loading: () => const NeoLoading(message: '', rows: 2),
               error: (Object error, StackTrace stack) => Row(
                 children: <Widget>[
                   const Expanded(
@@ -122,7 +118,7 @@ class DeudaDetalleScreen extends ConsumerWidget {
               data: (List<CuotaAmortizacion> cuotas) =>
                   _Cronograma(cuotas: cuotas),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.lg),
             _HistorialPagosSection(deudaId: id),
           ],
         ),
@@ -139,8 +135,10 @@ class DeudaDetalleScreen extends ConsumerWidget {
     if (pagado ?? false) {
       _refrescar(ref, deuda.id);
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Pago registrado.')),
+        NeoSnackbar.show(
+          context,
+          'Pago registrado.',
+          tone: NeoSnackbarTone.success,
         );
       }
     }
@@ -155,8 +153,10 @@ class DeudaDetalleScreen extends ConsumerWidget {
     if (cancelada ?? false) {
       _refrescar(ref, deuda.id);
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Deuda cancelada.')),
+        NeoSnackbar.show(
+          context,
+          'Deuda cancelada.',
+          tone: NeoSnackbarTone.warning,
         );
       }
     }
@@ -209,46 +209,36 @@ class _Ficha extends StatelessWidget {
       ),
     );
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Row(
-              children: <Widget>[
-                Expanded(
-                  child: Text(deuda.nombre, style: theme.textTheme.titleLarge),
-                ),
-                Chip(
-                  label: Text(estadoDeudaLabel(deuda.estado)),
-                  labelStyle: TextStyle(
-                    color: estadoDeudaColor(context, deuda.estado),
-                    fontSize: 12,
-                  ),
-                  visualDensity: VisualDensity.compact,
-                ),
-              ],
-            ),
-            if (deuda.descripcion != null && deuda.descripcion!.isNotEmpty)
-              Text(deuda.descripcion!, style: theme.textTheme.bodySmall),
-            const SizedBox(height: 8),
-            Text(
-              '${tipoDeudaLabel(deuda.tipo)} · ${modalidadLabel(deuda.modalidad)}',
-              style: theme.textTheme.bodySmall,
-            ),
-            const SizedBox(height: 12),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(4),
-              child: LinearProgressIndicator(
-                value: deuda.progreso,
-                minHeight: 8,
-                backgroundColor: scheme.surfaceContainerHighest,
+    return NeoSurface(
+      density: AppDensity.section,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              Expanded(
+                child: Text(deuda.nombre, style: theme.textTheme.titleLarge),
               ),
-            ),
-            const SizedBox(height: 6),
-            Text('${deuda.cuotasPagadas} de ${deuda.cantidadCuotas} cuotas pagadas'),
-            const SizedBox(height: 12),
+              const SizedBox(width: AppSpacing.sm),
+              NeoBadge(
+                label: estadoDeudaLabel(deuda.estado),
+                color: estadoDeudaColor(context, deuda.estado),
+                compact: true,
+              ),
+            ],
+          ),
+          if (deuda.descripcion != null && deuda.descripcion!.isNotEmpty)
+            Text(deuda.descripcion!, style: theme.textTheme.bodySmall),
+          const SizedBox(height: AppSpacing.sm),
+          Text(
+            '${tipoDeudaLabel(deuda.tipo)} · ${modalidadLabel(deuda.modalidad)}',
+            style: theme.textTheme.bodySmall,
+          ),
+          const SizedBox(height: AppSpacing.md),
+          NeoProgress(value: deuda.progreso),
+          const SizedBox(height: AppSpacing.xs),
+          Text('${deuda.cuotasPagadas} de ${deuda.cantidadCuotas} cuotas pagadas'),
+          const SizedBox(height: AppSpacing.md),
             fila('Capital', Money.formatClp(deuda.montoCapital)),
             fila(
               'Cuota',
@@ -296,8 +286,7 @@ class _Ficha extends StatelessWidget {
               ),
           ],
         ),
-      ),
-    );
+      );
   }
 }
 
@@ -312,65 +301,64 @@ class _Cronograma extends StatelessWidget {
       return const Text('Esta deuda no tiene cronograma calculado.');
     }
     final ThemeData theme = Theme.of(context);
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        child: Column(
-          children: <Widget>[
-            for (final CuotaAmortizacion cuota in cuotas)
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 6,
-                ),
-                child: Row(
-                  children: <Widget>[
-                    SizedBox(
-                      width: 32,
-                      child: Text(
-                        '${cuota.numero}',
-                        style: theme.textTheme.bodySmall,
-                      ),
+    return NeoSurface(
+      density: AppDensity.table,
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+      child: Column(
+        children: <Widget>[
+          for (final CuotaAmortizacion cuota in cuotas)
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.md,
+                vertical: 6,
+              ),
+              child: Row(
+                children: <Widget>[
+                  SizedBox(
+                    width: 32,
+                    child: Text(
+                      '${cuota.numero}',
+                      style: theme.textTheme.bodySmall,
                     ),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: <Widget>[
-                          Text(
-                            cuota.fechaVencimiento == null
-                                ? 'Cuota ${cuota.numero}'
-                                : '${cuota.fechaVencimiento}',
-                          ),
-                          Text(
-                            'Capital ${Money.formatClp(cuota.capital)} · '
-                            'Interés ${Money.formatClp(cuota.interes)}'
-                            '${cuota.previa ? ' · previa' : ''}',
-                            style: theme.textTheme.bodySmall,
-                          ),
-                        ],
-                      ),
-                    ),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
+                  ),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
-                        Text(Money.formatClp(cuota.cuota)),
                         Text(
-                          estadoCuotaLabel(cuota.estado),
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: switch (cuota.estado) {
-                              EstadoCuota.pagada => theme.colorScheme.primary,
-                              EstadoCuota.parcial => theme.colorScheme.tertiary,
-                              _ => theme.colorScheme.onSurfaceVariant,
-                            },
-                          ),
+                          cuota.fechaVencimiento == null
+                              ? 'Cuota ${cuota.numero}'
+                              : '${cuota.fechaVencimiento}',
+                        ),
+                        Text(
+                          'Capital ${Money.formatClp(cuota.capital)} · '
+                          'Interés ${Money.formatClp(cuota.interes)}'
+                          '${cuota.previa ? ' · previa' : ''}',
+                          style: theme.textTheme.bodySmall,
                         ),
                       ],
                     ),
-                  ],
-                ),
+                  ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: <Widget>[
+                      Text(Money.formatClp(cuota.cuota)),
+                      Text(
+                        estadoCuotaLabel(cuota.estado),
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: switch (cuota.estado) {
+                            EstadoCuota.pagada => theme.colorScheme.primary,
+                            EstadoCuota.parcial => theme.colorScheme.tertiary,
+                            _ => theme.colorScheme.onSurfaceVariant,
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
-          ],
-        ),
+            ),
+        ],
       ),
     );
   }
@@ -409,8 +397,7 @@ class _HistorialPagosSectionState
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        Text('Historial de pagos', style: theme.textTheme.titleMedium),
-        const SizedBox(height: 8),
+        const NeoSectionHeader(title: 'Historial de pagos'),
         if (estado.cargando && estado.items.isEmpty)
           const Center(
             child: Padding(
@@ -433,14 +420,15 @@ class _HistorialPagosSectionState
         else if (estado.items.isEmpty)
           const Text('Todavía no hay pagos registrados.')
         else
-          Card(
+          NeoSurface(
+            density: AppDensity.table,
             child: Column(
               children: <Widget>[
                 for (final PagoDeuda pago in estado.items)
                   Padding(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 8,
+                      horizontal: AppSpacing.md,
+                      vertical: AppSpacing.sm,
                     ),
                     child: Row(
                       children: <Widget>[

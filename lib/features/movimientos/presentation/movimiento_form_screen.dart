@@ -2,6 +2,7 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/design_system/design_system.dart';
 import '../../../core/money/money.dart';
 import '../domain/categoria.dart';
 import '../domain/movimiento.dart';
@@ -120,36 +121,26 @@ class _MovimientoFormScreenState extends ConsumerState<MovimientoFormScreen> {
       _ => null,
     };
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(_esEdicion ? 'Editar movimiento' : 'Nuevo movimiento'),
+    return NeoScaffold(
+      appBar: NeoAppBar(
+        title: _esEdicion ? 'Editar movimiento' : 'Nuevo movimiento',
       ),
       body: SafeArea(
         child: Form(
           key: _formKey,
           autovalidateMode: AutovalidateMode.onUserInteraction,
           child: ListView(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.all(AppSpacing.lg),
             children: <Widget>[
               if (ui is NuevoMovimientoError)
                 Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: Text(
-                    ui.message,
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.error,
-                    ),
-                  ),
+                  padding: const EdgeInsets.only(bottom: AppSpacing.md),
+                  child: NeoErrorBand(message: ui.message),
                 ),
               if (ui is NuevoMovimientoFieldErrors && ui.global != null)
                 Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: Text(
-                    ui.global!,
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.error,
-                    ),
-                  ),
+                  padding: const EdgeInsets.only(bottom: AppSpacing.md),
+                  child: NeoErrorBand(message: ui.global!),
                 ),
               if (_esEdicion)
                 InputDecorator(
@@ -186,8 +177,8 @@ class _MovimientoFormScreenState extends ConsumerState<MovimientoFormScreen> {
                     }
                   },
                 ),
-              const SizedBox(height: 12),
-              TextFormField(
+              const SizedBox(height: AppSpacing.md),
+              NeoInput(
                 controller: _descripcionController,
                 textInputAction: TextInputAction.next,
                 onChanged: (_) => _consultarSugerencia(),
@@ -197,23 +188,22 @@ class _MovimientoFormScreenState extends ConsumerState<MovimientoFormScreen> {
                   }
                   return null;
                 },
-                decoration: InputDecoration(
-                  labelText: 'Descripción',
-                  prefixIcon: const Icon(Icons.notes),
-                  errorText: errorFor('descripcion'),
-                ),
+                label: 'Descripción',
+                prefixIcon: Icons.notes,
+                error: errorFor('descripcion'),
               ),
               if (_sugerencias.isNotEmpty) ...<Widget>[
-                const SizedBox(height: 8),
+                const SizedBox(height: AppSpacing.sm),
                 Text(
                   _ambigua
                       ? 'Hay más de una categoría posible: elige la correcta.'
                       : 'Categorías sugeridas (puedes cambiarla):',
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: AppSpacing.xs),
                 Wrap(
-                  spacing: 8,
+                  spacing: AppSpacing.sm,
+                  runSpacing: AppSpacing.xs,
                   children: <Widget>[
                     for (final SugerenciaCategoria sugerencia in _sugerencias)
                       ChoiceChip(
@@ -228,8 +218,8 @@ class _MovimientoFormScreenState extends ConsumerState<MovimientoFormScreen> {
                   ],
                 ),
               ],
-              const SizedBox(height: 12),
-              TextFormField(
+              const SizedBox(height: AppSpacing.md),
+              NeoInput(
                 controller: _montoController,
                 keyboardType: const TextInputType.numberWithOptions(
                   decimal: true,
@@ -245,14 +235,12 @@ class _MovimientoFormScreenState extends ConsumerState<MovimientoFormScreen> {
                   }
                   return null;
                 },
-                decoration: InputDecoration(
-                  labelText: 'Monto',
-                  prefixIcon: const Icon(Icons.attach_money),
-                  hintText: '12.500',
-                  errorText: errorFor('monto'),
-                ),
+                label: 'Monto',
+                hint: '12.500',
+                prefixIcon: Icons.attach_money,
+                error: errorFor('monto'),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: AppSpacing.md),
               _CategoriaSelector(
                 categorias: categorias,
                 seleccionada: _categoriaSeleccionada,
@@ -263,20 +251,21 @@ class _MovimientoFormScreenState extends ConsumerState<MovimientoFormScreen> {
                 errorText: errorFor('categoriaId'),
                 onReintentar: () => ref.invalidate(categoriasProvider),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: AppSpacing.xl),
               if (enviando)
                 const Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: <Widget>[
                     LinearProgressIndicator(),
-                    SizedBox(height: 8),
+                    SizedBox(height: AppSpacing.sm),
                     Text('Guardando…'),
                   ],
                 )
               else
-                FilledButton(
+                NeoButton(
+                  label: 'Guardar movimiento',
+                  expanded: true,
                   onPressed: _submit,
-                  child: const Text('Guardar movimiento'),
                 ),
             ],
           ),

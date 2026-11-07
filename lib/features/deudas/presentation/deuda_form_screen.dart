@@ -2,6 +2,7 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/design_system/design_system.dart';
 import '../../../core/money/money.dart';
 import '../../../core/time/calendar_date.dart';
 import '../domain/deuda.dart';
@@ -126,41 +127,43 @@ class _DeudaFormScreenState extends ConsumerState<DeudaFormScreen> {
       _ => null,
     };
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.esEdicion ? 'Editar deuda' : 'Nueva deuda'),
+    return NeoScaffold(
+      appBar: NeoAppBar(
+        title: widget.esEdicion ? 'Editar deuda' : 'Nueva deuda',
       ),
       body: SafeArea(
         child: Form(
           key: _formKey,
           autovalidateMode: AutovalidateMode.onUserInteraction,
           child: ListView(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.all(AppSpacing.lg),
             children: <Widget>[
               if (ui is DeudaFormError)
-                _error(context, ui.message)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: AppSpacing.md),
+                  child: NeoErrorBand(message: ui.message),
+                )
               else if (ui is DeudaFormFieldErrors && ui.global != null)
-                _error(context, ui.global!),
-              TextFormField(
+                Padding(
+                  padding: const EdgeInsets.only(bottom: AppSpacing.md),
+                  child: NeoErrorBand(message: ui.global!),
+                ),
+              NeoInput(
                 controller: _nombre,
                 textInputAction: TextInputAction.next,
                 validator: (String? v) =>
                     (v == null || v.trim().isEmpty) ? 'Ponle un nombre.' : null,
-                decoration: InputDecoration(
-                  labelText: 'Nombre',
-                  prefixIcon: const Icon(Icons.label_outline),
-                  errorText: errorFor('nombre'),
-                ),
+                label: 'Nombre',
+                prefixIcon: Icons.label_outline,
+                error: errorFor('nombre'),
               ),
-              const SizedBox(height: 12),
-              TextFormField(
+              const SizedBox(height: AppSpacing.md),
+              NeoInput(
                 controller: _descripcion,
-                decoration: const InputDecoration(
-                  labelText: 'Descripción (opcional)',
-                  prefixIcon: Icon(Icons.notes),
-                ),
+                label: 'Descripción (opcional)',
+                prefixIcon: Icons.notes,
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: AppSpacing.md),
               DropdownButtonFormField<TipoDeuda>(
                 initialValue: _tipo,
                 decoration: const InputDecoration(
@@ -195,19 +198,17 @@ class _DeudaFormScreenState extends ConsumerState<DeudaFormScreen> {
                   _modalidad = m ?? ModalidadCalculo.sinInteres;
                 }),
               ),
-              const SizedBox(height: 12),
-              TextFormField(
+              const SizedBox(height: AppSpacing.md),
+              NeoInput(
                 controller: _montoCapital,
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
                 validator: _validateMoney,
-                decoration: InputDecoration(
-                  labelText: 'Capital',
-                  prefixIcon: const Icon(Icons.attach_money),
-                  hintText: '500.000',
-                  errorText: errorFor('condiciones.montoCapital'),
-                ),
+                label: 'Capital',
+                hint: '500.000',
+                prefixIcon: Icons.attach_money,
+                error: errorFor('condiciones.montoCapital'),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: AppSpacing.md),
               SegmentedButton<bool>(
                 segments: const <ButtonSegment<bool>>[
                   ButtonSegment<bool>(value: false, label: Text('Por cuotas')),
@@ -219,7 +220,7 @@ class _DeudaFormScreenState extends ConsumerState<DeudaFormScreen> {
               ),
               const SizedBox(height: 8),
               if (!_porFechas)
-                TextFormField(
+                NeoInput(
                   controller: _cuotas,
                   keyboardType: TextInputType.number,
                   validator: (String? v) {
@@ -229,11 +230,9 @@ class _DeudaFormScreenState extends ConsumerState<DeudaFormScreen> {
                     }
                     return null;
                   },
-                  decoration: InputDecoration(
-                    labelText: 'Cantidad de cuotas',
-                    prefixIcon: const Icon(Icons.tag),
-                    errorText: errorFor('condiciones.cantidadCuotas'),
-                  ),
+                  label: 'Cantidad de cuotas',
+                  prefixIcon: Icons.tag,
+                  error: errorFor('condiciones.cantidadCuotas'),
                 )
               else ...<Widget>[
                 _SelectorFecha(
@@ -262,59 +261,51 @@ class _DeudaFormScreenState extends ConsumerState<DeudaFormScreen> {
                       setState(() => _tasaAnual = v.first),
                 ),
                 const SizedBox(height: 8),
-                TextFormField(
+                NeoInput(
                   controller: _tasa,
                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
                   validator: _validateMoney,
-                  decoration: InputDecoration(
-                    labelText: _tasaAnual
-                        ? 'Tasa anual efectiva (%)'
-                        : 'Tasa mensual (%)',
-                    helperText: 'En porcentaje: 1,5 = 1,5 %',
-                    prefixIcon: const Icon(Icons.percent),
-                    errorText: errorFor(
-                      _tasaAnual
-                          ? 'condiciones.tasaAnualEfectiva'
-                          : 'condiciones.tasaMensual',
-                    ),
+                  label: _tasaAnual
+                      ? 'Tasa anual efectiva (%)'
+                      : 'Tasa mensual (%)',
+                  helper: 'En porcentaje: 1,5 = 1,5 %',
+                  prefixIcon: Icons.percent,
+                  error: errorFor(
+                    _tasaAnual
+                        ? 'condiciones.tasaAnualEfectiva'
+                        : 'condiciones.tasaMensual',
                   ),
                 ),
               ],
               if (_modalidad == ModalidadCalculo.cuotaConocida) ...<Widget>[
                 const SizedBox(height: 12),
-                TextFormField(
+                NeoInput(
                   controller: _valorCuota,
                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
                   validator: _validateMoney,
-                  decoration: InputDecoration(
-                    labelText: 'Valor de la cuota',
-                    prefixIcon: const Icon(Icons.payments_outlined),
-                    errorText: errorFor('condiciones.valorCuota'),
-                  ),
+                  label: 'Valor de la cuota',
+                  prefixIcon: Icons.payments_outlined,
+                  error: errorFor('condiciones.valorCuota'),
                 ),
               ],
-              const SizedBox(height: 12),
-              TextFormField(
+              const SizedBox(height: AppSpacing.md),
+              NeoInput(
                 controller: _gastos,
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
                 validator: _validateMoneyOptional,
-                decoration: InputDecoration(
-                  labelText: 'Gastos iniciales (opcional)',
-                  errorText: errorFor('condiciones.gastosIniciales'),
-                ),
+                label: 'Gastos iniciales (opcional)',
+                error: errorFor('condiciones.gastosIniciales'),
               ),
-              const SizedBox(height: 12),
-              TextFormField(
+              const SizedBox(height: AppSpacing.md),
+              NeoInput(
                 controller: _costoAdicional,
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
                 validator: _validateMoneyOptional,
-                decoration: InputDecoration(
-                  labelText: 'Costo adicional por cuota (opcional)',
-                  errorText: errorFor('condiciones.costoAdicionalPorCuota'),
-                ),
+                label: 'Costo adicional por cuota (opcional)',
+                error: errorFor('condiciones.costoAdicionalPorCuota'),
               ),
-              const SizedBox(height: 12),
-              TextFormField(
+              const SizedBox(height: AppSpacing.md),
+              NeoInput(
                 controller: _cuotasPrevias,
                 keyboardType: TextInputType.number,
                 validator: (String? v) {
@@ -331,14 +322,12 @@ class _DeudaFormScreenState extends ConsumerState<DeudaFormScreen> {
                   }
                   return null;
                 },
-                decoration: InputDecoration(
-                  labelText: 'Cuotas pagadas previas',
-                  prefixIcon: const Icon(Icons.history),
-                  helperText: 'No crean movimientos ni afectan el saldo.',
-                  errorText: errorFor('cuotasPagadasPrevias'),
-                ),
+                label: 'Cuotas pagadas previas',
+                helper: 'No crean movimientos ni afectan el saldo.',
+                prefixIcon: Icons.history,
+                error: errorFor('cuotasPagadasPrevias'),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: AppSpacing.xl),
               _acciones(enviando),
             ],
           ),
@@ -358,19 +347,12 @@ class _DeudaFormScreenState extends ConsumerState<DeudaFormScreen> {
         ],
       );
     }
-    return FilledButton(
+    return NeoButton(
+      label: widget.esEdicion ? 'Guardar cambios' : 'Crear deuda',
+      expanded: true,
       onPressed: _submit,
-      child: Text(widget.esEdicion ? 'Guardar cambios' : 'Crear deuda'),
     );
   }
-
-  Widget _error(BuildContext context, String message) => Padding(
-    padding: const EdgeInsets.only(bottom: 12),
-    child: Text(
-      message,
-      style: TextStyle(color: Theme.of(context).colorScheme.error),
-    ),
-  );
 
   String? _validateMoney(String? value) {
     final String text = value?.trim() ?? '';

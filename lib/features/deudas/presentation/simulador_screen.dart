@@ -2,6 +2,7 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/design_system/design_system.dart';
 import '../../../core/money/money.dart';
 import '../../../core/time/calendar_date.dart';
 import '../domain/deuda.dart';
@@ -68,19 +69,19 @@ class _SimuladorScreenState extends ConsumerState<SimuladorScreen> {
     final bool enviando = ui is SimulacionSubmitting;
     final ThemeData theme = Theme.of(context);
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Simulador de crédito')),
+    return NeoScaffold(
+      appBar: const NeoAppBar(title: 'Simulador de crédito'),
       body: Form(
         key: _formKey,
         child: ListView(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(AppSpacing.lg),
           children: <Widget>[
             Text(
               'Calcula cuánto te costaría un crédito antes de tomarlo. '
               'No se guarda nada.',
               style: theme.textTheme.bodySmall,
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.md),
             DropdownButtonFormField<ModalidadCalculo>(
               initialValue: _modalidad,
               decoration: const InputDecoration(
@@ -98,18 +99,16 @@ class _SimuladorScreenState extends ConsumerState<SimuladorScreen> {
                 () => _modalidad = m ?? ModalidadCalculo.tasaConocida,
               ),
             ),
-            const SizedBox(height: 12),
-            TextFormField(
+            const SizedBox(height: AppSpacing.md),
+            NeoInput(
               controller: _capital,
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
               validator: _moneyRequerido,
-              decoration: const InputDecoration(
-                labelText: 'Capital',
-                prefixIcon: Icon(Icons.attach_money),
-                hintText: '500.000',
-              ),
+              label: 'Capital',
+              hint: '500.000',
+              prefixIcon: Icons.attach_money,
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.md),
             SegmentedButton<bool>(
               segments: const <ButtonSegment<bool>>[
                 ButtonSegment<bool>(value: false, label: Text('Por cuotas')),
@@ -121,17 +120,15 @@ class _SimuladorScreenState extends ConsumerState<SimuladorScreen> {
             ),
             const SizedBox(height: 8),
             if (!_porFechas)
-              TextFormField(
+              NeoInput(
                 controller: _cuotas,
                 keyboardType: TextInputType.number,
                 validator: (String? v) {
                   final int? n = int.tryParse(v?.trim() ?? '');
                   return (n == null || n <= 0) ? 'Ingresa las cuotas.' : null;
                 },
-                decoration: const InputDecoration(
-                  labelText: 'Cantidad de cuotas',
-                  prefixIcon: Icon(Icons.tag),
-                ),
+                label: 'Cantidad de cuotas',
+                prefixIcon: Icons.tag,
               )
             else ...<Widget>[
               _SelectorFecha(
@@ -160,66 +157,54 @@ class _SimuladorScreenState extends ConsumerState<SimuladorScreen> {
                     setState(() => _tasaAnual = v.first),
               ),
               const SizedBox(height: 8),
-              TextFormField(
+              NeoInput(
                 controller: _tasa,
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
                 validator: _moneyRequerido,
-                decoration: InputDecoration(
-                  labelText: _tasaAnual
-                      ? 'Tasa anual efectiva (%)'
-                      : 'Tasa mensual (%)',
-                  helperText: 'En porcentaje: 1,5 = 1,5 %',
-                  prefixIcon: const Icon(Icons.percent),
-                ),
+                label: _tasaAnual
+                    ? 'Tasa anual efectiva (%)'
+                    : 'Tasa mensual (%)',
+                helper: 'En porcentaje: 1,5 = 1,5 %',
+                prefixIcon: Icons.percent,
               ),
             ],
             if (_modalidad == ModalidadCalculo.cuotaConocida) ...<Widget>[
               const SizedBox(height: 12),
-              TextFormField(
+              NeoInput(
                 controller: _valorCuota,
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
                 validator: _moneyRequerido,
-                decoration: const InputDecoration(
-                  labelText: 'Valor de la cuota',
-                  prefixIcon: Icon(Icons.payments_outlined),
-                ),
+                label: 'Valor de la cuota',
+                prefixIcon: Icons.payments_outlined,
               ),
             ],
-            const SizedBox(height: 12),
-            TextFormField(
+            const SizedBox(height: AppSpacing.md),
+            NeoInput(
               controller: _gastos,
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
               validator: _moneyOpcional,
-              decoration: const InputDecoration(
-                labelText: 'Gastos iniciales (opcional)',
-              ),
+              label: 'Gastos iniciales (opcional)',
             ),
-            const SizedBox(height: 12),
-            TextFormField(
+            const SizedBox(height: AppSpacing.md),
+            NeoInput(
               controller: _costoAdicional,
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
               validator: _moneyOpcional,
-              decoration: const InputDecoration(
-                labelText: 'Costo adicional por cuota (opcional)',
-              ),
+              label: 'Costo adicional por cuota (opcional)',
             ),
-            const SizedBox(height: 12),
-            TextFormField(
+            const SizedBox(height: AppSpacing.md),
+            NeoInput(
               controller: _ingreso,
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
               validator: _moneyOpcional,
-              decoration: const InputDecoration(
-                labelText: 'Ingreso mensual (opcional)',
-                helperText: 'Para el resumen educativo',
-              ),
+              label: 'Ingreso mensual (opcional)',
+              helper: 'Para el resumen educativo',
             ),
-            const SizedBox(height: 12),
-            TextFormField(
+            const SizedBox(height: AppSpacing.md),
+            NeoInput(
               controller: _alternativas,
-              decoration: const InputDecoration(
-                labelText: 'Plazos alternativos (opcional)',
-                helperText: 'Máximo 5, separados por coma: 12, 24, 36',
-              ),
+              label: 'Plazos alternativos (opcional)',
+              helper: 'Máximo 5, separados por coma: 12, 24, 36',
             ),
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
@@ -227,30 +212,28 @@ class _SimuladorScreenState extends ConsumerState<SimuladorScreen> {
               value: _incluirTabla,
               onChanged: (bool v) => setState(() => _incluirTabla = v),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.sm),
             if (enviando)
               const Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: <Widget>[
                   LinearProgressIndicator(),
-                  SizedBox(height: 8),
+                  SizedBox(height: AppSpacing.sm),
                   Text('Calculando…'),
                 ],
               )
             else
-              FilledButton(
+              NeoButton(
+                label: 'Simular',
+                expanded: true,
                 onPressed: _simular,
-                child: const Text('Simular'),
               ),
             if (ui is SimulacionError) ...<Widget>[
-              const SizedBox(height: 12),
-              Text(
-                ui.message,
-                style: TextStyle(color: theme.colorScheme.error),
-              ),
+              const SizedBox(height: AppSpacing.md),
+              NeoErrorBand(message: ui.message),
             ],
             if (ui is SimulacionSuccess) ...<Widget>[
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSpacing.lg),
               _Resultado(resultado: ui.resultado),
             ],
           ],
@@ -300,9 +283,7 @@ class _SimuladorScreenState extends ConsumerState<SimuladorScreen> {
       return;
     }
     if (_porFechas && (_fechaPrimera == null || _fechaUltima == null)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Elige ambas fechas.')),
-      );
+      NeoSnackbar.show(context, 'Elige ambas fechas.');
       return;
     }
     final SimulacionRequest request = SimulacionRequest(
@@ -353,160 +334,140 @@ class _Resultado extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Text('Resultado', style: theme.textTheme.titleMedium),
-                const SizedBox(height: 8),
-                fila('Cuota', Money.formatClp(resultado.valorCuota)),
-                fila('Monto total', Money.formatClp(resultado.montoTotal)),
-                fila(
-                  'Costo total del crédito',
-                  Money.formatClp(resultado.costoTotalCredito),
-                ),
-                fila(
-                  'Intereses y costos',
-                  Money.formatClp(resultado.interesesYCostos),
-                ),
-                fila('CAE', '${resultado.cargaAnualEquivalente} %'),
-                fila('Tasa mensual', '${resultado.tasaMensual} %'),
-                fila('Tasa anual efectiva', '${resultado.tasaAnualEfectiva} %'),
-              ],
-            ),
+        NeoSurface(
+          density: AppDensity.section,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              const NeoSectionHeader(title: 'Resultado'),
+              fila('Cuota', Money.formatClp(resultado.valorCuota)),
+              fila('Monto total', Money.formatClp(resultado.montoTotal)),
+              fila(
+                'Costo total del crédito',
+                Money.formatClp(resultado.costoTotalCredito),
+              ),
+              fila(
+                'Intereses y costos',
+                Money.formatClp(resultado.interesesYCostos),
+              ),
+              fila('CAE', '${resultado.cargaAnualEquivalente} %'),
+              fila('Tasa mensual', '${resultado.tasaMensual} %'),
+              fila('Tasa anual efectiva', '${resultado.tasaAnualEfectiva} %'),
+            ],
           ),
         ),
-        const SizedBox(height: 12),
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Text('Resumen educativo', style: theme.textTheme.titleMedium),
-                const SizedBox(height: 8),
+        const SizedBox(height: AppSpacing.md),
+        NeoSurface(
+          density: AppDensity.section,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              const NeoSectionHeader(title: 'Resumen educativo'),
+              fila(
+                'Costo por cada \$100',
+                Money.formatClp(resultado.resumen.costoPorCada100),
+              ),
+              fila(
+                '% sobre el capital',
+                '${resultado.resumen.porcentajeSobreCapital} %',
+              ),
+              fila(
+                '% intereses y costos',
+                '${resultado.resumen.porcentajeInteresesYCostos} %',
+              ),
+              if (resultado.resumen.porcentajeIngresoComprometido != null)
                 fila(
-                  'Costo por cada \$100',
-                  Money.formatClp(resultado.resumen.costoPorCada100),
+                  '% del ingreso comprometido',
+                  '${resultado.resumen.porcentajeIngresoComprometido} %',
                 ),
-                fila(
-                  '% sobre el capital',
-                  '${resultado.resumen.porcentajeSobreCapital} %',
-                ),
-                fila(
-                  '% intereses y costos',
-                  '${resultado.resumen.porcentajeInteresesYCostos} %',
-                ),
-                if (resultado.resumen.porcentajeIngresoComprometido != null)
-                  fila(
-                    '% del ingreso comprometido',
-                    '${resultado.resumen.porcentajeIngresoComprometido} %',
-                  ),
-              ],
-            ),
+            ],
           ),
         ),
         if (resultado.comparacion.isNotEmpty) ...<Widget>[
-          const SizedBox(height: 12),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Text(
-                    'Comparación de plazos',
-                    style: theme.textTheme.titleMedium,
-                  ),
-                  const SizedBox(height: 8),
-                  for (final ComparacionPlazo c in resultado.comparacion)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 4),
-                      child: Row(
-                        children: <Widget>[
-                          Expanded(child: Text('${c.cantidadCuotas} cuotas')),
-                          Text(
-                            '${Money.formatClp(c.valorCuota)} · '
-                            'total ${Money.formatClp(c.costoTotalCredito)}',
-                            style: theme.textTheme.bodySmall,
-                          ),
-                        ],
-                      ),
+          const SizedBox(height: AppSpacing.md),
+          NeoSurface(
+            density: AppDensity.section,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                const NeoSectionHeader(title: 'Comparación de plazos'),
+                for (final ComparacionPlazo c in resultado.comparacion)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+                    child: Row(
+                      children: <Widget>[
+                        Expanded(child: Text('${c.cantidadCuotas} cuotas')),
+                        Text(
+                          '${Money.formatClp(c.valorCuota)} · '
+                          'total ${Money.formatClp(c.costoTotalCredito)}',
+                          style: theme.textTheme.bodySmall,
+                        ),
+                      ],
                     ),
-                ],
-              ),
+                  ),
+              ],
             ),
           ),
         ],
         if (resultado.tabla.isNotEmpty) ...<Widget>[
-          const SizedBox(height: 12),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Text(
-                    'Tabla de amortización',
-                    style: theme.textTheme.titleMedium,
-                  ),
-                  const SizedBox(height: 8),
-                  for (final CuotaAmortizacion c in resultado.tabla)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 4),
-                      child: Row(
-                        children: <Widget>[
-                          SizedBox(
-                            width: 32,
-                            child: Text('${c.numero}'),
+          const SizedBox(height: AppSpacing.md),
+          NeoSurface(
+            density: AppDensity.section,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                const NeoSectionHeader(title: 'Tabla de amortización'),
+                for (final CuotaAmortizacion c in resultado.tabla)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+                    child: Row(
+                      children: <Widget>[
+                        SizedBox(
+                          width: 32,
+                          child: Text('${c.numero}'),
+                        ),
+                        Expanded(
+                          child: Text(
+                            c.fechaVencimiento == null
+                                ? 'Cuota ${c.numero}'
+                                : '${c.fechaVencimiento}',
+                            style: theme.textTheme.bodySmall,
                           ),
-                          Expanded(
-                            child: Text(
-                              c.fechaVencimiento == null
-                                  ? 'Cuota ${c.numero}'
-                                  : '${c.fechaVencimiento}',
+                        ),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: <Widget>[
+                            Text(Money.formatClp(c.cuota)),
+                            Text(
+                              'Capital ${Money.formatClp(c.capital)} · '
+                              'Interés ${Money.formatClp(c.interes)}',
                               style: theme.textTheme.bodySmall,
                             ),
-                          ),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: <Widget>[
-                              Text(Money.formatClp(c.cuota)),
-                              Text(
-                                'Capital ${Money.formatClp(c.capital)} · '
-                                'Interés ${Money.formatClp(c.interes)}',
-                                style: theme.textTheme.bodySmall,
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
+                          ],
+                        ),
+                      ],
                     ),
-                ],
-              ),
+                  ),
+              ],
             ),
           ),
         ],
         if (resultado.advertencias.isNotEmpty) ...<Widget>[
-          const SizedBox(height: 12),
-          Card(
-            color: theme.colorScheme.surfaceContainerHighest,
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Text('Ten en cuenta', style: theme.textTheme.titleSmall),
-                  const SizedBox(height: 8),
-                  for (final String a in resultado.advertencias)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 2),
-                      child: Text('• $a', style: theme.textTheme.bodySmall),
-                    ),
-                ],
-              ),
+          const SizedBox(height: AppSpacing.md),
+          NeoSurface(
+            density: AppDensity.section,
+            color: Theme.of(context).colorScheme.surfaceContainerHighest,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text('Ten en cuenta', style: theme.textTheme.titleSmall),
+                const SizedBox(height: AppSpacing.sm),
+                for (final String a in resultado.advertencias)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 2),
+                    child: Text('• $a', style: theme.textTheme.bodySmall),
+                  ),
+              ],
             ),
           ),
         ],

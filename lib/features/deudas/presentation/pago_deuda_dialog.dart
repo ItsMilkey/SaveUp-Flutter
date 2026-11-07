@@ -2,6 +2,7 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/design_system/design_system.dart';
 import '../../../core/errors/app_failure.dart';
 import '../../../core/errors/failure_messages.dart';
 import '../../../core/money/money.dart';
@@ -67,9 +68,21 @@ class _PagoDeudaDialogState extends ConsumerState<PagoDeudaDialog> {
     final Decimal pendiente =
         widget.deuda.proximaCuotaMontoPendiente ?? widget.deuda.montoRestante;
 
-    return AlertDialog(
-      title: const Text('Registrar pago'),
-      content: Form(
+    return NeoDialog(
+      title: 'Registrar pago',
+      actions: <Widget>[
+        NeoButton(
+          label: 'Cancelar',
+          variant: NeoButtonVariant.secondary,
+          onPressed: _enviando ? null : () => Navigator.of(context).pop(false),
+        ),
+        NeoButton(
+          label: 'Registrar pago',
+          loading: _enviando,
+          onPressed: _enviando ? null : _submit,
+        ),
+      ],
+      child: Form(
         key: _formKey,
         child: SingleChildScrollView(
           child: Column(
@@ -81,7 +94,7 @@ class _PagoDeudaDialogState extends ConsumerState<PagoDeudaDialog> {
                 '· saldo capital ${Money.formatClp(widget.deuda.saldoCapital)}',
                 style: Theme.of(context).textTheme.bodySmall,
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: AppSpacing.md),
               SegmentedButton<ModoPago>(
                 segments: const <ButtonSegment<ModoPago>>[
                   ButtonSegment<ModoPago>(
@@ -98,8 +111,8 @@ class _PagoDeudaDialogState extends ConsumerState<PagoDeudaDialog> {
                     setState(() => _modo = v.first),
               ),
               if (_modo == ModoPago.montoPersonalizado) ...<Widget>[
-                const SizedBox(height: 12),
-                TextFormField(
+                const SizedBox(height: AppSpacing.md),
+                NeoInput(
                   controller: _monto,
                   keyboardType: const TextInputType.numberWithOptions(
                     decimal: true,
@@ -119,54 +132,29 @@ class _PagoDeudaDialogState extends ConsumerState<PagoDeudaDialog> {
                     }
                     return null;
                   },
-                  decoration: const InputDecoration(
-                    labelText: 'Monto',
-                    prefixIcon: Icon(Icons.attach_money),
-                  ),
+                  label: 'Monto',
+                  prefixIcon: Icons.attach_money,
                 ),
               ],
-              const SizedBox(height: 12),
-              TextFormField(
+              const SizedBox(height: AppSpacing.md),
+              NeoInput(
                 controller: _descripcion,
                 validator: (String? value) =>
                     (value == null || value.trim().isEmpty)
                     ? 'Escribe una descripción.'
                     : null,
-                decoration: const InputDecoration(
-                  labelText: 'Descripción',
-                  prefixIcon: Icon(Icons.notes),
-                ),
+                label: 'Descripción',
+                prefixIcon: Icons.notes,
               ),
               if (_error != null)
                 Padding(
-                  padding: const EdgeInsets.only(top: 12),
-                  child: Text(
-                    failureMessage(_error!),
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.error,
-                    ),
-                  ),
+                  padding: const EdgeInsets.only(top: AppSpacing.md),
+                  child: NeoErrorBand(message: failureMessage(_error!)),
                 ),
             ],
           ),
         ),
       ),
-      actions: <Widget>[
-        TextButton(
-          onPressed: _enviando ? null : () => Navigator.of(context).pop(false),
-          child: const Text('Cancelar'),
-        ),
-        FilledButton(
-          onPressed: _enviando ? null : _submit,
-          child: _enviando
-              ? const SizedBox(
-                  width: 18,
-                  height: 18,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : const Text('Registrar pago'),
-        ),
-      ],
     );
   }
 

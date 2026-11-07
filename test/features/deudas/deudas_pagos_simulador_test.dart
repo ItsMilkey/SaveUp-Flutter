@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:saveup_app/core/design_system/design_system.dart';
 import 'package:saveup_app/core/network/token_store.dart';
 
 import '../../support/fake_http_adapter.dart';
@@ -192,7 +193,7 @@ void main() {
     // Confirmar en el diálogo (la barra inferior también dice lo mismo).
     await tester.tap(
       find.descendant(
-        of: find.byType(AlertDialog),
+        of: find.byType(NeoDialog),
         matching: find.widgetWithText(FilledButton, 'Registrar pago'),
       ),
     );
@@ -214,7 +215,7 @@ void main() {
     );
     await tester.tap(
       find.descendant(
-        of: find.byType(AlertDialog),
+        of: find.byType(NeoDialog),
         matching: find.widgetWithText(FilledButton, 'Registrar pago'),
       ),
     );
@@ -233,7 +234,7 @@ void main() {
 
     await tester.tap(
       find.descendant(
-        of: find.byType(AlertDialog),
+        of: find.byType(NeoDialog),
         matching: find.widgetWithText(FilledButton, 'Cancelar deuda'),
       ),
     );
@@ -257,7 +258,10 @@ void main() {
     );
     expect(find.text('Pago Cuota 1'), findsOneWidget);
 
-    await tester.tap(find.textContaining('Cargar más'));
+    final Finder cargarMas = find.textContaining('Cargar más');
+    await tester.ensureVisible(cargarMas);
+    await tester.pumpAndSettle();
+    await tester.tap(cargarMas);
     await tester.pumpAndSettle();
     expect(find.text('Pago Cuota 2'), findsOneWidget);
     pagosPagina += 1;

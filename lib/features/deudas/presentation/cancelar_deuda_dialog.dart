@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/design_system/design_system.dart';
 import '../../../core/errors/app_failure.dart';
 import '../../../core/errors/failure_messages.dart';
 import '../../../core/money/money.dart';
@@ -32,9 +33,22 @@ class _CancelarDeudaDialogState extends ConsumerState<CancelarDeudaDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: const Text('¿Cancelar la deuda?'),
-      content: Column(
+    return NeoDialog(
+      title: '¿Cancelar la deuda?',
+      actions: <Widget>[
+        NeoButton(
+          label: 'Volver',
+          variant: NeoButtonVariant.secondary,
+          onPressed: _enviando ? null : () => Navigator.of(context).pop(false),
+        ),
+        NeoButton(
+          label: 'Cancelar deuda',
+          variant: NeoButtonVariant.danger,
+          loading: _enviando,
+          onPressed: _enviando ? null : _cancelar,
+        ),
+      ],
+      child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
@@ -45,34 +59,11 @@ class _CancelarDeudaDialogState extends ConsumerState<CancelarDeudaDialog> {
           ),
           if (_error != null)
             Padding(
-              padding: const EdgeInsets.only(top: 12),
-              child: Text(
-                failureMessage(_error!),
-                style: TextStyle(color: Theme.of(context).colorScheme.error),
-              ),
+              padding: const EdgeInsets.only(top: AppSpacing.md),
+              child: NeoErrorBand(message: failureMessage(_error!)),
             ),
         ],
       ),
-      actions: <Widget>[
-        TextButton(
-          onPressed: _enviando ? null : () => Navigator.of(context).pop(false),
-          child: const Text('Volver'),
-        ),
-        FilledButton(
-          style: FilledButton.styleFrom(
-            backgroundColor: Theme.of(context).colorScheme.error,
-            foregroundColor: Theme.of(context).colorScheme.onError,
-          ),
-          onPressed: _enviando ? null : _cancelar,
-          child: _enviando
-              ? const SizedBox(
-                  width: 18,
-                  height: 18,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : const Text('Cancelar deuda'),
-        ),
-      ],
     );
   }
 

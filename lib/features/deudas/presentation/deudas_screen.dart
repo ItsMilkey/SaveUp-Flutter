@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/routes.dart';
+import '../../../core/design_system/design_system.dart';
 import '../../../core/errors/app_failure.dart';
 import '../../../core/errors/failure_messages.dart';
 import '../../../core/money/money.dart';
@@ -25,21 +26,30 @@ class _DeudasScreenState extends ConsumerState<DeudasScreen> {
   Widget build(BuildContext context) {
     final AsyncValue<List<Deuda>> deudas = ref.watch(deudasProvider);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Deudas'),
+    return NeoScaffold(
+      appBar: NeoAppBar(
+        title: 'Deudas',
         actions: <Widget>[
-          IconButton(
-            icon: const Icon(Icons.calculate_outlined),
-            tooltip: 'Simular crédito',
-            onPressed: () => context.push<void>(AppRoutes.simulador),
+          Padding(
+            padding: const EdgeInsets.only(right: AppSpacing.sm),
+            child: NeoIconButton(
+              icon: Icons.calculate_outlined,
+              tooltip: 'Simular crédito',
+              variant: NeoIconButtonVariant.secondary,
+              onPressed: () => context.push<void>(AppRoutes.simulador),
+            ),
           ),
         ],
       ),
       body: Column(
         children: <Widget>[
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.lg,
+              AppSpacing.md,
+              AppSpacing.lg,
+              AppSpacing.xs,
+            ),
             child: SegmentedButton<bool>(
               segments: const <ButtonSegment<bool>>[
                 ButtonSegment<bool>(value: true, label: Text('Activas')),
@@ -52,37 +62,22 @@ class _DeudasScreenState extends ConsumerState<DeudasScreen> {
           ),
           Expanded(
             child: deudas.when(
-              loading: () => const Center(
-                child: CircularProgressIndicator.adaptive(),
-              ),
-              error: (Object error, StackTrace stack) => Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: <Widget>[
-                    Text(
-                      error is AppFailure
-                          ? failureMessage(error)
-                          : 'No se pudieron cargar las deudas.',
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 8),
-                    OutlinedButton(
-                      onPressed: () =>
-                          ref.read(deudasProvider.notifier).refrescar(),
-                      child: const Text('Reintentar'),
-                    ),
-                  ],
-                ),
+              loading: () => const NeoLoading(rows: 3),
+              error: (Object error, StackTrace stack) => NeoErrorState(
+                message: error is AppFailure
+                    ? failureMessage(error)
+                    : 'No se pudieron cargar las deudas.',
+                onRetry: () => ref.read(deudasProvider.notifier).refrescar(),
               ),
               data: (List<Deuda> lista) => _lista(lista),
             ),
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: NeoButton(
+        label: 'Nueva deuda',
+        icon: Icons.add,
         onPressed: _abrirAlta,
-        icon: const Icon(Icons.add),
-        label: const Text('Nueva deuda'),
       ),
     );
   }
@@ -93,35 +88,34 @@ class _DeudasScreenState extends ConsumerState<DeudasScreen> {
         .toList(growable: false);
 
     if (visibles.isEmpty) {
-      return ListView(
-        padding: const EdgeInsets.all(24),
-        children: <Widget>[
-          const SizedBox(height: 48),
-          Text(
-            _verActivas
-                ? 'No tienes deudas activas.'
-                : 'No hay deudas pagadas ni canceladas.',
-            textAlign: TextAlign.center,
-          ),
-          if (_verActivas) ...<Widget>[
-            const SizedBox(height: 12),
-            Center(
-              child: FilledButton(
-                onPressed: _abrirAlta,
-                child: const Text('Registrar mi primera deuda'),
-              ),
+      return RefreshIndicator(
+        onRefresh: () => ref.read(deudasProvider.notifier).refrescar(),
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.all(AppSpacing.lg),
+          children: <Widget>[
+            _EmptyDeudas(
+              message: _verActivas
+                  ? 'No tienes deudas activas.'
+                  : 'No hay deudas pagadas ni canceladas.',
+              onRegistrar: _verActivas ? _abrirAlta : null,
             ),
           ],
-        ],
+        ),
       );
     }
 
     return RefreshIndicator(
       onRefresh: () => ref.read(deudasProvider.notifier).refrescar(),
       child: ListView.separated(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.lg,
+          AppSpacing.sm,
+          AppSpacing.lg,
+          AppSpacing.xxxl,
+        ),
         itemCount: visibles.length,
-        separatorBuilder: (_, _) => const SizedBox(height: 8),
+        separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.sm),
         itemBuilder: (BuildContext context, int index) {
           final Deuda deuda = visibles[index];
           return _DeudaCard(
@@ -154,72 +148,116 @@ class _DeudaCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ColorScheme scheme = Theme.of(context).colorScheme;
+    final ThemeData theme = Theme.of(context);
+    final ColorScheme scheme = theme.colorScheme;
     final String proxima = deuda.proximaCuotaNumero == null
         ? 'Sin cuotas pendientes'
         : 'Próxima cuota ${deuda.proximaCuotaNumero} · '
               '${Money.formatClp(deuda.proximaCuotaMontoPendiente ?? deuda.montoRestante)}'
               '${deuda.proximaFechaVencimiento == null ? '' : ' · vence ${deuda.proximaFechaVencimiento}'}';
 
-    return Card(
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    return NeoSurface(
+      density: AppDensity.section,
+      onTap: onTap,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
             children: <Widget>[
-              Row(
-                children: <Widget>[
-                  Expanded(
-                    child: Text(
-                      deuda.nombre,
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                  ),
-                  Chip(
-                    label: Text(estadoDeudaLabel(deuda.estado)),
-                    labelStyle: TextStyle(
-                      color: estadoDeudaColor(context, deuda.estado),
-                      fontSize: 12,
-                    ),
-                    visualDensity: VisualDensity.compact,
-                    side: BorderSide(
-                      color: estadoDeudaColor(context, deuda.estado),
-                    ),
-                  ),
-                ],
-              ),
-              Text(
-                '${tipoDeudaLabel(deuda.tipo)} · ${modalidadLabel(deuda.modalidad)}',
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-              const SizedBox(height: 12),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(4),
-                child: LinearProgressIndicator(
-                  value: deuda.progreso,
-                  minHeight: 8,
-                  backgroundColor: scheme.surfaceContainerHighest,
+              Expanded(
+                child: Text(
+                  deuda.nombre,
+                  style: theme.textTheme.titleMedium,
                 ),
               ),
-              const SizedBox(height: 8),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: <Widget>[
-                  Text('${deuda.cuotasPagadas} de ${deuda.cantidadCuotas} cuotas'),
-                  Text(
-                    'Pendiente: ${Money.formatClp(deuda.montoRestante)}',
-                    style: TextStyle(fontWeight: FontWeight.w600, color: scheme.error),
-                  ),
-                ],
+              const SizedBox(width: AppSpacing.sm),
+              NeoBadge(
+                label: estadoDeudaLabel(deuda.estado),
+                color: estadoDeudaColor(context, deuda.estado),
+                compact: true,
               ),
-              const SizedBox(height: 4),
-              Text(proxima, style: Theme.of(context).textTheme.bodySmall),
             ],
           ),
-        ),
+          const SizedBox(height: 2),
+          Text(
+            '${tipoDeudaLabel(deuda.tipo)} · ${modalidadLabel(deuda.modalidad)}',
+            style: theme.textTheme.bodySmall,
+          ),
+          const SizedBox(height: AppSpacing.md),
+          NeoProgress(value: deuda.progreso),
+          const SizedBox(height: AppSpacing.sm),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: <Widget>[
+              Text('${deuda.cuotasPagadas} de ${deuda.cantidadCuotas} cuotas'),
+              Text(
+                'Pendiente: ${Money.formatClp(deuda.montoRestante)}',
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  color: scheme.error,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Text(proxima, style: theme.textTheme.bodySmall),
+        ],
+      ),
+    );
+  }
+}
+
+class _EmptyDeudas extends StatelessWidget {
+  const _EmptyDeudas({required this.message, this.onRegistrar});
+
+  final String message;
+  final VoidCallback? onRegistrar;
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    final SaveUpColors colors = theme.extension<SaveUpColors>()!;
+    return NeoSurface(
+      density: AppDensity.section,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: AppColors.cyan,
+                  borderRadius: AppRadii.smAll,
+                  border: Border.all(
+                    color: colors.border,
+                    width: AppBorders.regular,
+                  ),
+                ),
+                child: const Icon(
+                  Icons.account_balance_wallet_outlined,
+                  size: 20,
+                  color: AppColors.ink,
+                ),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: Text(message, style: theme.textTheme.titleSmall),
+              ),
+            ],
+          ),
+          if (onRegistrar != null) ...<Widget>[
+            const SizedBox(height: AppSpacing.md),
+            NeoButton(
+              label: 'Registrar mi primera deuda',
+              variant: NeoButtonVariant.secondary,
+              expanded: true,
+              onPressed: onRegistrar,
+            ),
+          ],
+        ],
       ),
     );
   }
