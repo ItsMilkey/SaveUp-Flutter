@@ -36,5 +36,7 @@ Al terminar, marcar aquí con `[x]`.
   desde el home; verificada manualmente)
 - [ ] **F9** notificaciones push (requiere proyecto Firebase y, para iOS, cuenta de Apple
   Developer de pago; en producción el backend las tiene desactivadas)
+- [ ] **F10** analítica de gastos: torta por categoría y barras mensuales — propuesta en
+  `F10-analitica.md` (sin endpoints nuevos; entrada y tema se definen con el rediseño UI/UX)
 
 Las tareas F2 en adelante se redactan cuando se acerque su turno, con el contrato real a mano.
