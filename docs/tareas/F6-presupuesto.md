@@ -7,6 +7,16 @@
 > `desde/hasta`, `DELETE` de preferencia) y repositorios Dio con query params
 > exactos. Tests de contrato: 14 (URLs, cuerpos, query, parseo y `detail` de
 > `400 DATOS_INVALIDOS`). Suite total 314 verdes, `flutter analyze` limpio.
+>
+> **Avance Bloque 2 (2026-11-07): configuración de la regla.**
+> `ReglaPresupuestariaController` con autobalanceo exacto a 100.00 en `Decimal`
+> (mueve uno y reparte el resto proporcionalmente; clamp 0–100; suma siempre
+> exacta), carga tolerante a `404 NO_ENCONTRADO` (usa sugerencia/50-30-20),
+> sugerencia opcional con `DATOS_INSUFICIENTES`, toggles `activo` y
+> `automatizarAhorroEnMetas`, guardado y `detail` de `DATOS_INVALIDOS`.
+> Pantalla `/presupuestos/configuracion` con sugerencia aplicable, tres sliders
+> coordinados, suma visible y aviso de guardado; entrada desde el home.
+> Tests: 7 del controlador y 3 de pantalla. Total 324 verdes.
 
 ## Objetivo
 Configurar la regla 50/30/20 (o personalizada) del usuario, seguir su ejecución mensual frente

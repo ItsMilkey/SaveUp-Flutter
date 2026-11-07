@@ -50,4 +50,7 @@ abstract final class AppRoutes {
 
   /// Plan mensual (F6a).
   static const String plan = '/plan';
+
+  /// Configuración de la regla de presupuesto (F6).
+  static const String presupuestoConfiguracion = '/presupuestos/configuracion';
 }

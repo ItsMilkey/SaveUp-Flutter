@@ -18,6 +18,7 @@ import '../features/deudas/presentation/deudas_screen.dart';
 import '../features/deudas/presentation/simulador_screen.dart';
 import '../features/deudas/domain/deuda.dart';
 import '../features/presupuesto/presentation/screens/plan_screen.dart';
+import '../features/presupuesto/presentation/screens/configuracion_regla_screen.dart';
 import '../features/movimientos/presentation/movimientos_screen.dart';
 import '../features/movimientos/presentation/movimiento_form_screen.dart';
 import '../features/auth/domain/auth_session.dart';
@@ -135,6 +136,11 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
         path: AppRoutes.plan,
         name: 'plan',
         builder: (_, _) => const PlanScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.presupuestoConfiguracion,
+        name: 'presupuestoConfiguracion',
+        builder: (_, _) => const ConfiguracionReglaScreen(),
       ),
     ],
   );
