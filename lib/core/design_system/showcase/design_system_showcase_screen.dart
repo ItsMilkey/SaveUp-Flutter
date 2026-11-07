@@ -496,13 +496,10 @@ class _DesignSystemShowcaseScreenState
                               icon: Icons.savings_outlined,
                               onTap: () {},
                             ),
-                            const NeoMoreOption(
+                            NeoMoreOption(
                               label: 'Analítica',
                               icon: Icons.insights_outlined,
-                              badge: NeoBadge(
-                                label: 'Pronto',
-                                compact: true,
-                              ),
+                              onTap: () {},
                             ),
                             NeoMoreOption(
                               label: 'Reportes',

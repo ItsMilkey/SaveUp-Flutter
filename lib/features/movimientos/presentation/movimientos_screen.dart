@@ -83,7 +83,7 @@ class _MovimientosScreenState extends ConsumerState<MovimientosScreen> {
             AppSpacing.lg,
             AppSpacing.lg,
             AppSpacing.lg,
-            AppSpacing.xxxl,
+            AppSpacing.xxxl * 3,
           ),
           children: <Widget>[
             _TarjetaSaldo(estado: estado),

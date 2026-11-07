@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/design_system/design_system.dart';
 import '../../app_version/presentation/app_version_controller.dart';
 import '../domain/legal_documents.dart';
 
@@ -23,38 +24,48 @@ class LegalesScreen extends ConsumerWidget {
 
     return DefaultTabController(
       length: 2,
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Documentos legales'),
+      child: NeoScaffold(
+        appBar: NeoAppBar(
+          title: 'Documentos legales',
           bottom: const TabBar(
-            tabs: <Tab>[
+            tabs: <Widget>[
               Tab(text: 'Términos y Condiciones'),
               Tab(text: 'Política de Privacidad'),
             ],
           ),
         ),
-        body: TabBarView(
+        body: Column(
           children: <Widget>[
-            _DocumentoLegal(
-              titulo: 'Términos y Condiciones de Uso',
-              version: versionTerminos,
-              texto: textoProvisionalTerminos,
+            Expanded(
+              child: TabBarView(
+                children: <Widget>[
+                  _DocumentoLegal(
+                    titulo: 'Términos y Condiciones de Uso',
+                    version: versionTerminos,
+                    texto: textoProvisionalTerminos,
+                  ),
+                  _DocumentoLegal(
+                    titulo: 'Política de Privacidad',
+                    version: versionPrivacidad,
+                    texto: textoProvisionalPrivacidad,
+                  ),
+                ],
+              ),
             ),
-            _DocumentoLegal(
-              titulo: 'Política de Privacidad',
-              version: versionPrivacidad,
-              texto: textoProvisionalPrivacidad,
+            SafeArea(
+              top: false,
+              child: Padding(
+                padding: const EdgeInsets.all(AppSpacing.md),
+                child: Text(
+                  'Versión de los documentos informada por el servidor: '
+                  'Términos $versionTerminos · Privacidad $versionPrivacidad',
+                  style: textTheme.bodySmall,
+                  textAlign: TextAlign.center,
+                ),
+              ),
             ),
           ],
         ),
-        persistentFooterButtons: <Widget>[
-          Text(
-            'Versión de los documentos informada por el servidor: '
-            'Términos $versionTerminos · Privacidad $versionPrivacidad',
-            style: textTheme.bodySmall,
-            textAlign: TextAlign.center,
-          ),
-        ],
       ),
     );
   }
@@ -76,7 +87,7 @@ class _DocumentoLegal extends StatelessWidget {
   Widget build(BuildContext context) {
     final TextTheme textTheme = Theme.of(context).textTheme;
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(AppSpacing.lg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
@@ -84,9 +95,9 @@ class _DocumentoLegal extends StatelessWidget {
             '$titulo — versión $version',
             style: textTheme.titleMedium,
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.md),
           Text(texto),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSpacing.lg),
           Text(
             'Versión vigente: $version',
             style: textTheme.bodySmall,

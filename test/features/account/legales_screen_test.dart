@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:saveup_app/core/design_system/design_system.dart';
 import 'package:saveup_app/core/network/token_store.dart';
 import 'package:saveup_app/features/account/presentation/legales_screen.dart';
 import 'package:saveup_app/features/app_version/presentation/app_version_controller.dart';
@@ -131,7 +132,10 @@ void main() {
         overrides: [
           legalVersionsProvider.overrideWith(() => _LegalesNulas()),
         ],
-        child: const MaterialApp(home: LegalesScreen()),
+        child: MaterialApp(
+          theme: SaveUpTheme.light(),
+          home: const LegalesScreen(),
+        ),
       ),
     );
     await tester.pumpAndSettle();

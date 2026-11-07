@@ -18,6 +18,7 @@ void main() {
     required FakePlanMensualRepository plan,
     FakePresupuestoRepository? presupuesto,
     FakeCategoriasRepository? categorias,
+    ThemeData? theme,
   }) async {
     await tester.pumpWidget(
       ProviderScope(
@@ -31,7 +32,7 @@ void main() {
           ),
         ],
         child: MaterialApp(
-          theme: SaveUpTheme.light(),
+          theme: theme ?? SaveUpTheme.light(),
           home: const AnaliticaScreen(),
         ),
       ),
@@ -57,10 +58,24 @@ void main() {
     expect(plan.consultas, contains('2026-12'));
   });
 
-  testWidgets('la falla del plan muestra reintento', (
+  testWidgets('el tema oscuro monta sin excepciones', (
     WidgetTester tester,
   ) async {
-    await tester.pumpWidget(
+    await montar(
+      tester,
+      plan: FakePlanMensualRepository(
+        plan: planDePrueba(ingresoReferencia: d('1000000')),
+      ),
+      theme: SaveUpTheme.dark(),
+    );
+
+    expect(find.text('Sin movimientos'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('la falla del plan muestra reintento', (
+    WidgetTester tester,
+  ) async {    await tester.pumpWidget(
       ProviderScope(
         overrides: [
           planMensualRepositoryProvider.overrideWith(

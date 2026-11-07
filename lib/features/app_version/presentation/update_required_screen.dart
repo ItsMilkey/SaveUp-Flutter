@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../app/url_opener.dart';
+import '../../../core/design_system/design_system.dart';
 import '../domain/app_version_info.dart';
 import 'app_version_controller.dart';
 
@@ -20,37 +21,58 @@ class UpdateRequiredScreen extends ConsumerWidget {
 
     return PopScope(
       canPop: false,
-      child: Scaffold(
+      child: NeoScaffold(
         body: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: <Widget>[
-                Icon(
-                  Icons.system_update_alt,
-                  size: 64,
-                  color: Theme.of(context).colorScheme.primary,
+          child: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(AppSpacing.lg),
+              child: NeoSurface(
+                density: AppDensity.hero,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: <Widget>[
+                    Container(
+                      width: 64,
+                      height: 64,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: AppColors.yellow,
+                        borderRadius: AppRadii.mdAll,
+                        border: Border.all(
+                          color: Theme.of(context)
+                              .extension<SaveUpColors>()!
+                              .border,
+                          width: AppBorders.regular,
+                        ),
+                      ),
+                      child: const Icon(
+                        Icons.system_update_alt,
+                        size: 32,
+                        color: AppColors.ink,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.lg),
+                    Text(
+                      'Actualización requerida',
+                      style: textTheme.headlineSmall,
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    Text(
+                      info.mensaje,
+                      style: textTheme.bodyMedium,
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: AppSpacing.xl),
+                    NeoButton(
+                      label: 'Actualizar',
+                      icon: Icons.open_in_new,
+                      expanded: true,
+                      onPressed: () => _openStore(context, ref, info.urlTienda),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 16),
-                Text(
-                  'Actualización requerida',
-                  style: textTheme.headlineSmall,
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  info.mensaje,
-                  style: textTheme.bodyMedium,
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 24),
-                FilledButton(
-                  onPressed: () => _openStore(context, ref, info.urlTienda),
-                  child: const Text('Actualizar'),
-                ),
-              ],
+              ),
             ),
           ),
         ),
@@ -65,8 +87,10 @@ class UpdateRequiredScreen extends ConsumerWidget {
   ) async {
     final Uri? uri = Uri.tryParse(url);
     if (uri == null || !uri.isScheme('https') && !uri.isScheme('http')) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No se pudo abrir la tienda.')),
+      NeoSnackbar.show(
+        context,
+        'No se pudo abrir la tienda.',
+        tone: NeoSnackbarTone.danger,
       );
       return;
     }
@@ -82,8 +106,10 @@ class UpdateRequiredScreen extends ConsumerWidget {
       if (!context.mounted) {
         return;
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No se pudo abrir la tienda.')),
+      NeoSnackbar.show(
+        context,
+        'No se pudo abrir la tienda.',
+        tone: NeoSnackbarTone.danger,
       );
     }
   }

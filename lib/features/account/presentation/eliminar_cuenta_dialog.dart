@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/design_system/design_system.dart';
 import 'account_controllers.dart';
 
 /// Diálogo defensivo de eliminación de cuenta, en dos pasos:
@@ -77,10 +78,42 @@ class _EliminarCuentaDialogState extends ConsumerState<EliminarCuentaDialog> {
       _ => null,
     };
 
-    return AlertDialog(
-      title: Text(_pasoConfirmacion ? 'Eliminar cuenta' : '¿Eliminar tu cuenta?'),
-      content: _pasoConfirmacion
-          ? Form(
+    return NeoDialog(
+      title: _pasoConfirmacion ? 'Eliminar cuenta' : '¿Eliminar tu cuenta?',
+      actions: <Widget>[
+        if (!submitting)
+          NeoButton(
+            label: 'Cancelar',
+            variant: NeoButtonVariant.secondary,
+            onPressed: () {
+              final NavigatorState root = Navigator.of(
+                context,
+                rootNavigator: true,
+              );
+              if (root.canPop()) {
+                root.pop();
+              }
+            },
+          ),
+        if (!submitting)
+          NeoButton(
+            label: _pasoConfirmacion
+                ? 'Eliminar mi cuenta definitivamente'
+                : 'Continuar',
+            variant: _pasoConfirmacion
+                ? NeoButtonVariant.danger
+                : NeoButtonVariant.primary,
+            onPressed: _pasoConfirmacion
+                ? _confirmar
+                : () => setState(() => _pasoConfirmacion = true),
+          ),
+      ],
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          if (_pasoConfirmacion)
+            Form(
               key: _formKey,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -90,8 +123,8 @@ class _EliminarCuentaDialogState extends ConsumerState<EliminarCuentaDialog> {
                     'Ingresa tu contraseña actual para confirmar. Esta '
                     'acción no se puede deshacer.',
                   ),
-                  const SizedBox(height: 12),
-                  TextFormField(
+                  const SizedBox(height: AppSpacing.md),
+                  NeoInput(
                     controller: _contrasenaController,
                     obscureText: !_mostrar,
                     enableSuggestions: false,
@@ -104,20 +137,18 @@ class _EliminarCuentaDialogState extends ConsumerState<EliminarCuentaDialog> {
                       }
                       return null;
                     },
-                    decoration: InputDecoration(
-                      labelText: 'Contraseña',
-                      prefixIcon: const Icon(Icons.lock_outline),
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          _mostrar ? Icons.visibility_off : Icons.visibility,
-                        ),
-                        tooltip: _mostrar ? 'Ocultar' : 'Mostrar',
-                        onPressed: () => setState(() => _mostrar = !_mostrar),
+                    label: 'Contraseña',
+                    prefixIcon: Icons.lock_outline,
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _mostrar ? Icons.visibility_off : Icons.visibility,
                       ),
-                      errorText: errorContrasena,
+                      tooltip: _mostrar ? 'Ocultar' : 'Mostrar',
+                      onPressed: () => setState(() => _mostrar = !_mostrar),
                     ),
+                    error: errorContrasena,
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: AppSpacing.sm),
                   Text(
                     'Se eliminarán permanentemente tus datos: movimientos, '
                     'planes, deudas y metas.',
@@ -126,58 +157,25 @@ class _EliminarCuentaDialogState extends ConsumerState<EliminarCuentaDialog> {
                 ],
               ),
             )
-          : const Text(
+          else
+            const Text(
               'Tu cuenta y todos tus datos se eliminarán de forma '
               'permanente: movimientos, planes, deudas y metas. No podrán '
               'recuperarse.',
             ),
-      actions: <Widget>[
-        // Errores de red/servidor: el diálogo sigue abierto para reintentar.
-        if (!submitting && ui is EliminarCuentaError)
-          Text(
-            ui.message,
-            style: TextStyle(color: Theme.of(context).colorScheme.error),
-          ),
-        TextButton(
-          onPressed: submitting
-              ? null
-              : () {
-                  final NavigatorState root = Navigator.of(
-                    context,
-                    rootNavigator: true,
-                  );
-                  if (root.canPop()) {
-                    root.pop();
-                  }
-                },
-          child: const Text('Cancelar'),
-        ),
-        if (!submitting)
-          FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.error,
-              foregroundColor: Theme.of(context).colorScheme.onError,
-            ),
-            onPressed:
-                _pasoConfirmacion ? _confirmar : () => setState(
-                  () => _pasoConfirmacion = true,
-                ),
-            child: Text(
-              _pasoConfirmacion
-                  ? 'Eliminar mi cuenta definitivamente'
-                  : 'Continuar',
-            ),
-          ),
-        if (submitting)
-          const Column(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              LinearProgressIndicator(),
-              SizedBox(height: 8),
-              Text('Esperando al servidor…'),
-            ],
-          ),
-      ],
+          // Errores de red/servidor: el diálogo sigue abierto para reintentar.
+          if (!submitting && ui is EliminarCuentaError) ...<Widget>[
+            const SizedBox(height: AppSpacing.md),
+            NeoErrorBand(message: ui.message),
+          ],
+          if (submitting) ...<Widget>[
+            const SizedBox(height: AppSpacing.md),
+            const LinearProgressIndicator(),
+            const SizedBox(height: AppSpacing.sm),
+            const Text('Esperando al servidor…'),
+          ],
+        ],
+      ),
     );
   }
 

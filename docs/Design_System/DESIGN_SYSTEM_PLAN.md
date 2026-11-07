@@ -332,14 +332,15 @@ No se agrega un séptimo icono al AppBar.
 Cada fase = un PR/commit; sin big-bang. Se puede usar un wrapper temporal
 (`NeoLegacyCard`) para migrar una pantalla sin reescribir su lógica.
 
-**Avance (2026-11-07):** Fases 1 a 7 completadas. Incluye tokens/theme,
+**Avance (2026-11-07):** Fases 1 a 8 completadas. Incluye tokens/theme,
 átomos, moléculas/patrones, la navegación B (`NeoScaffold`, `NeoAppBar`,
 `NeoBottomNav`, `NeoMoreMenu`) con barra inferior Inicio/Deudas/Plan/Presupuesto/
 Más y menú «Más» para Metas, Analítica, Reportes, cuenta y Design System;
-Auth + Home; movimientos + deudas; presupuesto + plan + metas + reportes; y F10
-(analítica con `fl_chart`) + F11 (distribución del ahorro entre metas) con el
-sistema. Tests y goldens claro/oscuro (436 tests verdes). Queda la Fase 8:
-accesibilidad, dark mode y pulido.
+Auth + Home; movimientos + deudas; presupuesto + plan + metas + reportes; F10
+(analítica con `fl_chart`) y F11 (distribución del ahorro entre metas). La Fase 8
+migró las últimas pantallas de cuenta y el bloqueo por actualización, habilitó
+el modo oscuro del sistema y verificó dark mode y contraste en el emulador.
+Tests y goldens claro/oscuro (437 tests verdes).
 
 ## 11. Riesgos y mitigaciones
 

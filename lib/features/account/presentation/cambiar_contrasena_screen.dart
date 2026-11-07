@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/design_system/design_system.dart';
 import '../../auth/domain/validators.dart';
 import '../../auth/presentation/password_policy_checklist.dart';
 import 'account_controllers.dart';
@@ -55,37 +56,44 @@ class _CambiarContrasenaScreenState
       return errorFor('contrasenaActual');
     }
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Cambiar contraseña')),
+    return NeoScaffold(
+      appBar: const NeoAppBar(title: 'Cambiar contraseña'),
       body: SafeArea(
         child: Form(
           key: _formKey,
           autovalidateMode: AutovalidateMode.onUserInteraction,
           child: ListView(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.all(AppSpacing.lg),
             children: <Widget>[
-              if (ui is CambiarContrasenaError) _errorText(context, ui.message),
+              if (ui is CambiarContrasenaError)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: AppSpacing.md),
+                  child: NeoErrorBand(message: ui.message),
+                ),
               if (ui is CambiarContrasenaFieldErrors && ui.global != null)
-                _errorText(context, ui.global!),
+                Padding(
+                  padding: const EdgeInsets.only(bottom: AppSpacing.md),
+                  child: NeoErrorBand(message: ui.global!),
+                ),
               const Text(
                 'Al cambiar la contraseña se cierra tu sesión en todos los '
                 'dispositivos.',
               ),
-              const SizedBox(height: 16),
-              TextFormField(
+              const SizedBox(height: AppSpacing.lg),
+              NeoInput(
                 controller: _actualController,
                 obscureText: !_mostrar,
                 enableSuggestions: false,
                 autocorrect: false,
                 autofillHints: const <String>[AutofillHints.password],
                 validator: validateLoginPassword,
-                decoration: decoration(
-                  'Contraseña actual',
-                  errorText: errorActual(),
-                ),
+                label: 'Contraseña actual',
+                prefixIcon: Icons.lock_outline,
+                suffixIcon: _suffixVisible(),
+                error: errorActual(),
               ),
-              const SizedBox(height: 12),
-              TextFormField(
+              const SizedBox(height: AppSpacing.md),
+              NeoInput(
                 controller: _nuevaController,
                 obscureText: !_mostrar,
                 enableSuggestions: false,
@@ -93,40 +101,41 @@ class _CambiarContrasenaScreenState
                 autofillHints: const <String>[AutofillHints.newPassword],
                 validator: validatePassword,
                 onChanged: (_) => setState(() {}),
-                decoration: decoration(
-                  'Contraseña nueva',
-                  errorText: errorFor('nuevaContrasena'),
-                  errorMaxLines: 3,
-                ),
+                label: 'Contraseña nueva',
+                prefixIcon: Icons.lock_outline,
+                suffixIcon: _suffixVisible(),
+                errorMaxLines: 3,
+                error: errorFor('nuevaContrasena'),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: AppSpacing.sm),
               PasswordPolicyChecklist(value: _nuevaController.text),
-              const SizedBox(height: 12),
-              TextFormField(
+              const SizedBox(height: AppSpacing.md),
+              NeoInput(
                 controller: _repetidaController,
                 obscureText: !_mostrar,
                 enableSuggestions: false,
                 autocorrect: false,
                 validator: _repetidaValidator,
-                decoration: decoration(
-                  'Repite la contraseña nueva',
-                  errorText: errorFor('repetirContrasena'),
-                ),
+                label: 'Repite la contraseña nueva',
+                prefixIcon: Icons.lock_outline,
+                suffixIcon: _suffixVisible(),
+                error: errorFor('repetirContrasena'),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSpacing.lg),
               if (submitting)
                 const Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     LinearProgressIndicator(),
-                    SizedBox(height: 8),
+                    SizedBox(height: AppSpacing.sm),
                     Text('Esperando al servidor…'),
                   ],
                 )
               else
-                FilledButton(
+                NeoButton(
+                  label: 'Guardar nueva contraseña',
+                  expanded: true,
                   onPressed: _submit,
-                  child: const Text('Guardar nueva contraseña'),
                 ),
             ],
           ),
@@ -135,23 +144,13 @@ class _CambiarContrasenaScreenState
     );
   }
 
-  InputDecoration decoration(
-    String label, {
-    String? errorText,
-    int errorMaxLines = 1,
-  }) {
-    return InputDecoration(
-      labelText: label,
-      prefixIcon: const Icon(Icons.lock_outline),
-      suffixIcon: IconButton(
-        icon: Icon(
-          _mostrar ? Icons.visibility_off : Icons.visibility,
-        ),
-        tooltip: _mostrar ? 'Ocultar' : 'Mostrar',
-        onPressed: () => setState(() => _mostrar = !_mostrar),
+  Widget _suffixVisible() {
+    return IconButton(
+      icon: Icon(
+        _mostrar ? Icons.visibility_off : Icons.visibility,
       ),
-      errorText: errorText,
-      errorMaxLines: errorMaxLines,
+      tooltip: _mostrar ? 'Ocultar' : 'Mostrar',
+      onPressed: () => setState(() => _mostrar = !_mostrar),
     );
   }
 
@@ -163,16 +162,6 @@ class _CambiarContrasenaScreenState
       return 'Las contraseñas no coinciden.';
     }
     return null;
-  }
-
-  Widget _errorText(BuildContext context, String message) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Text(
-        message,
-        style: TextStyle(color: Theme.of(context).colorScheme.error),
-      ),
-    );
   }
 
   Future<void> _submit() async {
