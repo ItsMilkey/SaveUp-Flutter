@@ -11,6 +11,19 @@
 > desde `Content-Disposition` (con fallback) y content type limpio, y sharer con
 > `share_plus` (`XFile.fromData` + `fileNameOverrides`). Tests: 5 de repositorio
 > y 1 del mapeo en bytes. Total 375 verdes.
+>
+> **Avance Bloque 2 (2026-11-07): pantalla y verificación.**
+> `ReporteExportController` descarga y comparte con estado de envío/error;
+> pantalla `/reportes` con alcance completo/mensual, selector de mes, formato
+> CSV/PDF, aviso de archivo listo y limpieza del estado al cambiar opciones.
+> Entrada desde el home (icono de descarga) y «Cerrar sesión» movido al menú de
+> cuenta. Tests: 4 de controlador + 3 de pantalla. Total 382 verdes.
+>
+> **Verificación manual (emulador, backend real): PASÓ.** CSV completo:
+> `reporte_saveup_completo.csv` (`text/csv`, 244 bytes, cabecera con BOM);
+> PDF mensual 2026-11: `reporte_saveup_11-2026.pdf` (`application/pdf`, 1617
+> bytes, `%PDF-`); ambos abren la hoja de compartir con el nombre correcto (el
+> PDF ofrece «Imprimir»). Menú de cuenta con «Cerrar sesión».
 
 ## Objetivo
 Que la persona exporte sus movimientos a **CSV** o **PDF**, de todo el historial o de un mes

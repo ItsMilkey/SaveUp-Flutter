@@ -99,12 +99,12 @@ class _MovimientosScreenState extends ConsumerState<MovimientosScreen> {
             tooltip: 'Metas de ahorro',
             onPressed: () => GoRouter.of(context).push(AppRoutes.metas),
           ),
-          _CuentaMenu(),
           IconButton(
-            icon: const Icon(Icons.logout),
-            tooltip: 'Cerrar sesión',
-            onPressed: () => ref.read(authSessionProvider.notifier).logout(),
+            icon: const Icon(Icons.file_download_outlined),
+            tooltip: 'Reportes',
+            onPressed: () => GoRouter.of(context).push(AppRoutes.reportes),
           ),
+          _CuentaMenu(),
         ],
       ),
       body: RefreshIndicator(
@@ -508,11 +508,11 @@ class _ErrorConReintento extends StatelessWidget {
 }
 
 /// Menú con las entradas de cuenta que vivían en el home provisorio (F2).
-class _CuentaMenu extends StatelessWidget {
+class _CuentaMenu extends ConsumerWidget {
   const _CuentaMenu();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return PopupMenuButton<String>(
       icon: const Icon(Icons.account_circle_outlined),
       tooltip: 'Cuenta',
@@ -524,6 +524,8 @@ class _CuentaMenu extends StatelessWidget {
             EliminarCuentaDialog.show(context);
           case 'legales':
             GoRouter.of(context).push(AppRoutes.legales);
+          case 'salir':
+            ref.read(authSessionProvider.notifier).logout();
         }
       },
       itemBuilder: (BuildContext context) => const <PopupMenuEntry<String>>[
@@ -538,6 +540,11 @@ class _CuentaMenu extends StatelessWidget {
         PopupMenuItem<String>(
           value: 'legales',
           child: Text('Términos y privacidad'),
+        ),
+        PopupMenuDivider(),
+        PopupMenuItem<String>(
+          value: 'salir',
+          child: Text('Cerrar sesión'),
         ),
       ],
     );

@@ -30,7 +30,9 @@ Al terminar, marcar aquí con `[x]`.
   (completa: lista, alta/edición, abonos/retiros con movimientos reales, eliminación con
   reintegro y meta base protegida; verificada manualmente. `asignaciones[]` queda fuera porque el
   contrato no las expone en ninguna lectura)
-- [ ] **F8** exportar reportes (guardar/compartir archivo)
+- [x] **F8** exportar reportes (guardar/compartir archivo) — `F8-reportes.md`
+  (completa: CSV/PDF, alcance completo o mensual, descarga binaria, hoja de compartir y entrada
+  desde el home; verificada manualmente)
 - [ ] **F9** notificaciones push (requiere proyecto Firebase y, para iOS, cuenta de Apple
   Developer de pago; en producción el backend las tiene desactivadas)
 

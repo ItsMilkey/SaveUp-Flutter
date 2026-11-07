@@ -68,4 +68,7 @@ abstract final class AppRoutes {
 
   /// Edición de una meta (recibe la `MetaAhorro` por `extra`).
   static String editarMeta(int id) => '/metas/$id/editar';
+
+  /// Exportación de movimientos (F8).
+  static const String reportes = '/reportes';
 }

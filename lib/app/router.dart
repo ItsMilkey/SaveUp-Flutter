@@ -24,6 +24,7 @@ import '../features/presupuesto/presentation/screens/categorias_presupuesto_scre
 import '../features/metas/domain/meta_ahorro.dart';
 import '../features/metas/presentation/screens/metas_screen.dart';
 import '../features/metas/presentation/screens/meta_form_screen.dart';
+import '../features/reportes/presentation/screens/reportes_screen.dart';
 import '../features/movimientos/presentation/movimientos_screen.dart';
 import '../features/movimientos/presentation/movimiento_form_screen.dart';
 import '../features/auth/domain/auth_session.dart';
@@ -176,6 +177,11 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
               ? MetaFormScreen(meta: extra)
               : const MetasScreen();
         },
+      ),
+      GoRoute(
+        path: AppRoutes.reportes,
+        name: 'reportes',
+        builder: (_, _) => const ReportesScreen(),
       ),
     ],
   );
