@@ -1,5 +1,13 @@
 # F6 — Presupuesto: regla, ejecución y límites
 
+> **Avance Bloque 1 (2026-11-07): dominio, DTOs y repositorios.**
+> Modelos con `Decimal` para porcentajes/límites/consumos: regla y sugerencia,
+> ejecución global/historial/por categoría, límites y preferencias. DTOs a mano
+> fieles al contrato (`porcentajeAhorro`, `limiteMensual`, `month/year`,
+> `desde/hasta`, `DELETE` de preferencia) y repositorios Dio con query params
+> exactos. Tests de contrato: 14 (URLs, cuerpos, query, parseo y `detail` de
+> `400 DATOS_INVALIDOS`). Suite total 314 verdes, `flutter analyze` limpio.
+
 ## Objetivo
 Configurar la regla 50/30/20 (o personalizada) del usuario, seguir su ejecución mensual frente
 al gasto real, definir límites por categoría y personalizar el tipo de una categoría
