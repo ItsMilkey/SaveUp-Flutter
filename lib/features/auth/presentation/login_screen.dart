@@ -4,10 +4,12 @@ import 'package:go_router/go_router.dart';
 
 import '../../../app/routes.dart';
 import '../../../app/url_opener.dart';
+import '../../../core/design_system/design_system.dart';
 import '../../app_version/domain/app_version_info.dart';
 import '../../app_version/presentation/app_version_controller.dart';
 import '../domain/auth_session.dart';
 import '../domain/validators.dart';
+import 'auth_brand_hero.dart';
 import 'auth_controllers.dart';
 
 /// Inicio de sesión: correo y contraseña.
@@ -62,50 +64,51 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       }
     });
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Inicia sesión')),
+    return NeoScaffold(
+      appBar: const NeoAppBar(title: 'Inicia sesión'),
       body: SafeArea(
         child: Form(
           key: _formKey,
           child: ListView(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.all(AppSpacing.lg),
             children: <Widget>[
+              const AuthBrandHero(),
+              const SizedBox(height: AppSpacing.lg),
               const _SuggestedUpdateBanner(),
               _preloadNotice(ui),
-              TextFormField(
+              NeoInput(
                 controller: _correoController,
                 keyboardType: TextInputType.emailAddress,
                 autofillHints: const <String>[AutofillHints.email],
                 validator: validateEmail,
-                decoration: const InputDecoration(
-                  labelText: 'Correo',
-                  prefixIcon: Icon(Icons.alternate_email),
-                ),
+                label: 'Correo',
+                prefixIcon: Icons.alternate_email,
               ),
-              const SizedBox(height: 12),
-              TextFormField(
+              const SizedBox(height: AppSpacing.md),
+              NeoInput(
                 controller: _contrasenaController,
                 obscureText: !_mostrarContrasena,
                 enableSuggestions: false,
                 autocorrect: false,
                 autofillHints: const <String>[AutofillHints.password],
                 validator: validateLoginPassword,
-                decoration: InputDecoration(
-                  labelText: 'Contraseña',
-                  prefixIcon: const Icon(Icons.lock_outline),
-                  suffixIcon: IconButton(
-                    icon: Icon(
-                      _mostrarContrasena
-                          ? Icons.visibility_off
-                          : Icons.visibility,
-                    ),
-                    onPressed: _toggleMostrar,
+                label: 'Contraseña',
+                prefixIcon: Icons.lock_outline,
+                suffixIcon: IconButton(
+                  icon: Icon(
+                    _mostrarContrasena
+                        ? Icons.visibility_off
+                        : Icons.visibility,
                   ),
+                  tooltip: _mostrarContrasena
+                      ? 'Ocultar contraseña'
+                      : 'Mostrar contraseña',
+                  onPressed: _toggleMostrar,
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSpacing.lg),
               _actionArea(context, ui),
-              const SizedBox(height: 12),
+              const SizedBox(height: AppSpacing.md),
               TextButton(
                 onPressed: ui is LoginSubmitting
                     ? null
@@ -136,12 +139,24 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     if (ui is! LoginNotice) {
       return const SizedBox.shrink();
     }
+    final SaveUpColors colors = Theme.of(context).extension<SaveUpColors>()!;
     return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: Card(
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Text(ui.message),
+      padding: const EdgeInsets.only(bottom: AppSpacing.md),
+      child: NeoSurface(
+        density: AppDensity.list,
+        color: colors.info,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            const Icon(Icons.info_outline, size: 20, color: AppColors.ink),
+            const SizedBox(width: AppSpacing.sm),
+            Expanded(
+              child: Text(
+                ui.message,
+                style: AppTypography.text(size: 14, color: AppColors.ink),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -153,12 +168,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
           LinearProgressIndicator(),
-          SizedBox(height: 8),
-          Text(
-            'Esperando al servidor…',
-            textAlign: TextAlign.center,
-            style: TextStyle(fontStyle: FontStyle.italic),
-          ),
+          SizedBox(height: AppSpacing.sm),
+          Text('Esperando al servidor…', textAlign: TextAlign.center),
         ],
       );
     }
@@ -178,26 +189,27 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       children: <Widget>[
         if (message.isNotEmpty)
           Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: Text(
-              message,
-              style: TextStyle(color: Theme.of(context).colorScheme.error),
-              textAlign: TextAlign.center,
-            ),
+            padding: const EdgeInsets.only(bottom: AppSpacing.md),
+            child: NeoErrorBand(message: message),
           ),
-        FilledButton(
+        NeoButton(
           // Ante 429 el reenvío automático está prohibido: se inhabilita el
           // botón y el reintento es manual ("Reintentar", tras unos minutos).
+          label: 'Iniciar sesión',
+          expanded: true,
           onPressed: blocked ? null : _submit,
-          child: const Text('Iniciar sesión'),
         ),
-        if (blocked)
-          OutlinedButton(
+        if (blocked) ...<Widget>[
+          const SizedBox(height: AppSpacing.sm),
+          NeoButton(
+            label: 'Reintentar',
+            variant: NeoButtonVariant.secondary,
+            expanded: true,
             onPressed: () => ref
                 .read(loginProvider.notifier)
                 .retryAfterBlock(correo: _correoController.text),
-            child: const Text('Reintentar'),
           ),
+        ],
       ],
     );
   }
@@ -247,26 +259,43 @@ class _SuggestedUpdateBannerState
   }
 
   Widget _banner(String mensaje) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 16),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
+    final SaveUpColors colors = Theme.of(context).extension<SaveUpColors>()!;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.md),
+      child: NeoSurface(
+        density: AppDensity.list,
+        color: colors.surfaceAlt,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
-            Text(mensaje),
-            const SizedBox(height: 8),
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                TextButton(
-                  onPressed: () =>
-                      ref.read(appVersionProvider.notifier).dismissSuggestion(),
-                  child: const Text('Más tarde'),
+                Icon(
+                  Icons.system_update_alt,
+                  size: 20,
+                  color: colors.ink,
                 ),
-                TextButton(
+                const SizedBox(width: AppSpacing.sm),
+                Expanded(child: Text(mensaje)),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: <Widget>[
+                NeoButton(
+                  label: 'Más tarde',
+                  variant: NeoButtonVariant.ghost,
+                  onPressed: () => ref
+                      .read(appVersionProvider.notifier)
+                      .dismissSuggestion(),
+                ),
+                const SizedBox(width: AppSpacing.sm),
+                NeoButton(
+                  label: 'Actualizar',
+                  variant: NeoButtonVariant.secondary,
                   onPressed: _abrirTienda,
-                  child: const Text('Actualizar'),
                 ),
               ],
             ),

@@ -383,6 +383,10 @@ class _DesignSystemShowcaseScreenState
                   'Estados',
                   Column(
                     children: <Widget>[
+                      const NeoErrorBand(
+                        message: 'Datos inválidos: revisa los campos.',
+                      ),
+                      const SizedBox(height: AppSpacing.md),
                       const NeoErrorState(
                         message: 'No se pudieron cargar los datos.',
                         onRetry: _noop,

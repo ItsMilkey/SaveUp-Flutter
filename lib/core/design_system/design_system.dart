@@ -13,6 +13,7 @@ export 'components/atoms/neo_segmented.dart';
 export 'components/atoms/neo_surface.dart';
 export 'components/molecules/neo_dialog.dart';
 export 'components/molecules/neo_empty_state.dart';
+export 'components/molecules/neo_error_band.dart';
 export 'components/molecules/neo_error_state.dart';
 export 'components/molecules/neo_list_item.dart';
 export 'components/molecules/neo_loading.dart';

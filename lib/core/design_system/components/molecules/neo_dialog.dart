@@ -81,24 +81,32 @@ abstract final class NeoConfirmDialog {
     String confirmLabel = 'Confirmar',
     bool destructive = false,
   }) {
-    return NeoDialog.show<bool>(
-      context,
-      title: title,
-      child: Text(message, style: Theme.of(context).textTheme.bodyMedium),
-      actions: <Widget>[
-        NeoButton(
-          label: cancelLabel,
-          variant: NeoButtonVariant.secondary,
-          onPressed: () => Navigator.of(context).pop(false),
+    // Las acciones deben cerrar el diálogo con su propio contexto: hacerlo
+    // con el contexto de la pantalla puede vaciar el stack del router cuando
+    // la ruta vive dentro de un `ShellRoute`.
+    return showDialog<bool>(
+      context: context,
+      builder: (BuildContext dialogContext) => NeoDialog(
+        title: title,
+        actions: <Widget>[
+          NeoButton(
+            label: cancelLabel,
+            variant: NeoButtonVariant.secondary,
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+          ),
+          NeoButton(
+            label: confirmLabel,
+            variant: destructive
+                ? NeoButtonVariant.danger
+                : NeoButtonVariant.primary,
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+          ),
+        ],
+        child: Text(
+          message,
+          style: Theme.of(dialogContext).textTheme.bodyMedium,
         ),
-        NeoButton(
-          label: confirmLabel,
-          variant: destructive
-              ? NeoButtonVariant.danger
-              : NeoButtonVariant.primary,
-          onPressed: () => Navigator.of(context).pop(true),
-        ),
-      ],
+      ),
     );
   }
 }

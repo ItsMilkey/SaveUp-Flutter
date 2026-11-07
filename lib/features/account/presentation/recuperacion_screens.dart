@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/routes.dart';
+import '../../../core/design_system/design_system.dart';
 import '../../auth/domain/validators.dart';
 import '../../auth/presentation/password_policy_checklist.dart';
 import 'account_controllers.dart';
@@ -47,54 +48,31 @@ class _SolicitarRecuperacionScreenState
       }
     });
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Recuperar contraseña')),
+    return NeoScaffold(
+      appBar: const NeoAppBar(title: 'Recuperar contraseña'),
       body: SafeArea(
         child: Form(
           key: _formKey,
           child: ListView(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.all(AppSpacing.lg),
             children: <Widget>[
               // El envío del token por correo está pendiente de activación
               // (app.mail.enabled=false): no prometer un correo que no llega.
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      Icon(
-                        Icons.info_outline,
-                        size: 20,
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
-                      const SizedBox(width: 12),
-                      const Expanded(child: Text(avisoEnvioCorreoPendiente)),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
+              const _InfoNotice(message: avisoEnvioCorreoPendiente),
+              const SizedBox(height: AppSpacing.lg),
+              NeoInput(
                 controller: _correoController,
                 keyboardType: TextInputType.emailAddress,
                 autofillHints: const <String>[AutofillHints.email],
                 validator: validateEmail,
-                decoration: const InputDecoration(
-                  labelText: 'Correo',
-                  prefixIcon: Icon(Icons.alternate_email),
-                ),
+                label: 'Correo',
+                prefixIcon: Icons.alternate_email,
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSpacing.lg),
               if (ui is SolicitudRecuperacionError)
                 Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: Text(
-                    ui.message,
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.error,
-                    ),
-                  ),
+                  padding: const EdgeInsets.only(bottom: AppSpacing.md),
+                  child: NeoErrorBand(message: ui.message),
                 ),
               _actionArea(submitting),
             ],
@@ -105,24 +83,20 @@ class _SolicitarRecuperacionScreenState
   }
 
   Widget _actionArea(bool submitting) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: <Widget>[
-        if (submitting)
-          const Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: <Widget>[
-              LinearProgressIndicator(),
-              SizedBox(height: 8),
-              Text('Esperando al servidor…'),
-            ],
-          )
-        else
-          FilledButton(
-            onPressed: _submit,
-            child: const Text('Enviar solicitud'),
-          ),
-      ],
+    if (submitting) {
+      return const Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          LinearProgressIndicator(),
+          SizedBox(height: AppSpacing.sm),
+          Text('Esperando al servidor…', textAlign: TextAlign.center),
+        ],
+      );
+    }
+    return NeoButton(
+      label: 'Enviar solicitud',
+      expanded: true,
+      onPressed: _submit,
     );
   }
 
@@ -183,6 +157,7 @@ class _RestablecerContrasenaScreenState
       restablecerContrasenaProvider,
     );
     final bool submitting = ui is RestablecerContrasenaSubmitting;
+    final bool tokenInvalido = ui is RestablecerContrasenaTokenInvalido;
 
     ref.listen<RestablecerContrasenaUiState>(restablecerContrasenaProvider, (
       _,
@@ -201,49 +176,35 @@ class _RestablecerContrasenaScreenState
       };
     }
 
-    InputDecoration decoration(String label, {String? errorText}) {
-      return InputDecoration(
-        labelText: label,
-        prefixIcon: const Icon(Icons.lock_outline),
-        suffixIcon: IconButton(
-          icon: Icon(_mostrar ? Icons.visibility_off : Icons.visibility),
-          tooltip: _mostrar ? 'Ocultar' : 'Mostrar',
-          onPressed: () => setState(() => _mostrar = !_mostrar),
-        ),
-        errorText: errorText,
-        errorMaxLines: 3,
+    Widget visibleSuffix() {
+      return IconButton(
+        icon: Icon(_mostrar ? Icons.visibility_off : Icons.visibility),
+        tooltip: _mostrar ? 'Ocultar' : 'Mostrar',
+        onPressed: () => setState(() => _mostrar = !_mostrar),
       );
     }
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Restablecer contraseña')),
+    return NeoScaffold(
+      appBar: const NeoAppBar(title: 'Restablecer contraseña'),
       body: SafeArea(
         child: Form(
           key: _formKey,
           autovalidateMode: AutovalidateMode.onUserInteraction,
           child: ListView(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.all(AppSpacing.lg),
             children: <Widget>[
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Text(mensajeInstruccionesRestablecimiento),
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
+              const _InfoNotice(message: mensajeInstruccionesRestablecimiento),
+              const SizedBox(height: AppSpacing.lg),
+              NeoInput(
                 controller: _tokenController,
                 enableSuggestions: false,
                 autocorrect: false,
-                decoration: decoration(
-                  'Token',
-                  errorText: ui is RestablecerContrasenaTokenInvalido
-                      ? ui.message
-                      : errorFor('token'),
-                ),
+                label: 'Token',
+                prefixIcon: Icons.lock_outline,
+                error: tokenInvalido ? ui.message : errorFor('token'),
               ),
-              const SizedBox(height: 12),
-              TextFormField(
+              const SizedBox(height: AppSpacing.md),
+              NeoInput(
                 controller: _nuevaController,
                 obscureText: !_mostrar,
                 enableSuggestions: false,
@@ -251,14 +212,16 @@ class _RestablecerContrasenaScreenState
                 autofillHints: const <String>[AutofillHints.newPassword],
                 validator: validatePassword,
                 onChanged: (_) => setState(() {}),
-                decoration: decoration(
-                  'Contraseña nueva',
-                  errorText: errorFor('nuevaContrasena'),
-                ),
+                label: 'Contraseña nueva',
+                prefixIcon: Icons.lock_outline,
+                suffixIcon: visibleSuffix(),
+                errorMaxLines: 3,
+                error: errorFor('nuevaContrasena'),
               ),
-              const SizedBox(height: 8),
-              PasswordPolicyChecklist(value: _nuevaController.text),              const SizedBox(height: 12),
-              TextFormField(
+              const SizedBox(height: AppSpacing.sm),
+              PasswordPolicyChecklist(value: _nuevaController.text),
+              const SizedBox(height: AppSpacing.md),
+              NeoInput(
                 controller: _repetidaController,
                 obscureText: !_mostrar,
                 enableSuggestions: false,
@@ -272,20 +235,17 @@ class _RestablecerContrasenaScreenState
                   }
                   return null;
                 },
-                decoration: decoration('Repite la contraseña nueva'),
+                label: 'Repite la contraseña nueva',
+                prefixIcon: Icons.lock_outline,
+                suffixIcon: visibleSuffix(),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSpacing.lg),
               if (ui is RestablecerContrasenaError)
                 Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: Text(
-                    ui.message,
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.error,
-                    ),
-                  ),
+                  padding: const EdgeInsets.only(bottom: AppSpacing.md),
+                  child: NeoErrorBand(message: ui.message),
                 ),
-              _actionArea(submitting, tokenInvalido: ui is RestablecerContrasenaTokenInvalido),
+              _actionArea(submitting, tokenInvalido: tokenInvalido),
             ],
           ),
         ),
@@ -294,27 +254,29 @@ class _RestablecerContrasenaScreenState
   }
 
   Widget _actionArea(bool submitting, {required bool tokenInvalido}) {
+    if (submitting) {
+      return const Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          LinearProgressIndicator(),
+          SizedBox(height: AppSpacing.sm),
+          Text('Esperando al servidor…', textAlign: TextAlign.center),
+        ],
+      );
+    }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
-        if (submitting)
-          const Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: <Widget>[
-              LinearProgressIndicator(),
-              SizedBox(height: 8),
-              Text('Esperando al servidor…'),
-            ],
-          )
-        else
-          FilledButton(
-            onPressed: _submit,
-            child: const Text('Restablecer contraseña'),
-          ),
+        NeoButton(
+          label: 'Restablecer contraseña',
+          expanded: true,
+          onPressed: _submit,
+        ),
         // Token rechazado: reintento desde el paso 1 (solicitar uno nuevo).
         if (tokenInvalido)
           TextButton(
-            onPressed: () => GoRouter.of(context).go(AppRoutes.recuperarContrasena),
+            onPressed: () =>
+                GoRouter.of(context).go(AppRoutes.recuperarContrasena),
             child: const Text('Solicitar uno nuevo'),
           ),
       ],
@@ -332,5 +294,34 @@ class _RestablecerContrasenaScreenState
           nuevaContrasena: _nuevaController.text,
           correo: _correoSugerido,
         );
+  }
+}
+
+/// Aviso informativo con el color de info del sistema.
+class _InfoNotice extends StatelessWidget {
+  const _InfoNotice({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    final SaveUpColors colors = Theme.of(context).extension<SaveUpColors>()!;
+    return NeoSurface(
+      density: AppDensity.list,
+      color: colors.info,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          const Icon(Icons.info_outline, size: 20, color: AppColors.ink),
+          const SizedBox(width: AppSpacing.sm),
+          Expanded(
+            child: Text(
+              message,
+              style: AppTypography.text(size: 14, color: AppColors.ink),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

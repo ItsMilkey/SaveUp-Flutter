@@ -10,13 +10,18 @@ class NeoInput extends StatelessWidget {
     this.error,
     this.helper,
     this.prefixIcon,
+    this.suffixIcon,
     this.keyboardType,
     this.textInputAction,
+    this.autofillHints,
     this.obscureText = false,
+    this.autocorrect = true,
+    this.enableSuggestions = true,
     this.onChanged,
     this.validator,
     this.enabled = true,
     this.autofocus = false,
+    this.errorMaxLines,
   });
 
   final TextEditingController? controller;
@@ -25,13 +30,18 @@ class NeoInput extends StatelessWidget {
   final String? error;
   final String? helper;
   final IconData? prefixIcon;
+  final Widget? suffixIcon;
   final TextInputType? keyboardType;
   final TextInputAction? textInputAction;
+  final Iterable<String>? autofillHints;
   final bool obscureText;
+  final bool autocorrect;
+  final bool enableSuggestions;
   final ValueChanged<String>? onChanged;
   final String? Function(String?)? validator;
   final bool enabled;
   final bool autofocus;
+  final int? errorMaxLines;
 
   @override
   Widget build(BuildContext context) {
@@ -39,7 +49,10 @@ class NeoInput extends StatelessWidget {
       controller: controller,
       keyboardType: keyboardType,
       textInputAction: textInputAction,
+      autofillHints: autofillHints,
       obscureText: obscureText,
+      autocorrect: autocorrect,
+      enableSuggestions: enableSuggestions,
       onChanged: onChanged,
       validator: validator,
       enabled: enabled,
@@ -50,6 +63,8 @@ class NeoInput extends StatelessWidget {
         errorText: error,
         helperText: helper,
         prefixIcon: prefixIcon == null ? null : Icon(prefixIcon),
+        suffixIcon: suffixIcon,
+        errorMaxLines: errorMaxLines,
       ),
     );
   }

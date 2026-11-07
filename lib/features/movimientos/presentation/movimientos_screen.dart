@@ -7,6 +7,7 @@ import 'package:timezone/timezone.dart' as tz;
 
 import '../../../app/config.dart';
 import '../../../app/routes.dart';
+import '../../../core/design_system/design_system.dart';
 import '../../../core/errors/app_failure.dart';
 import '../../../core/errors/failure_messages.dart';
 import '../../../core/money/money.dart';
@@ -71,24 +72,31 @@ class _MovimientosScreenState extends ConsumerState<MovimientosScreen> {
   Widget build(BuildContext context) {
     final MovimientosState estado = ref.watch(movimientosProvider);
 
-    return Scaffold(
-      appBar: AppBar(title: const Text(AppConfig.appName)),
+    return NeoScaffold(
+      appBar: const NeoAppBar(title: AppConfig.appName),
       body: RefreshIndicator(
         onRefresh: () => ref.read(movimientosProvider.notifier).refrescar(),
         child: ListView(
           controller: _scroll,
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.lg,
+            AppSpacing.lg,
+            AppSpacing.lg,
+            AppSpacing.xxxl,
+          ),
           children: <Widget>[
             _TarjetaSaldo(estado: estado),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.lg),
             _Filtros(estado: estado),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.sm),
             ..._contenido(context, estado),
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: NeoButton(
+        label: 'Nuevo movimiento',
+        icon: Icons.add,
         onPressed: () async {
           final bool? guardado = await context.push<bool>(
             AppRoutes.nuevoMovimiento,
@@ -97,8 +105,6 @@ class _MovimientosScreenState extends ConsumerState<MovimientosScreen> {
             await ref.read(movimientosProvider.notifier).refrescar();
           }
         },
-        icon: const Icon(Icons.add),
-        label: const Text('Nuevo movimiento'),
       ),
     );
   }
@@ -106,54 +112,41 @@ class _MovimientosScreenState extends ConsumerState<MovimientosScreen> {
   List<Widget> _contenido(BuildContext context, MovimientosState estado) {
     if (estado.cargandoPagina) {
       return const <Widget>[
-        Padding(
-          padding: EdgeInsets.all(32),
-          child: Center(child: CircularProgressIndicator.adaptive()),
-        ),
+        NeoLoading(message: 'Cargando movimientos…', rows: 3),
       ];
     }
     if (estado.errorPagina != null) {
       return <Widget>[
-        _ErrorConReintento(
-          mensaje: failureMessage(estado.errorPagina!),
-          onReintentar: () => ref
-              .read(movimientosProvider.notifier)
-              .refrescar(),
+        NeoErrorState(
+          message: failureMessage(estado.errorPagina!),
+          onRetry: () => ref.read(movimientosProvider.notifier).refrescar(),
         ),
       ];
     }
     if (estado.vacio) {
       return <Widget>[
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 48),
-          child: Column(
-            children: <Widget>[
-              const Text('No hay movimientos para estos filtros.'),
-              if (estado.filtrosActivos) ...<Widget>[
-                const SizedBox(height: 8),
-                TextButton(
-                  onPressed: () => ref
-                      .read(movimientosProvider.notifier)
-                      .limpiarFiltros(),
-                  child: const Text('Quitar filtros'),
-                ),
-              ],
-            ],
-          ),
+        _SinMovimientos(
+          filtrosActivos: estado.filtrosActivos,
+          onQuitarFiltros: () =>
+              ref.read(movimientosProvider.notifier).limpiarFiltros(),
         ),
       ];
     }
     return <Widget>[
+      const NeoSectionHeader(title: 'Movimientos'),
       for (final Movimiento movimiento in estado.items)
-        _MovimientoFila(movimiento: movimiento),
+        Padding(
+          padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+          child: _MovimientoFila(movimiento: movimiento),
+        ),
       if (estado.cargandoMas)
         const Padding(
-          padding: EdgeInsets.symmetric(vertical: 16),
+          padding: EdgeInsets.symmetric(vertical: AppSpacing.lg),
           child: Center(child: CircularProgressIndicator.adaptive()),
         )
       else if (!estado.hayMas && estado.items.isNotEmpty)
         const Padding(
-          padding: EdgeInsets.symmetric(vertical: 16),
+          padding: EdgeInsets.symmetric(vertical: AppSpacing.lg),
           child: Center(child: Text('No hay más movimientos.')),
         ),
     ];
@@ -169,6 +162,7 @@ class _MovimientosScreenState extends ConsumerState<MovimientosScreen> {
   }
 }
 
+/// Hero de saldo disponible: la pieza de mayor jerarquía del home.
 class _TarjetaSaldo extends ConsumerWidget {
   const _TarjetaSaldo({required this.estado});
 
@@ -176,53 +170,101 @@ class _TarjetaSaldo extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final TextTheme text = Theme.of(context).textTheme;
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Text('Saldo disponible', style: text.titleSmall),
-            const SizedBox(height: 8),
-            if (estado.saldoError != null)
-              Row(
-                children: <Widget>[
-                  Expanded(
-                    child: Text(
-                      failureMessage(estado.saldoError!),
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.error,
-                      ),
-                    ),
+    final ThemeData theme = Theme.of(context);
+    final SaveUpColors colors = theme.extension<SaveUpColors>()!;
+    final Decimal? saldo = estado.saldo;
+    final bool negativo = saldo != null && saldo < Decimal.zero;
+
+    final Widget content;
+    if (estado.saldoError != null) {
+      content = Row(
+        children: <Widget>[
+          Expanded(
+            child: Text(
+              failureMessage(estado.saldoError!),
+              style: AppTypography.text(
+                size: 14,
+                weight: FontWeight.w500,
+                color: colors.negativeText,
+              ),
+            ),
+          ),
+          const SizedBox(width: AppSpacing.sm),
+          NeoButton(
+            label: 'Reintentar',
+            variant: NeoButtonVariant.ghost,
+            onPressed: () => ref.read(movimientosProvider.notifier).refrescar(),
+          ),
+        ],
+      );
+    } else if (estado.cargandoSaldo || saldo == null) {
+      content = const Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          LinearProgressIndicator(),
+          SizedBox(height: AppSpacing.sm),
+          Text('Consultando tu saldo…'),
+        ],
+      );
+    } else {
+      content = Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          NeoMoneyText(
+            amount: saldo,
+            size: NeoMoneySize.display,
+            tone: negativo ? NeoMoneyTone.expense : NeoMoneyTone.neutral,
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            'Según los movimientos registrados.',
+            style: theme.textTheme.bodySmall?.copyWith(color: colors.muted),
+          ),
+        ],
+      );
+    }
+
+    return NeoSurface(
+      density: AppDensity.hero,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: AppColors.yellow,
+                  borderRadius: AppRadii.smAll,
+                  border: Border.all(
+                    color: colors.border,
+                    width: AppBorders.regular,
                   ),
-                  TextButton(
-                    onPressed: () => ref
-                        .read(movimientosProvider.notifier)
-                        .refrescar(),
-                    child: const Text('Reintentar'),
-                  ),
-                ],
-              )
-            else if (estado.cargandoSaldo || estado.saldo == null)
-              const SizedBox(
-                height: 32,
-                child: Center(
-                  child: LinearProgressIndicator(),
                 ),
-              )
-            else
-              Text(
-                Money.formatClp(estado.saldo!),
-                style: text.headlineMedium?.copyWith(
-                  color: estado.saldo! < Decimal.zero
-                      ? Theme.of(context).colorScheme.error
-                      : null,
-                  fontWeight: FontWeight.w600,
+                child: const Icon(
+                  Icons.account_balance_wallet,
+                  size: 20,
+                  color: AppColors.ink,
                 ),
               ),
-          ],
-        ),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: Text(
+                  'Saldo disponible',
+                  style: AppTypography.text(
+                    size: 12,
+                    weight: FontWeight.w600,
+                    letterSpacing: 0.5,
+                    color: colors.muted,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.md),
+          content,
+        ],
       ),
     );
   }
@@ -235,62 +277,80 @@ class _Filtros extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final ThemeData theme = Theme.of(context);
+    final SaveUpColors colors = theme.extension<SaveUpColors>()!;
     final MovimientosController controller = ref.read(
       movimientosProvider.notifier,
     );
     final MovimientoFiltro filtro = estado.filtro;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          crossAxisAlignment: WrapCrossAlignment.center,
-          children: <Widget>[
-            OutlinedButton.icon(
-              icon: const Icon(Icons.event, size: 18),
-              label: Text(
-                filtro.desde == null ? 'Desde' : 'Desde ${filtro.desde}',
+    return NeoSurface(
+      density: AppDensity.list,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              Icon(Icons.tune, size: 18, color: colors.ink),
+              const SizedBox(width: AppSpacing.sm),
+              Text('Filtros', style: theme.textTheme.titleSmall),
+              const Spacer(),
+              Text(
+                estado.inicializado
+                    ? '${estado.totalItems} movimiento(s)'
+                    : 'Cargando movimientos…',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: colors.muted,
+                ),
               ),
-              onPressed: () => _elegirFecha(context, controller, esDesde: true),
-            ),
-            OutlinedButton.icon(
-              icon: const Icon(Icons.event_available, size: 18),
-              label: Text(
-                filtro.hasta == null ? 'Hasta' : 'Hasta ${filtro.hasta}',
+            ],
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Wrap(
+            spacing: AppSpacing.sm,
+            runSpacing: AppSpacing.sm,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: <Widget>[
+              OutlinedButton.icon(
+                icon: const Icon(Icons.event, size: 18),
+                label: Text(
+                  filtro.desde == null ? 'Desde' : 'Desde ${filtro.desde}',
+                ),
+                onPressed: () =>
+                    _elegirFecha(context, controller, esDesde: true),
               ),
-              onPressed: () =>
-                  _elegirFecha(context, controller, esDesde: false),
-            ),
-            DropdownButton<MovimientoTipo>(
-              value: filtro.tipo,
-              hint: const Text('Todos los tipos'),
-              underline: const SizedBox.shrink(),
-              items: <DropdownMenuItem<MovimientoTipo>>[
-                for (final MovimientoTipo tipo in MovimientoTipo.todos)
-                  DropdownMenuItem<MovimientoTipo>(
-                    value: tipo,
-                    child: Text(tipoMovimientoLabel(tipo)),
-                  ),
-              ],
-              onChanged: controller.setTipo,
-            ),
-            if (estado.filtrosActivos)
-              TextButton(
-                onPressed: controller.limpiarFiltros,
-                child: const Text('Limpiar'),
+              OutlinedButton.icon(
+                icon: const Icon(Icons.event_available, size: 18),
+                label: Text(
+                  filtro.hasta == null ? 'Hasta' : 'Hasta ${filtro.hasta}',
+                ),
+                onPressed: () =>
+                    _elegirFecha(context, controller, esDesde: false),
               ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        Text(
-          estado.inicializado
-              ? '${estado.totalItems} movimiento(s)'
-              : 'Cargando movimientos…',
-          style: Theme.of(context).textTheme.bodySmall,
-        ),
-      ],
+              DropdownButton<MovimientoTipo>(
+                value: filtro.tipo,
+                hint: const Text('Todos los tipos'),
+                underline: const SizedBox.shrink(),
+                dropdownColor: colors.surface,
+                borderRadius: AppRadii.mdAll,
+                items: <DropdownMenuItem<MovimientoTipo>>[
+                  for (final MovimientoTipo tipo in MovimientoTipo.todos)
+                    DropdownMenuItem<MovimientoTipo>(
+                      value: tipo,
+                      child: Text(tipoMovimientoLabel(tipo)),
+                    ),
+                ],
+                onChanged: controller.setTipo,
+              ),
+              if (estado.filtrosActivos)
+                TextButton(
+                  onPressed: controller.limpiarFiltros,
+                  child: const Text('Limpiar'),
+                ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 
@@ -331,6 +391,9 @@ class _MovimientoFila extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final bool editable = movimientoEditable(movimiento);
+    final ThemeData theme = Theme.of(context);
+    final SaveUpColors colors = theme.extension<SaveUpColors>()!;
+    final bool negativo = movimiento.monto < Decimal.zero;
 
     return Dismissible(
       key: ValueKey<String>('movimiento-${movimiento.id}'),
@@ -339,17 +402,22 @@ class _MovimientoFila extends ConsumerWidget {
           : DismissDirection.none,
       background: Container(
         alignment: Alignment.centerRight,
-        color: Theme.of(context).colorScheme.error,
-        padding: const EdgeInsets.symmetric(horizontal: 24),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.error,
+          borderRadius: AppRadii.mdAll,
+        ),
         child: Icon(
           Icons.delete_outline,
-          color: Theme.of(context).colorScheme.onError,
+          color: theme.colorScheme.onError,
         ),
       ),
       confirmDismiss: (_) => _confirmarEliminar(context, ref),
-      child: InkWell(
+      child: _MovimientoTile(
+        movimiento: movimiento,
+        negativo: negativo,
+        colors: colors,
         onTap: editable ? () => _abrirEdicion(context, ref) : null,
-        child: _MovimientoTile(movimiento: movimiento),
       ),
     );
   }
@@ -370,30 +438,15 @@ class _MovimientoFila extends ConsumerWidget {
     BuildContext context,
     WidgetRef ref,
   ) async {
-    final bool? confirmado = await showDialog<bool>(
-      context: context,
-      builder: (BuildContext dialogContext) => AlertDialog(
-        title: const Text('¿Eliminar movimiento?'),
-        content: Text(
+    final bool? confirmado = await NeoConfirmDialog.show(
+      context,
+      title: '¿Eliminar movimiento?',
+      message:
           '"${movimiento.descripcion}" por '
           '${Money.formatClp(movimiento.monto)}. Esta acción no se puede '
           'deshacer.',
-        ),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('Cancelar'),
-          ),
-          FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.error,
-              foregroundColor: Theme.of(context).colorScheme.onError,
-            ),
-            onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text('Eliminar'),
-          ),
-        ],
-      ),
+      confirmLabel: 'Eliminar',
+      destructive: true,
     );
     if (confirmado != true) {
       return false;
@@ -403,74 +456,128 @@ class _MovimientoFila extends ConsumerWidget {
         .read(movimientosProvider.notifier)
         .eliminarMovimiento(movimiento);
     if (failure != null && context.mounted) {
-      ScaffoldMessenger.of(
+      NeoSnackbar.show(
         context,
-      ).showSnackBar(SnackBar(content: Text(failureMessage(failure))));
+        failureMessage(failure),
+        tone: NeoSnackbarTone.danger,
+      );
       return false;
     }
     return true;
   }
 }
 
-class _MovimientoTile extends StatelessWidget {
-  const _MovimientoTile({required this.movimiento});
-
-  final Movimiento movimiento;
-
-  @override
-  Widget build(BuildContext context) {
-    final bool negativo = movimiento.monto < Decimal.zero;
-    final String categoria =
-        movimiento.categoria?.nombre ?? tipoMovimientoLabel(movimiento.tipo);
-
-    return ListTile(
-      contentPadding: EdgeInsets.zero,
-      title: Text(movimiento.descripcion),
-      subtitle: Text(
-        '${_MovimientosScreenState.fechaLocal(movimiento.fecha)} · $categoria',
-      ),
-      trailing: Text(
-        Money.formatClp(movimiento.monto),
-        style: TextStyle(
-          fontWeight: FontWeight.w600,
-          color: negativo
-              ? Theme.of(context).colorScheme.error
-              : Theme.of(context).colorScheme.primary,
-        ),
-      ),
-    );
-  }
-}
-
-class _ErrorConReintento extends StatelessWidget {
-  const _ErrorConReintento({
-    required this.mensaje,
-    required this.onReintentar,
+class _SinMovimientos extends StatelessWidget {
+  const _SinMovimientos({
+    required this.filtrosActivos,
+    required this.onQuitarFiltros,
   });
 
-  final String mensaje;
-  final VoidCallback onReintentar;
+  final bool filtrosActivos;
+  final VoidCallback onQuitarFiltros;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 32),
-      child: Column(
+    final ThemeData theme = Theme.of(context);
+    final SaveUpColors colors = theme.extension<SaveUpColors>()!;
+    return NeoSurface(
+      density: AppDensity.list,
+      child: Row(
         children: <Widget>[
-          Text(
-            mensaje,
-            textAlign: TextAlign.center,
-            style: TextStyle(color: Theme.of(context).colorScheme.error),
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: AppColors.yellow,
+              borderRadius: AppRadii.smAll,
+              border: Border.all(
+                color: colors.border,
+                width: AppBorders.thin,
+              ),
+            ),
+            child: const Icon(
+              Icons.receipt_long_outlined,
+              size: 20,
+              color: AppColors.ink,
+            ),
           ),
-          const SizedBox(height: 8),
-          OutlinedButton(
-            onPressed: onReintentar,
-            child: const Text('Reintentar'),
+          const SizedBox(width: AppSpacing.sm),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text('Sin movimientos', style: theme.textTheme.titleSmall),
+                const SizedBox(height: 2),
+                Text(
+                  'No hay movimientos para estos filtros.',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: colors.muted,
+                  ),
+                ),
+              ],
+            ),
           ),
+          if (filtrosActivos) ...<Widget>[
+            const SizedBox(width: AppSpacing.sm),
+            TextButton(
+              onPressed: onQuitarFiltros,
+              child: const Text('Quitar filtros'),
+            ),
+          ],
         ],
       ),
     );
   }
 }
 
-/// Menú con las entradas de cuenta que vivían en el home provisorio (F2).
+class _MovimientoTile extends StatelessWidget {
+  const _MovimientoTile({
+    required this.movimiento,
+    required this.negativo,
+    required this.colors,
+    this.onTap,
+  });
+
+  final Movimiento movimiento;
+  final bool negativo;
+  final SaveUpColors colors;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final String categoria =
+        movimiento.categoria?.nombre ?? tipoMovimientoLabel(movimiento.tipo);
+    final Color tone = negativo ? colors.negativeText : colors.positiveText;
+
+    return NeoListItem(
+      density: AppDensity.list,
+      onTap: onTap,
+      accent: tone,
+      leading: Container(
+        width: 34,
+        height: 34,
+        decoration: BoxDecoration(
+          color: colors.surfaceAlt,
+          borderRadius: AppRadii.smAll,
+          border: Border.all(
+            color: colors.border,
+            width: AppBorders.thin,
+          ),
+        ),
+        child: Icon(
+          negativo ? Icons.south_east : Icons.north_east,
+          size: 18,
+          color: tone,
+        ),
+      ),
+      title: movimiento.descripcion,
+      subtitle:
+          '${_MovimientosScreenState.fechaLocal(movimiento.fecha)} · $categoria',
+      trailing: NeoMoneyText(
+        amount: movimiento.monto,
+        size: NeoMoneySize.title,
+        tone: negativo ? NeoMoneyTone.expense : NeoMoneyTone.income,
+      ),
+    );
+  }
+}

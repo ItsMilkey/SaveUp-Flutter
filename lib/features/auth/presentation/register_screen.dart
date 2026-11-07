@@ -3,9 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/routes.dart';
+import '../../../core/design_system/design_system.dart';
 import '../domain/validators.dart';
-import 'password_policy_checklist.dart';
 import 'auth_controllers.dart';
+import 'password_policy_checklist.dart';
 
 /// Creación de cuenta: RUT, nombre, apellido, correo y contraseña.
 ///
@@ -55,68 +56,78 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       };
     }
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Crea tu cuenta')),
+    return NeoScaffold(
+      appBar: NeoAppBar(
+        title: 'Crea tu cuenta',
+        actions: <Widget>[
+          Padding(
+            padding: const EdgeInsets.only(right: AppSpacing.sm),
+            child: TextButton(
+              onPressed: () => GoRouter.of(context).go(AppRoutes.login),
+              child: const Text('Ya tengo cuenta'),
+            ),
+          ),
+        ],
+      ),
       body: SafeArea(
         child: Form(
           key: _formKey,
           autovalidateMode: AutovalidateMode.onUserInteraction,
           child: ListView(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.all(AppSpacing.lg),
             children: <Widget>[
-              if (ui is RegisterError) _errorText(context, ui.message),
+              if (ui is RegisterError)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: AppSpacing.md),
+                  child: NeoErrorBand(message: ui.message),
+                ),
               if (ui is RegisterFieldErrors && ui.global != null)
-                _errorText(context, ui.global!),
-              TextFormField(
+                Padding(
+                  padding: const EdgeInsets.only(bottom: AppSpacing.md),
+                  child: NeoErrorBand(message: ui.global!),
+                ),
+              NeoInput(
                 controller: _rutController,
                 keyboardType: TextInputType.text,
                 autofillHints: const <String>[AutofillHints.username],
                 validator: validateRut,
-                decoration: InputDecoration(
-                  labelText: 'RUT',
-                  hintText: '12345678-9',
-                  prefixIcon: const Icon(Icons.badge_outlined),
-                  errorText: errorFor('rut'),
-                ),
+                label: 'RUT',
+                hint: '12345678-9',
+                prefixIcon: Icons.badge_outlined,
+                error: errorFor('rut'),
               ),
-              const SizedBox(height: 12),
-              TextFormField(
+              const SizedBox(height: AppSpacing.md),
+              NeoInput(
                 controller: _nombreController,
                 keyboardType: TextInputType.name,
                 validator: (String? value) =>
                     validateName(value, label: 'El nombre'),
-                decoration: InputDecoration(
-                  labelText: 'Nombre',
-                  prefixIcon: const Icon(Icons.person_outline),
-                  errorText: errorFor('nombre'),
-                ),
+                label: 'Nombre',
+                prefixIcon: Icons.person_outline,
+                error: errorFor('nombre'),
               ),
-              const SizedBox(height: 12),
-              TextFormField(
+              const SizedBox(height: AppSpacing.md),
+              NeoInput(
                 controller: _apellidoController,
                 keyboardType: TextInputType.name,
                 validator: (String? value) =>
                     validateName(value, label: 'El apellido'),
-                decoration: InputDecoration(
-                  labelText: 'Apellido',
-                  prefixIcon: const Icon(Icons.person_outline),
-                  errorText: errorFor('apellido'),
-                ),
+                label: 'Apellido',
+                prefixIcon: Icons.person_outline,
+                error: errorFor('apellido'),
               ),
-              const SizedBox(height: 12),
-              TextFormField(
+              const SizedBox(height: AppSpacing.md),
+              NeoInput(
                 controller: _correoController,
                 keyboardType: TextInputType.emailAddress,
                 autofillHints: const <String>[AutofillHints.email],
                 validator: validateEmail,
-                decoration: InputDecoration(
-                  labelText: 'Correo',
-                  prefixIcon: const Icon(Icons.alternate_email),
-                  errorText: errorFor('email'),
-                ),
+                label: 'Correo',
+                prefixIcon: Icons.alternate_email,
+                error: errorFor('email'),
               ),
-              const SizedBox(height: 12),
-              TextFormField(
+              const SizedBox(height: AppSpacing.md),
+              NeoInput(
                 controller: _contrasenaController,
                 obscureText: true,
                 enableSuggestions: false,
@@ -124,49 +135,41 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 autofillHints: const <String>[AutofillHints.newPassword],
                 validator: validatePassword,
                 onChanged: (_) => setState(() {}),
-                decoration: InputDecoration(
-                  labelText: 'Contraseña',
-                  prefixIcon: Icon(Icons.lock_outline),
-                  errorMaxLines: 3,
-                  errorText: errorFor('contrasena'),
-                ),
+                label: 'Contraseña',
+                prefixIcon: Icons.lock_outline,
+                errorMaxLines: 3,
+                error: errorFor('contrasena'),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: AppSpacing.sm),
               PasswordPolicyChecklist(value: _contrasenaController.text),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSpacing.lg),
               if (ui is RegisterSubmitting)
-                const LinearProgressIndicator()
+                const Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: <Widget>[
+                    LinearProgressIndicator(),
+                    SizedBox(height: AppSpacing.sm),
+                    Text('Esperando al servidor…', textAlign: TextAlign.center),
+                  ],
+                )
               else
-                FilledButton(
+                NeoButton(
+                  label: 'Crear cuenta',
+                  expanded: true,
                   onPressed: _submit,
-                  child: const Text('Crear cuenta'),
                 ),
-              const SizedBox(height: 12),
+              const SizedBox(height: AppSpacing.md),
               if (ui is RegisterSuccess)
                 const Column(
                   children: <Widget>[
                     LinearProgressIndicator(),
-                    SizedBox(height: 8),
+                    SizedBox(height: AppSpacing.sm),
                     Text('Cuenta creada. Llevando al inicio de sesión…'),
                   ],
                 ),
-              TextButton(
-                onPressed: () => GoRouter.of(context).go(AppRoutes.login),
-                child: const Text('Ya tengo cuenta'),
-              ),
             ],
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _errorText(BuildContext context, String message) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Text(
-        message,
-        style: TextStyle(color: Theme.of(context).colorScheme.error),
       ),
     );
   }

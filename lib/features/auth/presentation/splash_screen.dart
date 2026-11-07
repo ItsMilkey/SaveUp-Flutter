@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/design_system/design_system.dart';
 import '../../../core/errors/app_failure.dart';
 import '../../../core/errors/failure_messages.dart';
 import '../../app_version/presentation/app_version_controller.dart';
+import 'auth_brand_hero.dart';
 import 'auth_controllers.dart';
 
 /// Arranque de la app.
@@ -59,40 +61,44 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final Widget body;
-    if (_startupFailure == null) {
-      body = const CircularProgressIndicator.adaptive();
-    } else {
-      final AppFailure failure = _startupFailure!;
-      body = Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: <Widget>[
-          Text(failureMessage(failure), textAlign: TextAlign.center),
-          const SizedBox(height: 16),
-          FilledButton(onPressed: _start, child: const Text('Reintentar')),
-        ],
-      );
-    }
-
-    return Scaffold(
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: <Widget>[
-              Text(
-                'SaveUp',
-                style: Theme.of(context).textTheme.headlineMedium,
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 24),
-              body,
-            ],
+    final AppFailure? failure = _startupFailure;
+    return NeoScaffold(
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(AppSpacing.lg),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                const AuthBrandHero(),
+                const SizedBox(height: AppSpacing.xl),
+                if (failure == null)
+                  const _Loading()
+                else
+                  NeoErrorState(
+                    title: 'No pudimos iniciar',
+                    message: failureMessage(failure),
+                    onRetry: _start,
+                  ),
+              ],
+            ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _Loading extends StatelessWidget {
+  const _Loading();
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      label: 'Preparando tu cuenta',
+      child: const Padding(
+        padding: EdgeInsets.symmetric(horizontal: AppSpacing.xxl),
+        child: LinearProgressIndicator(),
       ),
     );
   }

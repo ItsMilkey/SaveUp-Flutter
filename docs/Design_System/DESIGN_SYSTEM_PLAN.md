@@ -332,12 +332,14 @@ No se agrega un séptimo icono al AppBar.
 Cada fase = un PR/commit; sin big-bang. Se puede usar un wrapper temporal
 (`NeoLegacyCard`) para migrar una pantalla sin reescribir su lógica.
 
-**Avance (2026-11-07):** Fases 1, 2 y 3 completadas. Incluye tokens/theme,
-átomos, moléculas/patrones, y la navegación B (`NeoScaffold`, `NeoAppBar`,
+**Avance (2026-11-07):** Fases 1, 2, 3 y 4 completadas. Incluye tokens/theme,
+átomos, moléculas/patrones, la navegación B (`NeoScaffold`, `NeoAppBar`,
 `NeoBottomNav`, `NeoMoreMenu`) con barra inferior Inicio/Deudas/Plan/Presupuesto/
-Más y menú «Más» para Metas, Analítica (Pronto), Reportes, cuenta y Design System.
-Tests y goldens claro/oscuro (417 tests verdes). La migración de pantallas
-(Home/Login y luego el resto) es la Fase 4.
+Más y menú «Más» para Metas, Analítica (Pronto), Reportes, cuenta y Design System,
+y la migración de Auth + Home: login, registro, splash y recuperación con
+`AuthBrandHero`/`NeoInput`/`NeoButton`/`NeoErrorBand`; home con hero de saldo,
+filtros compactos, filas `NeoListItem` y FAB de acción. Tests y goldens claro/
+oscuro (419 tests verdes). La migración de movimientos y deudas es la Fase 5.
 
 ## 11. Riesgos y mitigaciones
 

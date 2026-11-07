@@ -90,6 +90,41 @@ void main() {
     expect(find.text('Monto inválido.'), findsOneWidget);
   });
 
+  testWidgets('NeoInput admite icono sufijo y error multilínea', (
+    WidgetTester tester,
+  ) async {
+    bool suffixTapped = false;
+    await tester.pumpWidget(
+      _wrap(
+        NeoInput(
+          label: 'Contraseña',
+          obscureText: true,
+          errorMaxLines: 3,
+          error: 'La contraseña no cumple la política.',
+          suffixIcon: IconButton(
+            icon: const Icon(Icons.visibility),
+            onPressed: () => suffixTapped = true,
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('La contraseña no cumple la política.'), findsOneWidget);
+    await tester.tap(find.byIcon(Icons.visibility));
+    expect(suffixTapped, isTrue);
+  });
+
+  testWidgets('NeoErrorBand muestra el detalle inline', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      _wrap(const NeoErrorBand(message: 'Datos inválidos.')),
+    );
+
+    expect(find.text('Datos inválidos.'), findsOneWidget);
+    expect(find.byIcon(Icons.error_outline), findsOneWidget);
+  });
+
   testWidgets('NeoBadge y NeoProgress renderizan', (
     WidgetTester tester,
   ) async {
