@@ -162,11 +162,11 @@ class _Kpis extends StatelessWidget {
                 child: NeoStat(
                   label: 'Ingresos',
                   icon: Icons.south_west,
-                  accent: colors.info,
+                  color: colors.info,
                   value: NeoMoneyText(
                     amount: resumen.ingresos,
                     size: NeoMoneySize.title,
-                    tone: NeoMoneyTone.income,
+                    tone: NeoMoneyTone.onAccent,
                   ),
                 ),
               ),
@@ -175,11 +175,11 @@ class _Kpis extends StatelessWidget {
                 child: NeoStat(
                   label: 'Gastos',
                   icon: Icons.north_east,
-                  accent: AppColors.magenta,
+                  color: AppColors.magenta,
                   value: NeoMoneyText(
                     amount: resumen.gastos,
                     size: NeoMoneySize.title,
-                    tone: NeoMoneyTone.expense,
+                    tone: NeoMoneyTone.onAccent,
                   ),
                 ),
               ),
@@ -195,11 +195,11 @@ class _Kpis extends StatelessWidget {
                 child: NeoStat(
                   label: 'Ahorro',
                   icon: Icons.savings_outlined,
-                  accent: colors.success,
+                  color: colors.success,
                   value: NeoMoneyText(
                     amount: resumen.ahorro,
                     size: NeoMoneySize.title,
-                    tone: NeoMoneyTone.savings,
+                    tone: NeoMoneyTone.onAccent,
                   ),
                 ),
               ),
@@ -208,13 +208,11 @@ class _Kpis extends StatelessWidget {
                 child: NeoStat(
                   label: 'Disponible',
                   icon: Icons.account_balance_wallet_outlined,
-                  accent: AppColors.yellow,
+                  color: AppColors.yellow,
                   value: NeoMoneyText(
                     amount: disponible,
                     size: NeoMoneySize.title,
-                    tone: disponible < Decimal.zero
-                        ? NeoMoneyTone.expense
-                        : NeoMoneyTone.neutral,
+                    tone: NeoMoneyTone.onAccent,
                   ),
                 ),
               ),

@@ -18,12 +18,16 @@ class NeoProgress extends StatelessWidget {
     this.color = AppColors.yellow,
     this.height = 10,
     this.label,
+    this.trackColor,
   });
 
   final double value;
   final Color color;
   final double height;
   final String? label;
+
+  /// Fondo de la pista; por defecto el surface del tema.
+  final Color? trackColor;
 
   @override
   Widget build(BuildContext context) {
@@ -45,7 +49,7 @@ class NeoProgress extends StatelessWidget {
         Container(
           height: height + 4,
           decoration: BoxDecoration(
-            color: colors.surface,
+            color: trackColor ?? colors.surface,
             borderRadius: AppRadii.pillAll,
             border: Border.all(
               color: colors.border,

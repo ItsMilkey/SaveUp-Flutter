@@ -15,9 +15,9 @@ class AuthBrandHero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final SaveUpColors colors = Theme.of(context).extension<SaveUpColors>()!;
     return NeoSurface(
       density: AppDensity.hero,
+      color: AppColors.cyan,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
@@ -27,15 +27,15 @@ class AuthBrandHero extends StatelessWidget {
               children: <Widget>[
                 Text(
                   title,
-                  style: AppTypography.display(size: 36, color: colors.ink),
+                  style: AppTypography.display(size: 36, color: AppColors.ink),
                 ),
                 const SizedBox(height: AppSpacing.sm),
                 Text(
                   subtitle,
                   style: AppTypography.text(
                     size: 14,
-                    weight: FontWeight.w500,
-                    color: colors.muted,
+                    weight: FontWeight.w600,
+                    color: AppColors.ink.withValues(alpha: 0.72),
                   ),
                 ),
               ],
@@ -76,9 +76,9 @@ class _GeometricMark extends StatelessWidget {
       children: <Widget>[
         block(AppColors.yellow),
         const SizedBox(height: AppSpacing.xs),
-        block(AppColors.cyan),
-        const SizedBox(height: AppSpacing.xs),
         block(AppColors.magenta),
+        const SizedBox(height: AppSpacing.xs),
+        block(AppColors.ink),
       ],
     );
   }

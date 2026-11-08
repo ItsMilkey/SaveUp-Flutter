@@ -37,7 +37,8 @@ class NeoSectionHeader extends StatelessWidget {
                   Text(
                     subtitle!,
                     style: theme.textTheme.bodySmall?.copyWith(
-                      color: colors.muted,
+                      color: (theme.textTheme.bodySmall?.color ?? colors.muted)
+                          .withValues(alpha: 0.7),
                     ),
                   ),
                 ],

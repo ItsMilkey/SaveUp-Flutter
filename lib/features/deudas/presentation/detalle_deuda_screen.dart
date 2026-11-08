@@ -194,16 +194,27 @@ class _Ficha extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
-    final ColorScheme scheme = theme.colorScheme;
+    final TextTheme textTheme = theme.textTheme.apply(
+      bodyColor: AppColors.ink,
+      displayColor: AppColors.ink,
+    );
+    final Color fondo = switch (deuda.estado) {
+      EstadoDeuda.pendiente => AppColors.yellow,
+      EstadoDeuda.pagada => AppColors.green,
+      EstadoDeuda.cancelada => AppColors.lavender,
+    };
 
     Widget fila(String label, String value) => Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          SizedBox(width: 150, child: Text(label, style: theme.textTheme.bodySmall)),
+          SizedBox(
+            width: 150,
+            child: Text(label, style: textTheme.bodySmall),
+          ),
           Expanded(
-            child: Text(value, style: theme.textTheme.bodyMedium),
+            child: Text(value, style: textTheme.bodyMedium),
           ),
         ],
       ),
@@ -211,31 +222,32 @@ class _Ficha extends StatelessWidget {
 
     return NeoSurface(
       density: AppDensity.section,
+      color: fondo,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Row(
             children: <Widget>[
               Expanded(
-                child: Text(deuda.nombre, style: theme.textTheme.titleLarge),
+                child: Text(deuda.nombre, style: textTheme.titleLarge),
               ),
               const SizedBox(width: AppSpacing.sm),
               NeoBadge(
                 label: estadoDeudaLabel(deuda.estado),
-                color: estadoDeudaColor(context, deuda.estado),
+                color: AppColors.paper,
                 compact: true,
               ),
             ],
           ),
           if (deuda.descripcion != null && deuda.descripcion!.isNotEmpty)
-            Text(deuda.descripcion!, style: theme.textTheme.bodySmall),
+            Text(deuda.descripcion!, style: textTheme.bodySmall),
           const SizedBox(height: AppSpacing.sm),
           Text(
             '${tipoDeudaLabel(deuda.tipo)} · ${modalidadLabel(deuda.modalidad)}',
-            style: theme.textTheme.bodySmall,
+            style: textTheme.bodySmall,
           ),
           const SizedBox(height: AppSpacing.md),
-          NeoProgress(value: deuda.progreso),
+          NeoProgress(value: deuda.progreso, color: AppColors.ink, trackColor: AppColors.paper),
           const SizedBox(height: AppSpacing.xs),
           Text('${deuda.cuotasPagadas} de ${deuda.cantidadCuotas} cuotas pagadas'),
           const SizedBox(height: AppSpacing.md),
@@ -279,8 +291,8 @@ class _Ficha extends StatelessWidget {
                 padding: const EdgeInsets.only(top: 8),
                 child: Text(
                   'Edición bloqueada: la deuda ya tiene pagos registrados.',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: scheme.onSurfaceVariant,
+                  style: textTheme.bodySmall?.copyWith(
+                    color: AppColors.ink.withValues(alpha: 0.7),
                   ),
                 ),
               ),

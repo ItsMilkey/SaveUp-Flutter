@@ -149,7 +149,15 @@ class _DeudaCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
-    final ColorScheme scheme = theme.colorScheme;
+    final TextTheme textTheme = theme.textTheme.apply(
+      bodyColor: AppColors.ink,
+      displayColor: AppColors.ink,
+    );
+    final Color fondo = switch (deuda.estado) {
+      EstadoDeuda.pendiente => AppColors.yellow,
+      EstadoDeuda.pagada => AppColors.green,
+      EstadoDeuda.cancelada => AppColors.lavender,
+    };
     final String proxima = deuda.proximaCuotaNumero == null
         ? 'Sin cuotas pendientes'
         : 'Próxima cuota ${deuda.proximaCuotaNumero} · '
@@ -158,6 +166,7 @@ class _DeudaCard extends StatelessWidget {
 
     return NeoSurface(
       density: AppDensity.section,
+      color: fondo,
       onTap: onTap,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -167,13 +176,13 @@ class _DeudaCard extends StatelessWidget {
               Expanded(
                 child: Text(
                   deuda.nombre,
-                  style: theme.textTheme.titleMedium,
+                  style: textTheme.titleMedium,
                 ),
               ),
               const SizedBox(width: AppSpacing.sm),
               NeoBadge(
                 label: estadoDeudaLabel(deuda.estado),
-                color: estadoDeudaColor(context, deuda.estado),
+                color: AppColors.paper,
                 compact: true,
               ),
             ],
@@ -181,10 +190,10 @@ class _DeudaCard extends StatelessWidget {
           const SizedBox(height: 2),
           Text(
             '${tipoDeudaLabel(deuda.tipo)} · ${modalidadLabel(deuda.modalidad)}',
-            style: theme.textTheme.bodySmall,
+            style: textTheme.bodySmall,
           ),
           const SizedBox(height: AppSpacing.md),
-          NeoProgress(value: deuda.progreso),
+          NeoProgress(value: deuda.progreso, color: AppColors.ink, trackColor: AppColors.paper),
           const SizedBox(height: AppSpacing.sm),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -192,15 +201,12 @@ class _DeudaCard extends StatelessWidget {
               Text('${deuda.cuotasPagadas} de ${deuda.cantidadCuotas} cuotas'),
               Text(
                 'Pendiente: ${Money.formatClp(deuda.montoRestante)}',
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                  color: scheme.error,
-                ),
+                style: const TextStyle(fontWeight: FontWeight.w700),
               ),
             ],
           ),
           const SizedBox(height: AppSpacing.xs),
-          Text(proxima, style: theme.textTheme.bodySmall),
+          Text(proxima, style: textTheme.bodySmall),
         ],
       ),
     );
@@ -216,6 +222,10 @@ class _EmptyDeudas extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
+    final TextTheme textTheme = theme.textTheme.apply(
+      bodyColor: AppColors.ink,
+      displayColor: AppColors.ink,
+    );
     final SaveUpColors colors = theme.extension<SaveUpColors>()!;
     return NeoSurface(
       density: AppDensity.section,
@@ -244,7 +254,7 @@ class _EmptyDeudas extends StatelessWidget {
               ),
               const SizedBox(width: AppSpacing.sm),
               Expanded(
-                child: Text(message, style: theme.textTheme.titleSmall),
+                child: Text(message, style: textTheme.titleSmall),
               ),
             ],
           ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../theme/saveup_colors.dart';
+import '../../tokens/app_colors.dart';
 import '../../tokens/app_density.dart';
 import '../../tokens/app_radii.dart';
 import '../../tokens/app_spacing.dart';
@@ -17,6 +18,7 @@ class NeoListItem extends StatelessWidget {
     this.onTap,
     this.density = AppDensity.list,
     this.accent,
+    this.color,
   });
 
   final String title;
@@ -27,12 +29,16 @@ class NeoListItem extends StatelessWidget {
   final AppDensity density;
   final Color? accent;
 
+  /// Fondo de color plano para la fila.
+  final Color? color;
+
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
     final SaveUpColors colors = theme.extension<SaveUpColors>()!;
     return NeoSurface(
       density: density,
+      color: color,
       onTap: onTap,
       child: Row(
         children: <Widget>[
@@ -55,13 +61,22 @@ class NeoListItem extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                Text(title, style: theme.textTheme.titleSmall),
+                Text(
+                  title,
+                  style: color == null
+                      ? theme.textTheme.titleSmall
+                      : theme.textTheme.titleSmall?.copyWith(
+                          color: AppColors.ink,
+                        ),
+                ),
                 if (subtitle != null) ...<Widget>[
                   const SizedBox(height: 2),
                   Text(
                     subtitle!,
                     style: theme.textTheme.bodySmall?.copyWith(
-                      color: colors.muted,
+                      color: color == null
+                          ? colors.muted
+                          : AppColors.ink.withValues(alpha: 0.8),
                     ),
                   ),
                 ],

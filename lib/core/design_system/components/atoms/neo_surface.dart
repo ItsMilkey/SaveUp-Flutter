@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../theme/saveup_colors.dart';
 import '../../theme/saveup_shadows.dart';
+import '../../tokens/app_colors.dart';
 import '../../tokens/app_density.dart';
 import '../../tokens/app_radii.dart';
 
@@ -18,6 +19,7 @@ class NeoSurface extends StatelessWidget {
     this.boxShadow,
     this.padding,
     this.onTap,
+    this.textColor,
   });
 
   final Widget child;
@@ -30,6 +32,9 @@ class NeoSurface extends StatelessWidget {
   final EdgeInsetsGeometry? padding;
   final VoidCallback? onTap;
 
+  /// Color del texto/iconos sobre [color]. Por defecto, tinta si hay fondo.
+  final Color? textColor;
+
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
@@ -40,10 +45,31 @@ class NeoSurface extends StatelessWidget {
       color: borderColor ?? colors.border,
       width: borderWidth ?? density.borderWidth,
     );
-    final Widget content = Padding(
+    final Color? foreground =
+        textColor ?? (color == null ? null : AppColors.ink);
+    Widget content = Padding(
       padding: padding ?? EdgeInsets.all(density.padding),
       child: child,
     );
+    if (foreground != null) {
+      content = Theme(
+        data: theme.copyWith(
+          textTheme: theme.textTheme.apply(
+            bodyColor: foreground,
+            displayColor: foreground,
+          ),
+          primaryTextTheme: theme.primaryTextTheme.apply(
+            bodyColor: foreground,
+            displayColor: foreground,
+          ),
+          iconTheme: IconThemeData(color: foreground),
+        ),
+        child: DefaultTextStyle.merge(
+          style: TextStyle(color: foreground),
+          child: content,
+        ),
+      );
+    }
 
     return DecoratedBox(
       decoration: BoxDecoration(

@@ -19,6 +19,7 @@ class NeoStat extends StatelessWidget {
     this.icon,
     this.accent = AppColors.yellow,
     this.density = AppDensity.section,
+    this.color,
   });
 
   final String label;
@@ -28,12 +29,18 @@ class NeoStat extends StatelessWidget {
   final Color accent;
   final AppDensity density;
 
+  /// Fondo de color plano (tinta sobre el color, sin degradados).
+  final Color? color;
+
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
     final SaveUpColors colors = theme.extension<SaveUpColors>()!;
+    final bool colorida = color != null;
+    final Color foreground = colorida ? AppColors.ink : colors.muted;
     return NeoSurface(
       density: density,
+      color: color,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
@@ -44,14 +51,18 @@ class NeoStat extends StatelessWidget {
                   width: 32,
                   height: 32,
                   decoration: BoxDecoration(
-                    color: accent,
+                    color: colorida ? colors.surface : accent,
                     borderRadius: AppRadii.smAll,
                     border: Border.all(
                       color: colors.border,
                       width: AppBorders.regular,
                     ),
                   ),
-                  child: Icon(icon, size: 18, color: AppColors.ink),
+                  child: Icon(
+                    icon,
+                    size: 18,
+                    color: colorida ? colors.ink : AppColors.ink,
+                  ),
                 ),
                 const SizedBox(width: AppSpacing.sm),
               ],
@@ -62,7 +73,7 @@ class NeoStat extends StatelessWidget {
                     size: 11,
                     weight: FontWeight.w600,
                     letterSpacing: 0.5,
-                    color: colors.muted,
+                    color: foreground,
                   ),
                 ),
               ),
@@ -74,7 +85,9 @@ class NeoStat extends StatelessWidget {
             const SizedBox(height: AppSpacing.xs),
             Text(
               helper!,
-              style: theme.textTheme.bodySmall?.copyWith(color: colors.muted),
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: colorida ? AppColors.ink : colors.muted,
+              ),
             ),
           ],
         ],

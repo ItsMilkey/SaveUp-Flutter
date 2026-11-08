@@ -42,6 +42,10 @@ class _ConfiguracionReglaScreenState
       reglaPresupuestariaProvider.notifier,
     );
     final ThemeData theme = Theme.of(context);
+    final TextTheme onColorText = theme.textTheme.apply(
+      bodyColor: AppColors.ink,
+      displayColor: AppColors.ink,
+    );
 
     return NeoScaffold(
       appBar: NeoAppBar(
@@ -143,19 +147,29 @@ class _ConfiguracionReglaScreenState
                 const SizedBox(height: AppSpacing.sm),
                 NeoSurface(
                   density: AppDensity.list,
+                  color: AppColors.cyan,
                   child: Material(
                     type: MaterialType.transparency,
                     child: Column(
                       children: <Widget>[
                         SwitchListTile(
-                          title: const Text('Presupuesto activo'),
+                          title: Text(
+                            'Presupuesto activo',
+                            style: onColorText.titleMedium,
+                          ),
                           value: estado.activo,
                           onChanged: controller.setActivo,
                         ),
                         SwitchListTile(
-                          title: const Text('Automatizar ahorro en metas'),
-                          subtitle: const Text(
+                          title: Text(
+                            'Automatizar ahorro en metas',
+                            style: onColorText.titleMedium,
+                          ),
+                          subtitle: Text(
                             'Reparte el ahorro automático entre tus metas.',
+                            style: onColorText.bodySmall?.copyWith(
+                              color: AppColors.ink.withValues(alpha: 0.7),
+                            ),
                           ),
                           value: estado.automatizarAhorroEnMetas,
                           onChanged: controller.setAutomatizarAhorroEnMetas,
@@ -237,11 +251,16 @@ class _Sugerencia extends StatelessWidget {
   Widget build(BuildContext context) {
     final SugerenciaRegla? sugerencia = estado.sugerencia;
     final ThemeData theme = Theme.of(context);
+    final TextTheme textTheme = theme.textTheme.apply(
+      bodyColor: AppColors.ink,
+      displayColor: AppColors.ink,
+    );
     final PorcentajesRegla? propuesta = sugerencia?.sugerencia;
 
     if (propuesta == null) {
       return NeoSurface(
         density: AppDensity.section,
+        color: AppColors.lavender,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
@@ -252,14 +271,14 @@ class _Sugerencia extends StatelessWidget {
                         'una regla. Puedes configurarla manualmente.'
                   : 'No hay una sugerencia disponible; configura tu regla '
                         'manualmente.',
-              style: theme.textTheme.bodySmall,
+              style: textTheme.bodySmall,
             ),
             if (sugerencia != null &&
                 sugerencia.mesesAnalizados.isNotEmpty) ...<Widget>[
               const SizedBox(height: AppSpacing.xs),
               Text(
                 'Meses analizados: ${sugerencia.mesesAnalizados.join(', ')}',
-                style: theme.textTheme.bodySmall,
+                style: textTheme.bodySmall,
               ),
             ],
           ],
@@ -269,6 +288,7 @@ class _Sugerencia extends StatelessWidget {
 
     return NeoSurface(
       density: AppDensity.section,
+      color: AppColors.lavender,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
@@ -277,7 +297,7 @@ class _Sugerencia extends StatelessWidget {
             '${propuesta.necesidades} / ${propuesta.deseos} / '
             '${propuesta.ahorro} · meses: '
             '${sugerencia!.mesesAnalizados.join(', ')}',
-            style: theme.textTheme.bodyMedium,
+            style: textTheme.bodyMedium,
           ),
           if (sugerencia.gastoSuperaIngreso)
             Padding(
@@ -285,8 +305,9 @@ class _Sugerencia extends StatelessWidget {
               child: Text(
                 'Tu gasto de necesidades y deseos supera tus ingresos; la '
                 'sugerencia se escaló para sumar 100.',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.error,
+                style: textTheme.bodySmall?.copyWith(
+                  color: AppColors.ink,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ),

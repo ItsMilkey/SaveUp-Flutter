@@ -64,6 +64,9 @@ class NeoButton extends StatelessWidget {
         child: content,
       ),
       NeoButtonVariant.ghost => TextButton(
+        style: TextButton.styleFrom(
+          foregroundColor: IconTheme.of(context).color ?? colors.ink,
+        ),
         onPressed: disabled ? null : onPressed,
         child: content,
       ),

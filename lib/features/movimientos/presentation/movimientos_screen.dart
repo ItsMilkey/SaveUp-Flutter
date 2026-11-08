@@ -147,7 +147,10 @@ class _MovimientosScreenState extends ConsumerState<MovimientosScreen> {
       else if (!estado.hayMas && estado.items.isNotEmpty)
         const Padding(
           padding: EdgeInsets.symmetric(vertical: AppSpacing.lg),
-          child: Center(child: Text('No hay más movimientos.')),
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: Text('No hay más movimientos.'),
+          ),
         ),
     ];
   }
@@ -184,8 +187,8 @@ class _TarjetaSaldo extends ConsumerWidget {
               failureMessage(estado.saldoError!),
               style: AppTypography.text(
                 size: 14,
-                weight: FontWeight.w500,
-                color: colors.negativeText,
+                weight: FontWeight.w600,
+                color: AppColors.ink,
               ),
             ),
           ),
@@ -198,12 +201,22 @@ class _TarjetaSaldo extends ConsumerWidget {
         ],
       );
     } else if (estado.cargandoSaldo || saldo == null) {
-      content = const Column(
+      content = Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
-          LinearProgressIndicator(),
-          SizedBox(height: AppSpacing.sm),
-          Text('Consultando tu saldo…'),
+          const LinearProgressIndicator(
+            color: AppColors.ink,
+            backgroundColor: AppColors.paper,
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Text(
+            'Consultando tu saldo…',
+            style: AppTypography.text(
+              size: 13,
+              weight: FontWeight.w500,
+              color: AppColors.ink,
+            ),
+          ),
         ],
       );
     } else {
@@ -213,12 +226,15 @@ class _TarjetaSaldo extends ConsumerWidget {
           NeoMoneyText(
             amount: saldo,
             size: NeoMoneySize.display,
-            tone: negativo ? NeoMoneyTone.expense : NeoMoneyTone.neutral,
+            tone: NeoMoneyTone.onAccent,
           ),
           const SizedBox(height: AppSpacing.xs),
           Text(
             'Según los movimientos registrados.',
-            style: theme.textTheme.bodySmall?.copyWith(color: colors.muted),
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: AppColors.ink.withValues(alpha: 0.8),
+              fontWeight: FontWeight.w500,
+            ),
           ),
         ],
       );
@@ -226,6 +242,7 @@ class _TarjetaSaldo extends ConsumerWidget {
 
     return NeoSurface(
       density: AppDensity.hero,
+      color: AppColors.yellow,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
@@ -235,7 +252,7 @@ class _TarjetaSaldo extends ConsumerWidget {
                 width: 36,
                 height: 36,
                 decoration: BoxDecoration(
-                  color: AppColors.yellow,
+                  color: colors.surface,
                   borderRadius: AppRadii.smAll,
                   border: Border.all(
                     color: colors.border,
@@ -254,12 +271,17 @@ class _TarjetaSaldo extends ConsumerWidget {
                   'Saldo disponible',
                   style: AppTypography.text(
                     size: 12,
-                    weight: FontWeight.w600,
+                    weight: FontWeight.w700,
                     letterSpacing: 0.5,
-                    color: colors.muted,
+                    color: AppColors.ink,
                   ),
                 ),
               ),
+              if (negativo && estado.saldoError == null)
+                NeoBadge(
+                  label: 'Saldo negativo',
+                  color: AppColors.danger,
+                ),
             ],
           ),
           const SizedBox(height: AppSpacing.md),
@@ -278,7 +300,6 @@ class _Filtros extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final ThemeData theme = Theme.of(context);
-    final SaveUpColors colors = theme.extension<SaveUpColors>()!;
     final MovimientosController controller = ref.read(
       movimientosProvider.notifier,
     );
@@ -286,21 +307,28 @@ class _Filtros extends ConsumerWidget {
 
     return NeoSurface(
       density: AppDensity.list,
+      color: AppColors.cyan,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Row(
             children: <Widget>[
-              Icon(Icons.tune, size: 18, color: colors.ink),
+              Icon(Icons.tune, size: 18, color: AppColors.ink),
               const SizedBox(width: AppSpacing.sm),
-              Text('Filtros', style: theme.textTheme.titleSmall),
+              Text(
+                'Filtros',
+                style: theme.textTheme.titleSmall?.copyWith(
+                  color: AppColors.ink,
+                ),
+              ),
               const Spacer(),
               Text(
                 estado.inicializado
                     ? '${estado.totalItems} movimiento(s)'
                     : 'Cargando movimientos…',
                 style: theme.textTheme.bodySmall?.copyWith(
-                  color: colors.muted,
+                  color: AppColors.ink.withValues(alpha: 0.7),
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ],
@@ -329,10 +357,23 @@ class _Filtros extends ConsumerWidget {
               ),
               DropdownButton<MovimientoTipo>(
                 value: filtro.tipo,
-                hint: const Text('Todos los tipos'),
+                hint: Text(
+                  'Todos los tipos',
+                  style: AppTypography.text(
+                    size: 14,
+                    weight: FontWeight.w600,
+                    color: AppColors.ink,
+                  ),
+                ),
                 underline: const SizedBox.shrink(),
-                dropdownColor: colors.surface,
+                dropdownColor: AppColors.paper,
                 borderRadius: AppRadii.mdAll,
+                iconEnabledColor: AppColors.ink,
+                style: AppTypography.text(
+                  size: 14,
+                  weight: FontWeight.w600,
+                  color: AppColors.ink,
+                ),
                 items: <DropdownMenuItem<MovimientoTipo>>[
                   for (final MovimientoTipo tipo in MovimientoTipo.todos)
                     DropdownMenuItem<MovimientoTipo>(

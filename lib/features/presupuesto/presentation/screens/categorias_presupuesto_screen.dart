@@ -113,15 +113,20 @@ class _LimitesTab extends ConsumerWidget {
               ),
             )
           else
-            for (final MapEntry<int, Decimal> fila in filas) ...<Widget>[
+            for (final MapEntry<int, MapEntry<int, Decimal>> indexado
+                in filas.asMap().entries) ...<Widget>[
               NeoListItem(
                 density: AppDensity.list,
-                title: porId[fila.key]?.nombre ?? 'Categoría ${fila.key}',
-                subtitle: Money.formatClp(fila.value),
+                color: _coloresCategorias[
+                    indexado.key % _coloresCategorias.length],
+                title:
+                    porId[indexado.value.key]?.nombre ??
+                    'Categoría ${indexado.value.key}',
+                subtitle: Money.formatClp(indexado.value.value),
                 onTap: () => _editar(
                   context,
                   ref,
-                  categoriaId: fila.key,
+                  categoriaId: indexado.value.key,
                 ),
                 trailing: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -133,14 +138,14 @@ class _LimitesTab extends ConsumerWidget {
                       onPressed: () => _editar(
                         context,
                         ref,
-                        categoriaId: fila.key,
+                        categoriaId: indexado.value.key,
                       ),
                     ),
                     NeoIconButton(
                       icon: Icons.delete_outline,
                       tooltip: 'Quitar límite',
                       variant: NeoIconButtonVariant.ghost,
-                      onPressed: () => controller.quitar(fila.key),
+                      onPressed: () => controller.quitar(indexado.value.key),
                     ),
                   ],
                 ),
@@ -501,15 +506,18 @@ class _TiposTab extends ConsumerWidget {
                 ],
               ),
             ),
-          for (final PreferenciaCategoria preferencia in estado.preferencias)
+          for (final MapEntry<int, PreferenciaCategoria> indexado
+              in estado.preferencias.asMap().entries)
             Padding(
               padding: const EdgeInsets.only(bottom: AppSpacing.sm),
               child: _FilaPreferencia(
-                preferencia: preferencia,
-                guardando: estado.guardando.contains(preferencia.id),
+                preferencia: indexado.value,
+                color: _coloresCategorias[
+                    indexado.key % _coloresCategorias.length],
+                guardando: estado.guardando.contains(indexado.value.id),
                 onEstablecer: (TipoPresupuesto tipo) =>
-                    controller.establecer(preferencia.id, tipo),
-                onQuitar: () => controller.quitar(preferencia.id),
+                    controller.establecer(indexado.value.id, tipo),
+                onQuitar: () => controller.quitar(indexado.value.id),
               ),
             ),
         ],
@@ -518,15 +526,26 @@ class _TiposTab extends ConsumerWidget {
   }
 }
 
+const List<Color> _coloresCategorias = <Color>[
+  AppColors.cyan,
+  AppColors.yellow,
+  AppColors.lavender,
+  AppColors.green,
+  AppColors.magenta,
+  AppColors.orange,
+];
+
 class _FilaPreferencia extends StatelessWidget {
   const _FilaPreferencia({
     required this.preferencia,
+    required this.color,
     required this.guardando,
     required this.onEstablecer,
     required this.onQuitar,
   });
 
   final PreferenciaCategoria preferencia;
+  final Color color;
   final bool guardando;
   final ValueChanged<TipoPresupuesto> onEstablecer;
   final VoidCallback onQuitar;
@@ -534,11 +553,16 @@ class _FilaPreferencia extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
+    final TextTheme textTheme = theme.textTheme.apply(
+      bodyColor: AppColors.ink,
+      displayColor: AppColors.ink,
+    );
     final String subtitulo =
         'Por defecto: ${tipoPresupuestoLabel(preferencia.tipoPorDefecto)} · '
         'Efectivo: ${tipoPresupuestoLabel(preferencia.tipoEfectivo)}';
     return NeoSurface(
       density: AppDensity.list,
+      color: color,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
@@ -547,7 +571,7 @@ class _FilaPreferencia extends StatelessWidget {
               Expanded(
                 child: Text(
                   preferencia.nombre,
-                  style: theme.textTheme.titleSmall,
+                  style: textTheme.titleSmall,
                 ),
               ),
               if (guardando)
@@ -559,12 +583,12 @@ class _FilaPreferencia extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 2),
-          Text(subtitulo, style: theme.textTheme.bodySmall),
+          Text(subtitulo, style: textTheme.bodySmall),
           const SizedBox(height: AppSpacing.xs),
           if (!preferencia.reclasificable)
             Text(
               'No reclasificable (${tipoPresupuestoLabel(preferencia.tipoPorDefecto)})',
-              style: theme.textTheme.bodySmall,
+              style: textTheme.bodySmall,
             )
           else
             Wrap(

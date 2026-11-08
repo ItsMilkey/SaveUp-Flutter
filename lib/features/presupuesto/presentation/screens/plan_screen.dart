@@ -180,6 +180,7 @@ class _PlanScreenState extends ConsumerState<PlanScreen> {
           if (plan.grupos.isEmpty && plan.partidas.isNotEmpty)
             _SeccionGrupo(
               titulo: 'Sin grupo',
+              color: AppColors.lavender,
               planificado: plan.calculo.resumen.planificadoTotal,
               real: plan.partidas.fold(
                 Decimal.zero,
@@ -192,12 +193,13 @@ class _PlanScreenState extends ConsumerState<PlanScreen> {
               onEliminar: _eliminarPartida,
             )
           else
-            for (final GrupoResultado grupo in plan.grupos)
+            for (int i = 0; i < plan.grupos.length; i++)
               _SeccionGrupo(
-                titulo: grupo.nombre,
-                planificado: grupo.planificado,
-                real: grupo.real,
-                partidaIds: grupo.partidaIds,
+                titulo: plan.grupos[i].nombre,
+                color: _coloresGrupo[i % _coloresGrupo.length],
+                planificado: plan.grupos[i].planificado,
+                real: plan.grupos[i].real,
+                partidaIds: plan.grupos[i].partidaIds,
                 onEditar: _editarPartida,
                 onEliminar: _eliminarPartida,
               ),
@@ -341,6 +343,15 @@ class _PlanScreenState extends ConsumerState<PlanScreen> {
   }
 }
 
+const List<Color> _coloresGrupo = <Color>[
+  AppColors.cyan,
+  AppColors.magenta,
+  AppColors.green,
+  AppColors.lavender,
+  AppColors.orange,
+  AppColors.yellow,
+];
+
 class _Resumen extends StatelessWidget {
   const _Resumen({required this.plan, required this.onEditarIngreso});
 
@@ -350,6 +361,10 @@ class _Resumen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
+    final TextTheme textTheme = theme.textTheme.apply(
+      bodyColor: AppColors.ink,
+      displayColor: AppColors.ink,
+    );
     final ResumenCalculado resumen = plan.calculo.resumen;
     final String remanente = resumen.remanenteLibre == null
         ? 'Sin ingreso de referencia'
@@ -360,6 +375,7 @@ class _Resumen extends StatelessWidget {
 
     return NeoSurface(
       density: AppDensity.section,
+      color: AppColors.lavender,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
@@ -379,7 +395,7 @@ class _Resumen extends StatelessWidget {
             children: <Widget>[
               Expanded(
                 child: _fila(
-                  theme,
+                  textTheme,
                   'Ingreso de referencia',
                   plan.ingresoReferencia == null
                       ? 'Sin definir'
@@ -394,9 +410,13 @@ class _Resumen extends StatelessWidget {
               ),
             ],
           ),
-          _fila(theme, 'Planificado', Money.formatClp(resumen.planificadoTotal)),
-          _fila(theme, 'Remanente libre', remanente),
-          _fila(theme, 'Margen de seguridad', margen),
+          _fila(
+            textTheme,
+            'Planificado',
+            Money.formatClp(resumen.planificadoTotal),
+          ),
+          _fila(textTheme, 'Remanente libre', remanente),
+          _fila(textTheme, 'Margen de seguridad', margen),
           const Divider(),
           for (final RepartoTipoResultado fila in plan.calculo.repartoPorTipo)
             Padding(
@@ -412,7 +432,7 @@ class _Resumen extends StatelessWidget {
                         TipoPresupuesto.otros => 'Otros',
                         TipoPresupuesto.ahorro => 'Ahorro',
                       },
-                      style: theme.textTheme.bodySmall,
+                      style: textTheme.bodySmall,
                     ),
                   ),
                   Expanded(
@@ -425,10 +445,11 @@ class _Resumen extends StatelessWidget {
                     Text(
                       '${fila.diferenciaPuntos! >= Decimal.zero ? '+' : ''}'
                       '${fila.diferenciaPuntos} pts',
-                      style: theme.textTheme.bodySmall?.copyWith(
+                      style: textTheme.bodySmall?.copyWith(
                         color: fila.diferenciaPuntos! > Decimal.zero
-                            ? theme.colorScheme.error
-                            : theme.colorScheme.primary,
+                            ? AppColors.danger
+                            : AppColors.ink,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
                 ],
@@ -440,7 +461,7 @@ class _Resumen extends StatelessWidget {
               child: Text(
                 'Guía: ${plan.calculo.guia!.necesidades} / '
                 '${plan.calculo.guia!.deseos} / ${plan.calculo.guia!.ahorro}',
-                style: theme.textTheme.bodySmall,
+                style: textTheme.bodySmall,
               ),
             ),
         ],
@@ -448,14 +469,14 @@ class _Resumen extends StatelessWidget {
     );
   }
 
-  Widget _fila(ThemeData theme, String label, String value) {
+  Widget _fila(TextTheme textTheme, String label, String value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 3),
       child: Row(
         children: <Widget>[
           SizedBox(
             width: 150,
-            child: Text(label, style: theme.textTheme.bodySmall),
+            child: Text(label, style: textTheme.bodySmall),
           ),
           Expanded(child: Text(value)),
         ],
@@ -467,6 +488,7 @@ class _Resumen extends StatelessWidget {
 class _SeccionGrupo extends StatelessWidget {
   const _SeccionGrupo({
     required this.titulo,
+    required this.color,
     required this.planificado,
     required this.real,
     required this.partidaIds,
@@ -475,6 +497,7 @@ class _SeccionGrupo extends StatelessWidget {
   });
 
   final String titulo;
+  final Color color;
   final Decimal planificado;
   final Decimal real;
   final List<int> partidaIds;
@@ -486,11 +509,30 @@ class _SeccionGrupo extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        NeoSectionHeader(
-          title: titulo,
-          subtitle:
-              '${Money.formatClp(planificado)} · real '
-              '${Money.formatClp(real)}',
+        Row(
+          children: <Widget>[
+            Container(
+              width: 12,
+              height: 12,
+              margin: const EdgeInsets.only(right: AppSpacing.sm),
+              decoration: BoxDecoration(
+                color: color,
+                borderRadius: AppRadii.smAll,
+                border: Border.all(
+                  color: Theme.of(context).extension<SaveUpColors>()!.border,
+                  width: AppBorders.thin,
+                ),
+              ),
+            ),
+            Expanded(
+              child: NeoSectionHeader(
+                title: titulo,
+                subtitle:
+                    '${Money.formatClp(planificado)} · real '
+                    '${Money.formatClp(real)}',
+              ),
+            ),
+          ],
         ),
         if (partidaIds.isEmpty)
           const Padding(
@@ -503,6 +545,7 @@ class _SeccionGrupo extends StatelessWidget {
               padding: const EdgeInsets.only(bottom: AppSpacing.sm),
               child: PartidaMontoSlider(
                 partidaId: id,
+                color: color,
                 onEditar: () => onEditar(id),
                 onEliminar: () => onEliminar(id),
               ),

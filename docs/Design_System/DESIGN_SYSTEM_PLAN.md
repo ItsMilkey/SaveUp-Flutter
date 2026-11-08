@@ -340,7 +340,9 @@ Auth + Home; movimientos + deudas; presupuesto + plan + metas + reportes; F10
 (analítica con `fl_chart`) y F11 (distribución del ahorro entre metas). La Fase 8
 migró las últimas pantallas de cuenta y el bloqueo por actualización, habilitó
 el modo oscuro del sistema y verificó dark mode y contraste en el emulador.
-Tests y goldens claro/oscuro (437 tests verdes).
+Además, las tarjetas usan color por rol (amarillo, cian, magenta, verde,
+lavanda y naranja) con tinta oscura sobre color, para aprovechar la paleta sin
+perder legibilidad. Tests y goldens claro/oscuro (438 tests verdes).
 
 ## 11. Riesgos y mitigaciones
 

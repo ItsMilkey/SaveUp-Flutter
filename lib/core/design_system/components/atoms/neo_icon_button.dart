@@ -64,7 +64,7 @@ class NeoIconButton extends StatelessWidget {
         onPressed: onPressed,
         tooltip: tooltip,
         icon: Icon(icon),
-        color: colors.ink,
+        color: IconTheme.of(context).color ?? colors.ink,
         disabledColor: colors.muted,
       ),
     };

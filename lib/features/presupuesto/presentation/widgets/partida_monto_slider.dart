@@ -21,11 +21,15 @@ class PartidaMontoSlider extends ConsumerWidget {
     required this.partidaId,
     this.onEditar,
     this.onEliminar,
+    this.color,
   });
 
   final int partidaId;
   final VoidCallback? onEditar;
   final VoidCallback? onEliminar;
+
+  /// Fondo de color del grupo; `null` = papel.
+  final Color? color;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -40,7 +44,12 @@ class PartidaMontoSlider extends ConsumerWidget {
     }
 
     final ThemeData theme = Theme.of(context);
-    final Color color = estadoPlanColor(context, partida.estado);
+    final TextTheme textTheme = color == null
+        ? theme.textTheme
+        : theme.textTheme.apply(
+            bodyColor: AppColors.ink,
+            displayColor: AppColors.ink,
+          );
 
     final Widget encabezado = Row(
       children: <Widget>[
@@ -48,11 +57,11 @@ class PartidaMontoSlider extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              Text(partida.nombre, style: theme.textTheme.titleSmall),
+              Text(partida.nombre, style: textTheme.titleSmall),
               const SizedBox(height: 2),
               NeoBadge(
                 label: estadoPlanLabel(partida.estado),
-                color: color,
+                color: color == null ? AppColors.yellow : AppColors.paper,
                 compact: true,
               ),
             ],
@@ -63,11 +72,11 @@ class PartidaMontoSlider extends ConsumerWidget {
           children: <Widget>[
             Text(
               Money.formatClp(partida.montoPlanificado),
-              style: theme.textTheme.titleSmall,
+              style: textTheme.titleSmall,
             ),
             Text(
               'Real ${Money.formatClp(partida.real)}',
-              style: theme.textTheme.bodySmall,
+              style: textTheme.bodySmall,
             ),
           ],
         ),
@@ -97,6 +106,7 @@ class PartidaMontoSlider extends ConsumerWidget {
     if (partida.vinculadaADeuda) {
       return NeoSurface(
         density: AppDensity.list,
+        color: color,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
@@ -109,7 +119,7 @@ class PartidaMontoSlider extends ConsumerWidget {
                 Expanded(
                   child: Text(
                     'El monto lo define la cuota de la deuda.',
-                    style: theme.textTheme.bodySmall,
+                    style: textTheme.bodySmall,
                   ),
                 ),
                 if (partida.estadoCuota != null)
@@ -124,8 +134,8 @@ class PartidaMontoSlider extends ConsumerWidget {
                 padding: const EdgeInsets.only(top: AppSpacing.xs),
                 child: Text(
                   'El vínculo ya no calcula; se muestra el último monto.',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.error,
+                  style: textTheme.bodySmall?.copyWith(
+                    color: AppColors.danger,
                   ),
                 ),
               ),
@@ -147,34 +157,42 @@ class PartidaMontoSlider extends ConsumerWidget {
 
     return NeoSurface(
       density: AppDensity.list,
+      color: color,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           encabezado,
-          Slider(
-            value: actual.clamp(0, maximo),
-            max: maximo,
-            onChanged: (double value) => ref
-                .read(planMensualProvider.notifier)
-                .moverPartida(
-                  partidaId,
-                  Decimal.parse(value.round().toString()),
-                ),
-            onChangeEnd: (_) =>
-                ref.read(planMensualProvider.notifier).soltar(),
+          SliderTheme(
+            data: SliderTheme.of(context).copyWith(
+              activeTrackColor: color == null ? AppColors.yellow : AppColors.ink,
+              thumbColor: color == null ? AppColors.yellow : AppColors.ink,
+              inactiveTrackColor: color == null ? null : AppColors.paper,
+            ),
+            child: Slider(
+              value: actual.clamp(0, maximo),
+              max: maximo,
+              onChanged: (double value) => ref
+                  .read(planMensualProvider.notifier)
+                  .moverPartida(
+                    partidaId,
+                    Decimal.parse(value.round().toString()),
+                  ),
+              onChangeEnd: (_) =>
+                  ref.read(planMensualProvider.notifier).soltar(),
+            ),
           ),
           Row(
             children: <Widget>[
               Expanded(
                 child: Text(
                   'Diferencia ${Money.formatClp(partida.diferencia)}',
-                  style: theme.textTheme.bodySmall,
+                  style: textTheme.bodySmall,
                 ),
               ),
               if (partida.porcentajeUsado != null)
                 Text(
                   '${partida.porcentajeUsado} % usado',
-                  style: theme.textTheme.bodySmall,
+                  style: textTheme.bodySmall,
                 ),
             ],
           ),

@@ -81,17 +81,18 @@ class MetasScreen extends ConsumerWidget {
           AppSpacing.xxxl * 2,
         ),
         children: <Widget>[
-          for (final MetaAhorro meta in lista)
+          for (int i = 0; i < lista.length; i++)
             Padding(
               padding: const EdgeInsets.only(bottom: AppSpacing.sm),
               child: _MetaCard(
-                meta: meta,
-                onAbonar: () => _abonar(context, ref, meta),
-                onRetirar: () => _retirar(context, ref, meta),
-                onEditar: () => _abrirFormulario(context, meta: meta),
-                onEliminar: meta.esPorDefecto
+                meta: lista[i],
+                color: _coloresMeta[i % _coloresMeta.length],
+                onAbonar: () => _abonar(context, ref, lista[i]),
+                onRetirar: () => _retirar(context, ref, lista[i]),
+                onEditar: () => _abrirFormulario(context, meta: lista[i]),
+                onEliminar: lista[i].esPorDefecto
                     ? null
-                    : () => _eliminar(context, ref, meta),
+                    : () => _eliminar(context, ref, lista[i]),
               ),
             ),
         ],
@@ -215,6 +216,7 @@ class MetasScreen extends ConsumerWidget {
 class _MetaCard extends StatelessWidget {
   const _MetaCard({
     required this.meta,
+    required this.color,
     required this.onAbonar,
     required this.onRetirar,
     required this.onEditar,
@@ -222,6 +224,7 @@ class _MetaCard extends StatelessWidget {
   });
 
   final MetaAhorro meta;
+  final Color color;
   final VoidCallback onAbonar;
   final VoidCallback onRetirar;
   final VoidCallback onEditar;
@@ -232,10 +235,15 @@ class _MetaCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
+    final TextTheme textTheme = theme.textTheme.apply(
+      bodyColor: AppColors.ink,
+      displayColor: AppColors.ink,
+    );
     final Decimal? objetivo = meta.montoObjetivo;
 
     return NeoSurface(
       density: AppDensity.section,
+      color: color,
       padding: const EdgeInsets.fromLTRB(
         AppSpacing.lg,
         AppSpacing.md,
@@ -250,13 +258,13 @@ class _MetaCard extends StatelessWidget {
               Expanded(
                 child: Text(
                   meta.nombre,
-                  style: theme.textTheme.titleMedium,
+                  style: textTheme.titleMedium,
                 ),
               ),
               if (meta.esPorDefecto)
                 NeoBadge(
                   label: 'Meta base',
-                  color: theme.colorScheme.secondary,
+                  color: AppColors.paper,
                   compact: true,
                 ),
               PopupMenuButton<_AccionMeta>(
@@ -284,25 +292,29 @@ class _MetaCard extends StatelessWidget {
             ],
           ),
           if (objetivo != null) ...<Widget>[
-            NeoProgress(value: _progreso(meta.montoActual, objetivo)),
+            NeoProgress(
+              value: _progreso(meta.montoActual, objetivo),
+              color: AppColors.ink,
+              trackColor: AppColors.paper,
+            ),
             const SizedBox(height: AppSpacing.xs),
             Text(
               '${Money.formatClp(meta.montoActual)} de '
               '${Money.formatClp(objetivo)} '
               '(${_porcentaje(meta.montoActual, objetivo)} %)',
-              style: theme.textTheme.bodyMedium,
+              style: textTheme.bodyMedium,
             ),
           ] else
             Text(
               'Ahorrado: ${Money.formatClp(meta.montoActual)}',
-              style: theme.textTheme.bodyMedium,
+              style: textTheme.bodyMedium,
             ),
           if (meta.fechaLimite != null)
             Padding(
               padding: const EdgeInsets.only(top: 2),
               child: Text(
                 'Fecha límite: ${meta.fechaLimite}',
-                style: theme.textTheme.bodySmall,
+                style: textTheme.bodySmall,
               ),
             ),
           Row(
@@ -328,6 +340,14 @@ class _MetaCard extends StatelessWidget {
 }
 
 enum _AccionMeta { editar, eliminar }
+const List<Color> _coloresMeta = <Color>[
+  AppColors.yellow,
+  AppColors.cyan,
+  AppColors.lavender,
+  AppColors.green,
+  AppColors.magenta,
+  AppColors.orange,
+];
 
 /// Avance visual (0–1). El `double` solo existe en la barra.
 double _progreso(Decimal actual, Decimal objetivo) {

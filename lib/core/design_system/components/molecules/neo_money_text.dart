@@ -5,11 +5,12 @@ import 'package:flutter/material.dart';
 
 import '../../../money/money.dart';
 import '../../theme/saveup_colors.dart';
+import '../../tokens/app_colors.dart';
 import '../../tokens/app_typography.dart';
 
 enum NeoMoneySize { display, headline, title, body }
 
-enum NeoMoneyTone { neutral, income, expense, savings }
+enum NeoMoneyTone { neutral, income, expense, savings, onAccent }
 
 /// Monto formateado en CLP con tipografía tabular y tono semántico.
 ///
@@ -37,6 +38,7 @@ class NeoMoneyText extends StatelessWidget {
       NeoMoneyTone.income => colors.positiveText,
       NeoMoneyTone.expense => colors.negativeText,
       NeoMoneyTone.savings => colors.savingsText,
+      NeoMoneyTone.onAccent => AppColors.ink,
     };
     final TextStyle style = switch (size) {
       NeoMoneySize.display => AppTypography.display(size: 32, color: color),

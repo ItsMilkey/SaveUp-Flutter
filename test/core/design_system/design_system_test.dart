@@ -125,6 +125,36 @@ void main() {
     expect(find.byIcon(Icons.error_outline), findsOneWidget);
   });
 
+  testWidgets('NeoStat y NeoListItem aceptan fondo de color', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      _wrap(
+        const Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            NeoStat(
+              label: 'Ingresos',
+              color: AppColors.cyan,
+              value: Text(r'$100'),
+            ),
+            SizedBox(height: 16),
+            NeoListItem(
+              title: 'Viaje',
+              subtitle: '60 %',
+              color: AppColors.lavender,
+            ),
+          ],
+        ),
+      ),
+    );
+
+    expect(find.text('INGRESOS'), findsOneWidget);
+    expect(find.text(r'$100'), findsOneWidget);
+    expect(find.text('Viaje'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('NeoBadge y NeoProgress renderizan', (
     WidgetTester tester,
   ) async {

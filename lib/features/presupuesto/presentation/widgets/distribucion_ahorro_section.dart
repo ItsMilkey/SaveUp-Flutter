@@ -39,6 +39,7 @@ class DistribucionAhorroSection extends ConsumerWidget {
 
     return NeoSurface(
       density: AppDensity.section,
+      color: colors.success,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
@@ -51,14 +52,16 @@ class DistribucionAhorroSection extends ConsumerWidget {
           else if (estado.valores.isEmpty) ...<Widget>[
             Text(
               'Sin distribución: el ahorro queda en la meta base.',
-              style: theme.textTheme.bodySmall?.copyWith(color: colors.muted),
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: AppColors.ink.withValues(alpha: 0.7),
+              ),
             ),
             const SizedBox(height: AppSpacing.md),
             if (estado.metas.isEmpty)
               Text(
                 'No tienes metas de ahorro para asignar.',
                 style: theme.textTheme.bodySmall?.copyWith(
-                  color: colors.muted,
+                  color: AppColors.ink.withValues(alpha: 0.7),
                 ),
               )
             else
@@ -92,16 +95,14 @@ class DistribucionAhorroSection extends ConsumerWidget {
                     style: AppTypography.text(
                       size: 13,
                       weight: FontWeight.w700,
-                      color: estado.valido
-                          ? colors.positiveText
-                          : colors.negativeText,
+                      color: estado.valido ? AppColors.ink : AppColors.danger,
                     ),
                   ),
                 ),
                 Text(
                   '${ids.length} meta(s)',
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: colors.muted,
+                    color: AppColors.ink.withValues(alpha: 0.7),
                   ),
                 ),
               ],
@@ -138,7 +139,7 @@ class DistribucionAhorroSection extends ConsumerWidget {
               'apagados: se ejecutará cuando actives «Automatizar ahorro en '
               'metas».',
               style: theme.textTheme.bodySmall?.copyWith(
-                color: colors.warning,
+                color: AppColors.ink.withValues(alpha: 0.7),
               ),
             ),
           ],
@@ -188,7 +189,6 @@ class _FilaAsignacion extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
-    final SaveUpColors colors = theme.extension<SaveUpColors>()!;
     final bool unica = cantidad == 1;
     final double maximo = unica ? 100 : 100 - (cantidad - 1);
     final double actual = porcentaje.toDouble().clamp(1, maximo);
@@ -199,14 +199,19 @@ class _FilaAsignacion extends StatelessWidget {
         Row(
           children: <Widget>[
             Expanded(
-              child: Text(nombre, style: theme.textTheme.titleSmall),
+              child: Text(
+                nombre,
+                style: theme.textTheme.titleSmall?.copyWith(
+                  color: AppColors.ink,
+                ),
+              ),
             ),
             Text(
               '${porcentaje.toStringAsFixed(2)} %',
               style: AppTypography.text(
                 size: 13,
                 weight: FontWeight.w700,
-                color: colors.ink,
+                color: AppColors.ink,
               ),
             ),
             NeoIconButton(
@@ -218,14 +223,21 @@ class _FilaAsignacion extends StatelessWidget {
           ],
         ),
         if (!unica)
-          Slider(
-            value: actual,
-            min: 1,
-            max: maximo,
-            divisions: (maximo - 1).round(),
-            label: '${porcentaje.toStringAsFixed(2)} %',
-            onChanged: (double valor) =>
-                onChanged(Decimal.parse(valor.toStringAsFixed(2))),
+          SliderTheme(
+            data: SliderTheme.of(context).copyWith(
+              activeTrackColor: AppColors.ink,
+              thumbColor: AppColors.ink,
+              inactiveTrackColor: AppColors.paper,
+            ),
+            child: Slider(
+              value: actual,
+              min: 1,
+              max: maximo,
+              divisions: (maximo - 1).round(),
+              label: '${porcentaje.toStringAsFixed(2)} %',
+              onChanged: (double valor) =>
+                  onChanged(Decimal.parse(valor.toStringAsFixed(2))),
+            ),
           ),
       ],
     );

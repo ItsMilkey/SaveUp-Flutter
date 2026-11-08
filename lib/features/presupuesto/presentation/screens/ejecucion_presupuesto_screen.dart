@@ -118,6 +118,7 @@ class _EjecucionPresupuestoScreenState
           const SizedBox(height: AppSpacing.sm),
           _BloqueGasto(
             titulo: 'Necesidades',
+            color: Theme.of(context).extension<SaveUpColors>()!.info,
             presupuesto: ejecucion.presupuestoNecesidades,
             real: ejecucion.gastoNecesidades,
             porcentaje: ejecucion.porcentajeNecesidadesConfigurado,
@@ -125,6 +126,7 @@ class _EjecucionPresupuestoScreenState
           const SizedBox(height: AppSpacing.sm),
           _BloqueGasto(
             titulo: 'Deseos',
+            color: AppColors.magenta,
             presupuesto: ejecucion.presupuestoDeseos,
             real: ejecucion.gastoDeseos,
             porcentaje: ejecucion.porcentajeDeseosConfigurado,
@@ -147,29 +149,40 @@ class _Ingresos extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
+    final TextTheme textTheme = theme.textTheme.apply(
+      bodyColor: AppColors.ink,
+      displayColor: AppColors.ink,
+    );
     return NeoSurface(
       density: AppDensity.section,
+      color: AppColors.yellow,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           const NeoSectionHeader(title: 'Ingresos del mes'),
           Text(
             Money.formatClp(ejecucion.totalIngresos),
-            style: theme.textTheme.headlineSmall,
+            style: textTheme.headlineSmall,
           ),
           const SizedBox(height: AppSpacing.sm),
           Text(
             'Regla: ${ejecucion.porcentajeNecesidadesConfigurado} / '
             '${ejecucion.porcentajeDeseosConfigurado} / '
             '${ejecucion.porcentajeAhorroConfigurado}',
-            style: theme.textTheme.bodySmall,
+            style: textTheme.bodySmall?.copyWith(
+              color: AppColors.ink.withValues(alpha: 0.8),
+              fontWeight: FontWeight.w500,
+            ),
           ),
           if (ejecucion.automatizarAhorroEnMetas)
             Padding(
               padding: const EdgeInsets.only(top: AppSpacing.xs),
               child: Text(
                 'Automatización del ahorro en metas activa.',
-                style: theme.textTheme.bodySmall,
+                style: textTheme.bodySmall?.copyWith(
+                  color: AppColors.ink.withValues(alpha: 0.8),
+                  fontWeight: FontWeight.w500,
+                ),
               ),
             ),
         ],
@@ -181,12 +194,14 @@ class _Ingresos extends StatelessWidget {
 class _BloqueGasto extends StatelessWidget {
   const _BloqueGasto({
     required this.titulo,
+    required this.color,
     required this.presupuesto,
     required this.real,
     required this.porcentaje,
   });
 
   final String titulo;
+  final Color color;
   final Decimal presupuesto;
   final Decimal real;
   final Decimal porcentaje;
@@ -194,20 +209,25 @@ class _BloqueGasto extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
+    final TextTheme textTheme = theme.textTheme.apply(
+      bodyColor: AppColors.ink,
+      displayColor: AppColors.ink,
+    );
     final EstadoEjecucion estado = EstadoEjecucion.desde(real, presupuesto);
     return NeoSurface(
       density: AppDensity.section,
+      color: color,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Row(
             children: <Widget>[
               Expanded(
-                child: Text(titulo, style: theme.textTheme.titleMedium),
+                child: Text(titulo, style: textTheme.titleMedium),
               ),
               NeoBadge(
                 label: estadoPlanLabel(estado),
-                color: estadoPlanColor(context, estado),
+                color: AppColors.paper,
                 compact: true,
               ),
             ],
@@ -215,13 +235,14 @@ class _BloqueGasto extends StatelessWidget {
           const SizedBox(height: AppSpacing.sm),
           NeoProgress(
             value: _avance(real, presupuesto),
-            color: estadoPlanColor(context, estado),
+            color: AppColors.ink,
+            trackColor: AppColors.paper,
           ),
           const SizedBox(height: AppSpacing.sm),
           Text(
             '${Money.formatClp(real)} de ${Money.formatClp(presupuesto)} '
             '(plan $porcentaje %)',
-            style: theme.textTheme.bodyMedium,
+            style: textTheme.bodyMedium,
           ),
         ],
       ),
@@ -237,8 +258,14 @@ class _BloqueAhorro extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
+    final TextTheme textTheme = theme.textTheme.apply(
+      bodyColor: AppColors.ink,
+      displayColor: AppColors.ink,
+    );
+    final SaveUpColors colors = theme.extension<SaveUpColors>()!;
     return NeoSurface(
       density: AppDensity.section,
+      color: colors.success,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
@@ -248,14 +275,15 @@ class _BloqueAhorro extends StatelessWidget {
               ejecucion.ahorroRealizado,
               ejecucion.presupuestoAhorro,
             ),
-            color: Theme.of(context).extension<SaveUpColors>()!.success,
+            color: AppColors.ink,
+            trackColor: AppColors.paper,
           ),
           const SizedBox(height: AppSpacing.sm),
           Text(
             '${Money.formatClp(ejecucion.ahorroRealizado)} de '
             '${Money.formatClp(ejecucion.presupuestoAhorro)} '
             '(plan ${ejecucion.porcentajeAhorroConfigurado} %)',
-            style: theme.textTheme.bodyMedium,
+            style: textTheme.bodyMedium,
           ),
         ],
       ),
