@@ -186,12 +186,14 @@ class MovimientoRegistroDto {
     required this.descripcion,
     required this.tipo,
     this.categoriaId,
+    this.partidaId,
   });
 
   final Decimal monto;
   final String descripcion;
   final MovimientoTipo tipo;
   final int? categoriaId;
+  final int? partidaId;
 
   Map<String, Object?> toJson() {
     return <String, Object?>{
@@ -199,6 +201,7 @@ class MovimientoRegistroDto {
       'descripcion': descripcion,
       'tipoMovimiento': tipo.codigo,
       'categoriaId': ?categoriaId,
+      'partidaId': ?partidaId,
     };
   }
 }

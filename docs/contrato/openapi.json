@@ -2555,8 +2555,8 @@
           "required" : true
         },
         "responses" : {
-          "201" : {
-            "description" : "Dispositivo registrado",
+          "200" : {
+            "description" : "El dispositivo ya existía y se refrescó",
             "content" : {
               "application/json" : {
                 "schema" : {
@@ -2565,8 +2565,8 @@
               }
             }
           },
-          "200" : {
-            "description" : "El dispositivo ya existía y se refrescó",
+          "201" : {
+            "description" : "Dispositivo registrado",
             "content" : {
               "application/json" : {
                 "schema" : {
@@ -3693,6 +3693,108 @@
               "*/*" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/PlanMensualResponseDTO"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Solicitud inválida. Revisa el cuerpo y los parámetros.",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "No autenticado o token inválido/expirado.",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          },
+          "403" : {
+            "description" : "No tienes permisos para acceder al recurso.",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          },
+          "404" : {
+            "description" : "Recurso no encontrado.",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          },
+          "409" : {
+            "description" : "Conflicto con una regla de negocio.",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          },
+          "500" : {
+            "description" : "Error interno. Usa idError para reportarlo.",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ]
+      }
+    },
+    "/api/v1/deudas/{deudaId}/fecha-primera-cuota" : {
+      "patch" : {
+        "tags" : [ "Deudas" ],
+        "summary" : "Actualiza la fecha de la primera cuota",
+        "description" : "Fija el calendario de vencimientos sin cambiar montos, tasas ni cantidad de\ncuotas. Permite asociar al plan una deuda creada \"Por cuotas\" (sin fechas),\nincluso si ya tiene pagos registrados. La fecha de la última cuota se deriva\nal leer. Una deuda cancelada responde 409.",
+        "operationId" : "actualizarFechaPrimeraCuota",
+        "parameters" : [ {
+          "name" : "deudaId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/FechaPrimeraCuotaDTO"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/DeudaResponseDTO"
                 }
               }
             }
@@ -6133,6 +6235,10 @@
             "description" : "ID de la deuda vinculada; null si la partida es normal.",
             "format" : "int64"
           },
+          "deudaNombre" : {
+            "type" : "string",
+            "description" : "Nombre de la deuda vinculada; null si la partida es normal."
+          },
           "vinculoDesactualizado" : {
             "type" : "boolean",
             "description" : "true si la cuota ya no se puede recalcular y se muestra el último monto guardado."
@@ -7531,6 +7637,18 @@
           }
         },
         "description" : "Lote de 1 a 100 cambios de monto; todo o nada."
+      },
+      "FechaPrimeraCuotaDTO" : {
+        "required" : [ "fechaPrimeraCuota" ],
+        "type" : "object",
+        "properties" : {
+          "fechaPrimeraCuota" : {
+            "type" : "string",
+            "description" : "Fecha de la primera cuota (yyyy-MM-dd).",
+            "format" : "date"
+          }
+        },
+        "description" : "Fecha de la primera cuota de una deuda."
       },
       "UsuarioResponseDTO" : {
         "required" : [ "apellido", "email", "fechaRegistro", "nombre", "rut" ],

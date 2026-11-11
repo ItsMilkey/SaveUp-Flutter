@@ -6,6 +6,7 @@ import '../../../../core/design_system/design_system.dart';
 import '../../../../core/errors/app_failure.dart';
 import '../../../../core/errors/failure_messages.dart';
 import '../../../../core/money/money.dart';
+import '../../../../core/money/money_input_formatter.dart';
 import '../../../movimientos/domain/categoria.dart';
 import '../../../movimientos/domain/sugerencia_categoria.dart';
 import '../../../movimientos/presentation/categoria_sugerencia_controller.dart';
@@ -219,6 +220,7 @@ class _PartidaFormDialogState extends ConsumerState<PartidaFormDialog> {
                     },
                     label: 'Monto planificado',
                     prefixIcon: Icons.attach_money,
+                    inputFormatters: moneyInputFormatters,
                   ),
                 ],
                 const SizedBox(height: AppSpacing.sm),

@@ -126,17 +126,19 @@ flutter test      # pruebas unitarias y de widgets
 lib/
 ├── app/                 # configuración, tema, router, pantalla raíz
 ├── core/
-│   ├── errors/          # tipos de error de la app (pendiente)
-│   ├── money/           # manejo de dinero con Decimal
-│   ├── network/         # cliente HTTP / interceptores (pendiente)
-│   └── time/            # fechas y zonas horarias (pendiente)
+│   ├── design_system/   # tokens, tema y componentes Neo (átomos, moléculas, navegación)
+│   ├── errors/          # tipos de error de la app
+│   ├── money/           # dinero con Decimal, JSON y formato de entrada
+│   ├── network/         # cliente HTTP / interceptores
+│   └── time/            # fechas y zonas horarias
 ├── features/
 │   ├── auth/            # {data, domain, presentation}
 │   ├── movimientos/
 │   ├── deudas/
 │   ├── presupuesto/
 │   ├── metas/
-│   └── reportes/
+│   ├── reportes/
+│   └── analitica/
 └── main.dart
 ```
 
@@ -148,8 +150,10 @@ estado).
 
 - [`docs/CONTEXT.md`](docs/CONTEXT.md): contexto técnico y convenciones del
   proyecto. Léelo antes de implementar cualquier tarea.
+- [`docs/Design_System/DESIGN_SYSTEM_PLAN.md`](docs/Design_System/DESIGN_SYSTEM_PLAN.md):
+  contrato del design system Neo (tokens, componentes y patrones de UI).
 - [`docs/tareas/README.md`](docs/tareas/README.md): formato de tareas y estado
-  de los bloques F0/F1.
+  de las fases F0–F11.
 - [`.agents/rules/flutter-dart.md`](.agents/rules/flutter-dart.md): reglas
   siempre activas para agentes y personas.
 - [`.agents/workflows/nueva-feature.md`](.agents/workflows/nueva-feature.md):

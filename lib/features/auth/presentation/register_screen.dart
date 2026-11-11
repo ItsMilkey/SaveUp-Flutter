@@ -7,6 +7,7 @@ import '../../../core/design_system/design_system.dart';
 import '../domain/validators.dart';
 import 'auth_controllers.dart';
 import 'password_policy_checklist.dart';
+import 'rut_input_formatter.dart';
 
 /// Creación de cuenta: RUT, nombre, apellido, correo y contraseña.
 ///
@@ -94,6 +95,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 label: 'RUT',
                 hint: '12345678-9',
                 prefixIcon: Icons.badge_outlined,
+                inputFormatters: rutInputFormatters,
                 error: errorFor('rut'),
               ),
               const SizedBox(height: AppSpacing.md),

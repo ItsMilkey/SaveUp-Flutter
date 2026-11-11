@@ -79,6 +79,61 @@ void main() {
     expect(find.text('Regla guardada.'), findsOneWidget);
   });
 
+  testWidgets('el porcentaje se puede editar con precisión', (
+    WidgetTester tester,
+  ) async {
+    final FakePresupuestoRepository repo = FakePresupuestoRepository(
+      config: configuracion(),
+    );
+    await montar(tester, repo);
+
+    await tester.tap(find.text('50 %'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Editar Necesidades'), findsOneWidget);
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Porcentaje'),
+      '60,25',
+    );
+    await tester.tap(find.text('Aplicar'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('60.25 %'), findsOneWidget);
+    expect(find.textContaining('Suma: 100'), findsOneWidget);
+    expect(find.text('Editar Necesidades'), findsNothing);
+  });
+
+  testWidgets('los iconos de información explican los switches', (
+    WidgetTester tester,
+  ) async {
+    final FakePresupuestoRepository repo = FakePresupuestoRepository(
+      config: configuracion(),
+    );
+    await montar(tester, repo);
+
+    await tester.scrollUntilVisible(
+      find.text('Presupuesto activo'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.byTooltip('Información sobre Presupuesto activo'),
+    );
+    await tester.pumpAndSettle();
+    expect(find.textContaining('interruptor maestro'), findsOneWidget);
+    await tester.tap(find.text('Entendido'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(
+      find.byTooltip('Información sobre Automatizar ahorro en metas'),
+    );
+    await tester.pumpAndSettle();
+    expect(find.textContaining('porcentaje de Ahorro'), findsOneWidget);
+    await tester.tap(find.text('Entendido'));
+    await tester.pumpAndSettle();
+  });
+
   testWidgets('sin historial suficiente explica que no hay sugerencia', (
     WidgetTester tester,
   ) async {

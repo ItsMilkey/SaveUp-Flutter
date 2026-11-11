@@ -75,6 +75,7 @@ void main() {
       final String dv = rutCheckDigit(digits);
       expect(validateRut('$digits-$dv'), isNull);
       expect(validateRut('7.6.2.6.1.4.8.0-$dv'), isNull);
+      expect(validateRut(normalizeRut('$digits$dv')), isNull);
       expect(validateRut('${'12345678'}-${rutCheckDigit('12345678')}'), isNull);
     });
 
@@ -82,12 +83,14 @@ void main() {
       final String rut = rutTerminadoEnK();
       expect(validateRut(rut), isNull);
       expect(validateRut(rut.toLowerCase()), isNull);
+      expect(validateRut(rut.replaceFirst('-', '')), isNull);
     });
 
     test('normaliza: quita puntos y espacios, mayúscula y guion', () {
       expect(normalizeRut('1.234.567 8-5'), '12345678-5');
       expect(normalizeRut('12345678k'), '12345678-K');
       expect(normalizeRut('12345678'), '1234567-8');
+      expect(normalizeRut('123456789'), '12345678-9');
     });
 
     test('rechaza formato inválido', () {
@@ -97,10 +100,9 @@ void main() {
       expect(validateRut('7626148-08'), isNotNull);
       expect(validateRut('1234567 8'), isNotNull); // sin guion: se normaliza,
       // pero sobran 8 dígitos para 9 posiciones… ver caso siguiente.
-      expect(
-        validateRut(normalizeRut('123456789').replaceFirst('-', '-')),
-        isNotNull,
-      ); // 9 dígitos
+      // Un RUT de 8 dígitos sin guion se normaliza a 8+DV; si el DV no
+      // corresponde falla por dígito, no por formato.
+      expect(validateRut(normalizeRut('123456789')), isNotNull);
     });
 
     test('rechaza dígito verificador incorrecto', () {

@@ -45,6 +45,7 @@ class DioMovimientosRepository implements MovimientosRepository {
     required String descripcion,
     required MovimientoTipo tipo,
     int? categoriaId,
+    int? partidaId,
   }) async {
     // El contrato responde 200 con el movimiento creado; aquí solo importa
     // que la operación haya sido aceptada (la UI refresca saldo y listado).
@@ -56,6 +57,7 @@ class DioMovimientosRepository implements MovimientosRepository {
           descripcion: descripcion,
           tipo: tipo,
           categoriaId: categoriaId,
+          partidaId: partidaId,
         ).toJson(),
       ),
     );

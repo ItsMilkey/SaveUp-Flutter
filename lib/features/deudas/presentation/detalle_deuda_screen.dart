@@ -9,11 +9,15 @@ import '../../../core/design_system/design_system.dart';
 import '../../../core/errors/app_failure.dart';
 import '../../../core/errors/failure_messages.dart';
 import '../../../core/money/money.dart';
+import '../../../core/time/calendar_date.dart';
 import '../../../core/time/time_zones.dart';
+import '../../presupuesto/domain/plan_mensual.dart';
 import '../domain/deuda.dart';
 import '../domain/pago_deuda.dart';
+import 'asociar_partida_deuda_dialog.dart';
 import 'cancelar_deuda_dialog.dart';
 import 'deuda_labels.dart';
+import 'deuda_partida_controller.dart';
 import 'deudas_controller.dart';
 import 'pago_deuda_dialog.dart';
 
@@ -186,13 +190,13 @@ class DeudaDetalleScreen extends ConsumerWidget {
   }
 }
 
-class _Ficha extends StatelessWidget {
+class _Ficha extends ConsumerWidget {
   const _Ficha({required this.deuda});
 
   final Deuda deuda;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final ThemeData theme = Theme.of(context);
     final TextTheme textTheme = theme.textTheme.apply(
       bodyColor: AppColors.ink,
@@ -231,14 +235,31 @@ class _Ficha extends StatelessWidget {
               Expanded(
                 child: Text(deuda.nombre, style: textTheme.titleLarge),
               ),
-              const SizedBox(width: AppSpacing.sm),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Wrap(
+            spacing: AppSpacing.sm,
+            runSpacing: AppSpacing.xs,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: <Widget>[
               NeoBadge(
                 label: estadoDeudaLabel(deuda.estado),
                 color: AppColors.paper,
                 compact: true,
               ),
+              _AsociacionPartida(deuda: deuda),
             ],
           ),
+          if (deuda.estado == EstadoDeuda.pendiente &&
+              deuda.fechaPrimeraCuota == null)
+            Padding(
+              padding: const EdgeInsets.only(top: AppSpacing.xs),
+              child: Text(
+                'Para asociarla al plan, la deuda necesita cuotas con fecha.',
+                style: textTheme.bodySmall,
+              ),
+            ),
           if (deuda.descripcion != null && deuda.descripcion!.isNotEmpty)
             Text(deuda.descripcion!, style: textTheme.bodySmall),
           const SizedBox(height: AppSpacing.sm),
@@ -302,9 +323,140 @@ class _Ficha extends StatelessWidget {
   }
 }
 
+/// Estado de la partida del plan asociada a esta deuda (mes en curso).
+class _AsociacionPartida extends ConsumerWidget {
+  const _AsociacionPartida({required this.deuda});
+
+  final Deuda deuda;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final AsyncValue<PartidaPlan?> asociacion = ref.watch(
+      partidaDeDeudaProvider(deuda.id),
+    );
+    return asociacion.when(
+      loading: () => const SizedBox(
+        width: 18,
+        height: 18,
+        child: CircularProgressIndicator(strokeWidth: 2),
+      ),
+      error: (Object error, StackTrace stack) => TextButton(
+        onPressed: () => ref.invalidate(partidaDeDeudaProvider(deuda.id)),
+        child: const Text('Verificar plan'),
+      ),
+      data: (PartidaPlan? partida) {
+        if (partida != null) {
+          return Row(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              const NeoBadge(
+                label: 'En el plan',
+                icon: Icons.check,
+                color: AppColors.green,
+                compact: true,
+              ),
+              const SizedBox(width: AppSpacing.xs),
+              TextButton(
+                onPressed: () => context.go(AppRoutes.plan),
+                child: const Text('Ver plan'),
+              ),
+            ],
+          );
+        }
+        if (deuda.estado != EstadoDeuda.pendiente) {
+          return const SizedBox.shrink();
+        }
+        final bool sinFechas = deuda.fechaPrimeraCuota == null;
+        return Wrap(
+          spacing: AppSpacing.xs,
+          runSpacing: AppSpacing.xs,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: <Widget>[
+            if (sinFechas)
+              NeoButton(
+                label: 'Agregar fechas',
+                icon: Icons.event_available,
+                variant: NeoButtonVariant.secondary,
+                onPressed: () => _elegirFecha(context, ref),
+              )
+            else ...<Widget>[
+              NeoButton(
+                label: 'Asociar al plan',
+                icon: Icons.playlist_add,
+                variant: NeoButtonVariant.secondary,
+                onPressed: () => _asociar(context, ref),
+              ),
+              TextButton(
+                onPressed: () => _elegirFecha(context, ref),
+                child: const Text('Cambiar fechas'),
+              ),
+            ],
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _asociar(BuildContext context, WidgetRef ref) async {
+    final bool? creada = await AsociarPartidaDeudaDialog.show(
+      context,
+      deuda: deuda,
+    );
+    if ((creada ?? false) && context.mounted) {
+      NeoSnackbar.show(
+        context,
+        'Partida asociada al plan.',
+        tone: NeoSnackbarTone.success,
+      );
+    }
+  }
+
+  /// Elige la fecha de la primera cuota y la guarda sin tocar las condiciones.
+  Future<void> _elegirFecha(BuildContext context, WidgetRef ref) async {
+    final DateTime hoy = DateTime.now();
+    final CalendarDate? actual = deuda.fechaPrimeraCuota;
+    final int dia = hoy.day > 28 ? 28 : hoy.day;
+    final DateTime inicial = actual == null
+        // Sugerencia: la próxima cuota impaga cae en el mes actual.
+        ? DateTime(hoy.year, hoy.month - deuda.cuotasPagadas, dia)
+        : DateTime(actual.year, actual.month, actual.day);
+    final DateTime? elegida = await showDatePicker(
+      context: context,
+      initialDate: inicial,
+      firstDate: DateTime(2000),
+      lastDate: DateTime(hoy.year + 5, 12, 31),
+      helpText: 'Fecha de la primera cuota',
+    );
+    if (elegida == null || !context.mounted) {
+      return;
+    }
+    final AppFailure? failure = await ref
+        .read(deudaAccionesProvider.notifier)
+        .actualizarFechaPrimeraCuota(
+          deuda.id,
+          CalendarDate(elegida.year, elegida.month, elegida.day),
+        );
+    if (!context.mounted) {
+      return;
+    }
+    if (failure != null) {
+      NeoSnackbar.show(
+        context,
+        failureMessage(failure),
+        tone: NeoSnackbarTone.danger,
+      );
+      return;
+    }
+    NeoSnackbar.show(
+      context,
+      'Fechas actualizadas.',
+      tone: NeoSnackbarTone.success,
+    );
+  }
+}
+
 class _Cronograma extends StatelessWidget {
   const _Cronograma({required this.cuotas});
-
   final List<CuotaAmortizacion> cuotas;
 
   @override

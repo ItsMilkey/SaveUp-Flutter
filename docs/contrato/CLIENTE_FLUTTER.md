@@ -201,7 +201,8 @@ reemplaza tu estado local con esa respuesta en lugar de parchear el objeto a man
     { "id": 1, "nombre": "Arriendo", "categoriaId": 4, "categoriaCodigo": "VIVIENDA_SUMINISTROS",
       "montoPlanificado": 400000.00, "real": 400000.00, "diferencia": 0.00,
       "porcentajeUsado": 100.00, "estado": "CERCA_DEL_PLAN", "grupoId": 1,
-      "deudaId": null, "estadoCuota": null, "vinculoDesactualizado": false, "orden": 1,
+      "deudaId": null, "deudaNombre": null, "estadoCuota": null,
+      "vinculoDesactualizado": false, "orden": 1,
       "actualizadoEn": "2026-11-02T03:00:00.000Z" }
   ],
   "porCategoria": [
@@ -292,6 +293,7 @@ ejecución 50/30/20 (T5), `porCategoria.tipo`, `repartoPorTipo` y sugerencia de 
 - `montoPlanificado` = cuota del mes + costo adicional, recalculado en cada lectura; la app **no** lo envía. Si el
   vínculo ya no calcula (por ejemplo, editaron la deuda), llega el último monto guardado con
   `vinculoDesactualizado: true`.
+- `deudaNombre` trae el nombre de la deuda vinculada para mostrarlo en el plan sin consultar `/deudas/me`.
 - `estadoCuota`: `PENDIENTE` (sin pagos), `PARCIAL` (pagado < monto) o `PAGADA` (pagado ≥ monto). Es adicional al
   `estado` neutro, que se sigue calculando.
 - `PATCH /montos` sobre una partida vinculada → `409`. El vínculo con la deuda solo se crea en el `POST`; el `PUT`
@@ -299,6 +301,13 @@ ejecución 50/30/20 (T5), `porCategoria.tipo`, `repartoPorTipo` y sugerencia de 
   la partida queda normal (`deudaId: null`).
 - Un `PAGO_DEUDA` sin `partidaId` cuya deuda tenga partida vinculada en el plan se imputa a esa partida
   automáticamente; el `partidaId` explícito manda.
+
+**Completar fechas de una deuda.** `PATCH /deudas/{id}/fecha-primera-cuota` con
+`{ "fechaPrimeraCuota": "2026-11-15" }` fija el calendario sin cambiar montos, tasas ni cantidad de cuotas
+(útil para deudas creadas "Por cuotas", que no tienen fecha) y responde `200 DeudaResponseDTO` con la deuda
+actualizada. Acepta deudas con pagos registrados; `fechaUltimaCuota` se deriva al leer (primera + cantidad − 1
+meses). Deuda cancelada → `409 CONFLICTO_REGLA_NEGOCIO`; fecha nula o mal formada → `400 DATOS_INVALIDOS`;
+deuda ajena → `403`; inexistente → `404`.
 
 **Avisos.** `avisos` solo se llena al copiar un mes. Cada elemento tiene
 `{motivo, partidaId, nombre, deudaId, mensaje}`; hoy el único motivo es `SIN_COUOTA_EN_EL_MES` (la partida

@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/design_system/design_system.dart';
 import '../../../../core/errors/failure_messages.dart';
 import '../../../../core/money/money.dart';
+import '../../../../core/money/money_input_formatter.dart';
 import '../../../movimientos/domain/categoria.dart';
 import '../../domain/ejecucion_presupuesto.dart';
 import '../../domain/plan_calculo.dart';
@@ -375,7 +376,9 @@ class _LimiteDialogState extends State<_LimiteDialog> {
     super.initState();
     _categoriaId = widget.categoriaInicial ?? widget.categorias.first.id;
     _monto = TextEditingController(
-      text: widget.limiteActual?.toString() ?? '',
+      text: widget.limiteActual == null
+          ? ''
+          : MoneyInputFormatter.format(widget.limiteActual!),
     );
   }
 
@@ -446,6 +449,7 @@ class _LimiteDialogState extends State<_LimiteDialog> {
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
             label: 'Límite mensual',
             error: _error,
+            inputFormatters: moneyInputFormatters,
           ),
         ],
       ),

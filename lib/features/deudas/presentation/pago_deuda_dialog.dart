@@ -6,6 +6,7 @@ import '../../../core/design_system/design_system.dart';
 import '../../../core/errors/app_failure.dart';
 import '../../../core/errors/failure_messages.dart';
 import '../../../core/money/money.dart';
+import '../../../core/money/money_input_formatter.dart';
 import '../../movimientos/presentation/movimientos_controller.dart';
 import '../domain/deuda.dart';
 import '../domain/pago_deuda.dart';
@@ -47,7 +48,11 @@ class _PagoDeudaDialogState extends ConsumerState<PagoDeudaDialog> {
       text: cuota.isEmpty ? 'Pago de deuda' : 'Pago $cuota',
     );
     _monto = TextEditingController(
-      text: widget.deuda.proximaCuotaMontoPendiente?.toString() ?? '',
+      text: widget.deuda.proximaCuotaMontoPendiente == null
+          ? ''
+          : MoneyInputFormatter.format(
+              widget.deuda.proximaCuotaMontoPendiente!,
+            ),
     );
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
@@ -134,6 +139,7 @@ class _PagoDeudaDialogState extends ConsumerState<PagoDeudaDialog> {
                   },
                   label: 'Monto',
                   prefixIcon: Icons.attach_money,
+                  inputFormatters: moneyInputFormatters,
                 ),
               ],
               const SizedBox(height: AppSpacing.md),

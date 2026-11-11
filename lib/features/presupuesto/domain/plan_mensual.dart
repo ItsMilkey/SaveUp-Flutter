@@ -19,6 +19,7 @@ class PartidaPlan {
     this.estadoCuota,
     this.grupoId,
     this.deudaId,
+    this.deudaNombre,
     this.vinculoDesactualizado = false,
   });
 
@@ -34,6 +35,9 @@ class PartidaPlan {
   final EstadoCuota? estadoCuota;
   final int? grupoId;
   final int? deudaId;
+
+  /// Nombre de la deuda vinculada (solo partidas de deuda).
+  final String? deudaNombre;
 
   /// `true` si la cuota ya no se puede recalcular y se muestra el último monto.
   final bool vinculoDesactualizado;
@@ -65,6 +69,7 @@ class PartidaPlan {
       estadoCuota: estadoCuota,
       grupoId: grupoId,
       deudaId: deudaId,
+      deudaNombre: deudaNombre,
       vinculoDesactualizado: vinculoDesactualizado,
       orden: orden,
       actualizadoEn: actualizadoEn,

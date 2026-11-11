@@ -82,6 +82,7 @@ Map<String, Object?> partidaJson({int id = 1}) => <String, Object?>{
   'estadoCuota': null,
   'grupoId': 1,
   'deudaId': null,
+  'deudaNombre': null,
   'vinculoDesactualizado': false,
   'orden': 1,
   'actualizadoEn': '2026-11-01T12:00:00.000Z',
@@ -239,6 +240,28 @@ void main() {
     expect(plan.grupos.single.nombre, 'Fijos');
     expect(plan.calculo.guia?.necesidades.toString(), '50');
     expect(plan.partidas.single.estado.codigo, 'BAJO_EL_PLAN');
+  });
+
+  test('parsea deudaNombre de una partida vinculada', () async {
+    adapter.handler = (RequestOptions options) async => jsonResponse(
+      planJson(
+        partidas: <Object?>[
+          <String, Object?>{
+            ...partidaJson(id: 7),
+            'categoriaId': 8,
+            'categoriaCodigo': 'DEUDAS',
+            'deudaId': 77,
+            'deudaNombre': 'Crédito auto',
+            'estadoCuota': 'PENDIENTE',
+          },
+        ],
+      ),
+    );
+
+    final PlanMensual plan = await repository.obtener('2026-11');
+    expect(plan.partidas.single.deudaId, 77);
+    expect(plan.partidas.single.deudaNombre, 'Crédito auto');
+    expect(plan.partidas.single.estadoCuota, EstadoCuota.pendiente);
   });
 
   test('actualizarIngreso envía el monto como número', () async {

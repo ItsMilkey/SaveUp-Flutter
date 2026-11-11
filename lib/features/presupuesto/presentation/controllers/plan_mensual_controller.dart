@@ -4,6 +4,8 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/errors/app_failure.dart';
+import '../../../movimientos/data/dio_movimientos_repository.dart';
+import '../../../movimientos/domain/movimiento_tipo.dart';
 import '../../data/dio_plan_mensual_repository.dart';
 import '../../domain/plan_calculo.dart';
 import '../../domain/plan_mensual.dart';
@@ -120,6 +122,32 @@ class PlanMensualController extends Notifier<PlanMensualState> {
         incluirReferencias: referencias,
       );
     }
+  }
+
+  /// Registra un gasto imputado a una partida (`POST /movimientos` con
+  /// `partidaId`) y recarga el plan para reflejar el nuevo `real`.
+  ///
+  /// El backend toma la fecha del movimiento (ahora) y exige que la partida
+  /// pertenezca a ese mes; por eso la UI solo ofrece la acción en el mes actual.
+  Future<AppFailure?> registrarGastoPartida({
+    required int partidaId,
+    required Decimal monto,
+    required String descripcion,
+  }) async {
+    try {
+      await ref
+          .read(movimientosRepositoryProvider)
+          .registrar(
+            monto: monto,
+            descripcion: descripcion,
+            tipo: MovimientoTipo.gastoGeneral,
+            partidaId: partidaId,
+          );
+    } on AppFailure catch (failure) {
+      return failure;
+    }
+    await cargar(state.mes);
+    return null;
   }
 
   /// Copia el plan de [mesOrigen] al mes actual. Devuelve la falla, si hubo.

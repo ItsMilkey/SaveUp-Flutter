@@ -1,5 +1,10 @@
 # F1 — Autenticación, sesión y versión mínima
 
+> **Avance posterior (2026-11-11): formato de RUT.** `RutInputFormatter`
+> normaliza mientras se escribe (`123456789` → `12345678-9`, K en mayúscula,
+> sin puntos) y `normalizeRut` cubre cuerpos de 7 u 8 dígitos con o sin K. El
+> registro lo usa; tests propios y de validador en verde.
+
 ## Objetivo
 Que una persona pueda registrarse, iniciar sesión, mantener la sesión entre aperturas de la
 app y cerrar sesión; y que la app consulte la versión mínima al arrancar.

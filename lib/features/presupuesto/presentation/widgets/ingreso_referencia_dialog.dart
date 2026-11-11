@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/design_system/design_system.dart';
 import '../../../../core/money/money.dart';
+import '../../../../core/money/money_input_formatter.dart';
 
 /// Resultado del diálogo de ingreso de referencia: [monto] nulo = quitarlo.
 class IngresoReferenciaValor {
@@ -40,7 +41,9 @@ class _IngresoReferenciaDialogState extends State<IngresoReferenciaDialog> {
   void initState() {
     super.initState();
     _monto = TextEditingController(
-      text: widget.actual == null ? '' : widget.actual!.toString(),
+      text: widget.actual == null
+          ? ''
+          : MoneyInputFormatter.format(widget.actual!),
     );
   }
 
@@ -106,6 +109,7 @@ class _IngresoReferenciaDialogState extends State<IngresoReferenciaDialog> {
               },
               label: 'Ingreso mensual',
               prefixIcon: Icons.attach_money,
+              inputFormatters: moneyInputFormatters,
             ),
             const SizedBox(height: AppSpacing.sm),
             const Text(

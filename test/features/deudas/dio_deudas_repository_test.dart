@@ -160,6 +160,35 @@ void main() {
     });
   });
 
+  group('fechaPrimeraCuota', () {
+    test('PATCH con la fecha y parsea la deuda actualizada', () async {
+      adapter.handler = (RequestOptions options) async {
+        expect(options.method, 'PATCH');
+        expect(
+          options.path.endsWith('/deudas/7/fecha-primera-cuota'),
+          isTrue,
+        );
+        expect(jsonBodyOf(options), <String, Object?>{
+          'fechaPrimeraCuota': '2026-09-15',
+        });
+        return jsonResponse(
+          deudaJson(
+            id: 7,
+            fechaPrimeraCuota: '2026-09-15',
+            fechaUltimaCuota: '2027-02-15',
+          ),
+        );
+      };
+
+      final Deuda deuda = await repository.actualizarFechaPrimeraCuota(
+        7,
+        CalendarDate(2026, 9, 15),
+      );
+      expect(deuda.fechaPrimeraCuota?.toString(), '2026-09-15');
+      expect(deuda.fechaUltimaCuota?.toString(), '2027-02-15');
+    });
+  });
+
   group('detalle y amortización', () {
     test('GET del detalle y del cronograma', () async {
       adapter.handler = (RequestOptions options) async {

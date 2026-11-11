@@ -14,16 +14,35 @@ Map<String, Object?> meBody() => <String, Object?>{
   'fechaRegistro': '2026-01-15T10:30:00.000Z',
 };
 
-Map<String, Object?> categoriaJson(int id, String codigo, String nombre) =>
-    <String, Object?>{
-      'id': id,
-      'codigo': codigo,
-      'nombre': nombre,
-    };
+Map<String, Object?> categoriaJson(
+  int id,
+  String codigo,
+  String nombre, {
+  String? tipo,
+}) => <String, Object?>{
+  'id': id,
+  'codigo': codigo,
+  'nombre': nombre,
+  'tipoPresupuesto': ?tipo,
+};
 
 ResponseBody categoriasResponse() => jsonResponse(<Object?>[
-  categoriaJson(1, 'ALIMENTACION_BASE', 'Alimentación Básica'),
-  categoriaJson(17, 'REGALOS_CELEBRACIONES', 'Regalos y Celebraciones'),
+  categoriaJson(
+    1,
+    'ALIMENTACION_BASE',
+    'Alimentación Básica',
+    tipo: 'NECESIDAD',
+  ),
+  categoriaJson(2, 'OCIO_RECREACION', 'Ocio y Recreación', tipo: 'DESEO'),
+  categoriaJson(3, 'SUELDO', 'Sueldo', tipo: 'OTROS'),
+  categoriaJson(4, 'AHORRO', 'Ahorro y Fondo de Reserva', tipo: 'AHORRO'),
+  categoriaJson(5, 'OTROS', 'Otros', tipo: 'OTROS'),
+  categoriaJson(
+    17,
+    'REGALOS_CELEBRACIONES',
+    'Regalos y Celebraciones',
+    tipo: 'DESEO',
+  ),
 ]);
 
 void main() {
@@ -204,5 +223,61 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Saldo disponible'), findsOneWidget);
+  });
+
+  testWidgets('el selector de gasto agrupa y oculta Sueldo/Ahorro', (
+    WidgetTester tester,
+  ) async {
+    adapter.handler = (RequestOptions options) async {
+      final ResponseBody? base = baseGet(options);
+      if (base != null) {
+        return base;
+      }
+      fail('petición inesperada: ${options.method} ${options.path}');
+    };
+
+    await abrirAlta(tester);
+    await tester.tap(find.text('Elegir categoría'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('TODAS LAS CATEGORÍAS'), findsOneWidget);
+    expect(find.text('Necesidades'), findsOneWidget);
+    expect(find.text('Deseos'), findsOneWidget);
+    expect(find.byIcon(Icons.fastfood), findsWidgets);
+    expect(find.text('Sueldo'), findsNothing);
+    expect(find.text('Ahorro y Fondo de Reserva'), findsNothing);
+
+    await tester.tap(find.text('Alimentación Básica'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Alimentación Básica'), findsOneWidget);
+  });
+
+  testWidgets('un ingreso solo ofrece categorías de ingreso', (
+    WidgetTester tester,
+  ) async {
+    adapter.handler = (RequestOptions options) async {
+      final ResponseBody? base = baseGet(options);
+      if (base != null) {
+        return base;
+      }
+      fail('petición inesperada: ${options.method} ${options.path}');
+    };
+
+    await abrirAlta(tester);
+    await tester.tap(find.text('Gasto'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Ingreso').last);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Elegir categoría'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('CATEGORÍAS DE INGRESO'), findsOneWidget);
+    expect(find.text('Sueldo'), findsOneWidget);
+    expect(find.text('Otros'), findsOneWidget);
+    expect(find.byIcon(Icons.work_outline), findsWidgets);
+    expect(find.byIcon(Icons.label_outline), findsWidgets);
+    expect(find.text('Alimentación Básica'), findsNothing);
   });
 }

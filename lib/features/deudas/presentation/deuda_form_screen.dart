@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/design_system/design_system.dart';
 import '../../../core/money/money.dart';
+import '../../../core/money/money_input_formatter.dart';
+import '../../../core/time/business_month.dart';
 import '../../../core/time/calendar_date.dart';
 import '../domain/deuda.dart';
 import '../domain/deudas_repository.dart';
@@ -42,6 +44,7 @@ class _DeudaFormScreenState extends ConsumerState<DeudaFormScreen> {
   ModalidadCalculo _modalidad = ModalidadCalculo.sinInteres;
   bool _porFechas = false;
   bool _tasaAnual = false;
+  bool _crearPartida = false;
   CalendarDate? _fechaPrimera;
   CalendarDate? _fechaUltima;
 
@@ -52,7 +55,7 @@ class _DeudaFormScreenState extends ConsumerState<DeudaFormScreen> {
     if (deuda != null) {
       _nombre.text = deuda.nombre;
       _descripcion.text = deuda.descripcion ?? '';
-      _montoCapital.text = deuda.montoCapital.toString();
+      _montoCapital.text = MoneyInputFormatter.format(deuda.montoCapital);
       _tipo = deuda.tipo;
       _modalidad = deuda.modalidad;
       _cuotasPrevias.text = '${deuda.cuotasPagadasPrevias}';
@@ -74,13 +77,15 @@ class _DeudaFormScreenState extends ConsumerState<DeudaFormScreen> {
       }
       if (deuda.modalidad == ModalidadCalculo.cuotaConocida &&
           deuda.valorCuota != null) {
-        _valorCuota.text = deuda.valorCuota!.toString();
+        _valorCuota.text = MoneyInputFormatter.format(deuda.valorCuota!);
       }
       if (deuda.gastosIniciales > Decimal.zero) {
-        _gastos.text = deuda.gastosIniciales.toString();
+        _gastos.text = MoneyInputFormatter.format(deuda.gastosIniciales);
       }
       if (deuda.costoAdicionalPorCuota > Decimal.zero) {
-        _costoAdicional.text = deuda.costoAdicionalPorCuota.toString();
+        _costoAdicional.text = MoneyInputFormatter.format(
+          deuda.costoAdicionalPorCuota,
+        );
       }
     }
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -112,12 +117,17 @@ class _DeudaFormScreenState extends ConsumerState<DeudaFormScreen> {
   Widget build(BuildContext context) {
     final DeudaFormUiState ui = ref.watch(deudaFormProvider);
     final bool enviando = ui is DeudaFormSubmitting;
+    final String mesPlan = BusinessMonth.fromInstant(DateTime.now()).toString();
 
     ref.listen<DeudaFormUiState>(deudaFormProvider, (
       _,
       DeudaFormUiState next,
     ) {
       if (next is DeudaFormSuccess) {
+        final String? aviso = next.avisoPartida;
+        if (aviso != null) {
+          NeoSnackbar.show(context, aviso, tone: NeoSnackbarTone.warning);
+        }
         Navigator.of(context).pop(true);
       }
     });
@@ -206,6 +216,7 @@ class _DeudaFormScreenState extends ConsumerState<DeudaFormScreen> {
                 label: 'Capital',
                 hint: '500.000',
                 prefixIcon: Icons.attach_money,
+                inputFormatters: moneyInputFormatters,
                 error: errorFor('condiciones.montoCapital'),
               ),
               const SizedBox(height: AppSpacing.md),
@@ -285,6 +296,7 @@ class _DeudaFormScreenState extends ConsumerState<DeudaFormScreen> {
                   validator: _validateMoney,
                   label: 'Valor de la cuota',
                   prefixIcon: Icons.payments_outlined,
+                  inputFormatters: moneyInputFormatters,
                   error: errorFor('condiciones.valorCuota'),
                 ),
               ],
@@ -294,6 +306,7 @@ class _DeudaFormScreenState extends ConsumerState<DeudaFormScreen> {
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
                 validator: _validateMoneyOptional,
                 label: 'Gastos iniciales (opcional)',
+                inputFormatters: moneyInputFormatters,
                 error: errorFor('condiciones.gastosIniciales'),
               ),
               const SizedBox(height: AppSpacing.md),
@@ -302,6 +315,7 @@ class _DeudaFormScreenState extends ConsumerState<DeudaFormScreen> {
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
                 validator: _validateMoneyOptional,
                 label: 'Costo adicional por cuota (opcional)',
+                inputFormatters: moneyInputFormatters,
                 error: errorFor('condiciones.costoAdicionalPorCuota'),
               ),
               const SizedBox(height: AppSpacing.md),
@@ -327,6 +341,25 @@ class _DeudaFormScreenState extends ConsumerState<DeudaFormScreen> {
                 prefixIcon: Icons.history,
                 error: errorFor('cuotasPagadasPrevias'),
               ),
+              if (!widget.esEdicion) ...[
+                const SizedBox(height: AppSpacing.md),
+                SwitchListTile(
+                  value: _crearPartida && _porFechas,
+                  onChanged: _porFechas
+                      ? (bool value) =>
+                            setState(() => _crearPartida = value)
+                      : null,
+                  contentPadding: EdgeInsets.zero,
+                  title: Text('Crear partida en el plan de $mesPlan'),
+                  subtitle: Text(
+                    _porFechas
+                        ? 'Asocia esta deuda al plan del mes con el monto de '
+                              'la cuota.'
+                        : 'Requiere cuotas con fecha: cambia el plazo a '
+                              '"Por fechas".',
+                  ),
+                ),
+              ],
               const SizedBox(height: AppSpacing.xl),
               _acciones(enviando),
             ],
@@ -433,6 +466,7 @@ class _DeudaFormScreenState extends ConsumerState<DeudaFormScreen> {
             condiciones: condiciones,
           ),
           id: widget.deuda?.id,
+          crearPartida: _crearPartida && _porFechas,
         );
   }
 }

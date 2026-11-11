@@ -137,6 +137,86 @@ void main() {
     expect(find.text('Sin grupo'), findsNothing);
   });
 
+  testWidgets('el resumen explica las métricas y la guía', (
+    WidgetTester tester,
+  ) async {
+    final PlanMensual plan = planDePrueba(
+      ingresoReferencia: d('1000000'),
+      guia: GuiaCalculo(
+        necesidades: d('50'),
+        deseos: d('30'),
+        ahorro: d('20'),
+      ),
+    );
+    final FakePlanMensualRepository repo = FakePlanMensualRepository(
+      plan: plan,
+    );
+    await montar(tester, repo);
+
+    expect(find.text('Planificado'), findsOneWidget);
+    expect(find.text('Remanente'), findsOneWidget);
+    expect(find.text('Margen'), findsOneWidget);
+    expect(find.text('Necesidades 50 %'), findsOneWidget);
+    expect(find.text('Deseos 30 %'), findsOneWidget);
+    expect(find.text('Ahorro 20 %'), findsOneWidget);
+    expect(find.text('Ir a Presupuesto'), findsOneWidget);
+  });
+
+  testWidgets('los grupos se pueden plegar y desplegar', (
+    WidgetTester tester,
+  ) async {
+    final FakePlanMensualRepository repo = FakePlanMensualRepository(
+      plan: planConGrupos(),
+    );
+    await montar(tester, repo);
+
+    await tester.scrollUntilVisible(
+      find.text('Fijos'),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    expect(find.text('Arriendo'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Contraer grupo').first);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Fijos'), findsOneWidget);
+    expect(find.text('Arriendo'), findsNothing);
+    expect(find.text('Netflix'), findsNothing);
+
+    await tester.tap(find.byTooltip('Expandir grupo').first);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Arriendo'), findsOneWidget);
+    expect(find.text('Netflix'), findsOneWidget);
+  });
+
+  testWidgets('el botón + abre el menú y lanza los diálogos', (
+    WidgetTester tester,
+  ) async {
+    final FakePlanMensualRepository repo = FakePlanMensualRepository(
+      plan: planConGrupos(),
+    );
+    await montar(tester, repo);
+
+    await tester.tap(find.byTooltip('Agregar al plan'));
+    await tester.pumpAndSettle();
+    expect(find.text('Crear grupo'), findsOneWidget);
+    expect(find.text('Crear partida'), findsOneWidget);
+
+    await tester.tap(find.text('Crear partida'));
+    await tester.pumpAndSettle();
+    expect(find.text('Nueva partida'), findsOneWidget);
+    await tester.tap(find.text('Cancelar'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Agregar al plan'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Crear grupo'));
+    await tester.pumpAndSettle();
+    expect(find.text('Grupos del plan'), findsOneWidget);
+  });
+
   testWidgets('navegar al mes siguiente vuelve a consultar el plan', (
     WidgetTester tester,
   ) async {
@@ -261,7 +341,7 @@ void main() {
     await montar(tester, repo);
 
     await tester.scrollUntilVisible(
-      find.byTooltip('Eliminar partida').first,
+      find.text('Arriendo'),
       300,
       scrollable: find.byType(Scrollable).first,
     );
@@ -290,6 +370,7 @@ void main() {
           tipo: TipoPresupuesto.necesidad,
           monto: d('43500'),
           deudaId: 77,
+          deudaNombre: 'Crédito auto',
         ),
       ],
     );
@@ -304,6 +385,7 @@ void main() {
       scrollable: find.byType(Scrollable).first,
     );
     await tester.pumpAndSettle();
+    expect(find.text('Deuda: Crédito auto'), findsOneWidget);
     await tester.tap(find.byTooltip('Editar partida'));
     await tester.pumpAndSettle();
 

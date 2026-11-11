@@ -16,6 +16,7 @@ class PartidaSpec {
     required this.monto,
     this.grupoId,
     this.deudaId,
+    this.deudaNombre,
   });
 
   final int id;
@@ -26,6 +27,7 @@ class PartidaSpec {
   final Decimal monto;
   final int? grupoId;
   final int? deudaId;
+  final String? deudaNombre;
 }
 
 /// Construye un plan consistente con el motor (sin movimientos reales).
@@ -81,6 +83,7 @@ PlanMensual planDePrueba({
           estadoCuota: calculo.partidas[i].estadoCuota,
           grupoId: partidas[i].grupoId,
           deudaId: partidas[i].deudaId,
+          deudaNombre: partidas[i].deudaNombre,
           orden: partidas[i].id,
           actualizadoEn: DateTime.utc(2026, 11, 1),
         ),

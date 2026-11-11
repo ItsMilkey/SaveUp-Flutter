@@ -25,6 +25,7 @@ export 'components/navigation/neo_app_bar.dart';
 export 'components/navigation/neo_bottom_nav.dart';
 export 'components/navigation/neo_more_menu.dart';
 export 'components/navigation/neo_scaffold.dart';
+export 'components/navigation/neo_sliver_app_bar.dart';
 export 'patterns/neo_chart_card.dart';
 export 'patterns/neo_month_picker.dart';
 export 'showcase/design_system_showcase_screen.dart';

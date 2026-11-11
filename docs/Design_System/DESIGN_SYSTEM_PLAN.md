@@ -1,12 +1,11 @@
 # SaveUp — Plan de Design System Neo-Brutalista (propuesta refinada)
 
-> **Estado:** propuesta de refinamiento del borrador `neo_brutalism_guidelines.md`.
-> No reemplaza las referencias; las aterriza en tokens, componentes y un plan
-> incremental alineado con el código actual. **No se ha implementado nada.**
+> **Estado:** implementado. Este documento se conserva como contrato del design
+> system: tokens, componentes y fases ejecutadas. Las fases 0–8 están cerradas y el
+> pulido posterior se registra en «Migración incremental».
 >
-> Base actual: F1–F8 cerradas, F10 (dominio/controller) y F11 (backend/contrato)
-> listos; 394 tests frontend y 662 backend. El rediseño es una tarea aparte y no
-> debe tocar dominio, data, controladores ni contratos.
+> Base actual: F1–F8, F10 y F11 cerradas; el rediseño se hizo solo en
+> `presentation/`, sin tocar dominio, data, controladores ni contratos.
 
 ## 1. Qué conservar del borrador y qué falta
 
@@ -224,7 +223,7 @@ disabled, loading, error**, light/dark, semántica y test.
 | `NeoCard` | `child`, `accent`, `onTap`, `elevated` |
 | `NeoButton` | `label`, `onPressed`, `variant` (primary/secondary/ghost/danger), `icon`, `loading`, `expanded` |
 | `NeoIconButton` | `icon`, `tooltip`, `onPressed`, `variant` |
-| `NeoInput` | `controller`, `label`, `hint`, `error`, `helper`, `prefix`, `suffix`, `keyboardType`, `textInputAction` |
+| `NeoInput` | `controller`, `label`, `hint`, `error`, `helper`, `prefix`, `suffix`, `keyboardType`, `textInputAction`, `inputFormatters` |
 | `NeoBadge` | `label`, `color`, `icon`, `compact` |
 | `NeoChip` | `label`, `selected`, `onSelected` |
 | `NeoSegmented` | `values`, `selected`, `onChanged`, `labels` |
@@ -238,6 +237,7 @@ disabled, loading, error**, light/dark, semántica y test.
 | `NeoLoading` | `message`, `skeletonRows` |
 | `NeoDialog` / `NeoConfirmDialog` | `title`, `message`, `confirmLabel`, `destructive`, `onConfirm` |
 | `NeoScaffold` | `title`, `actions`, `bottomNav`, `body`, `pattern` |
+| `NeoAppBar` / `NeoSliverAppBar` | `title`, `brand`, `centerTitle`, `leading`, `actions`, `floating`, `pinned`, `snap` |
 | `NeoBottomNav` | `destinations`, `selectedIndex`, `onSelected` |
 | `NeoChartCard` | `title`, `subtitle`, `legend`, `child`, `empty` |
 | `NeoMonthPicker` | `month`, `onChanged`, `min`, `max` |
@@ -270,6 +270,10 @@ No se agrega un séptimo icono al AppBar.
 - **Formularios:** label arriba, ayuda debajo, error inline con icono; el error
   del backend (`detail` de `DATOS_INVALIDOS`) se muestra en una banda de error,
   no en un toast esquivo.
+- **Entrada formateada:** `MoneyInputFormatter` agrupa miles con punto y acepta
+  coma decimal (máximo 2) en todos los campos de dinero; `RutInputFormatter`
+  normaliza el RUT a `12345678-9` mientras se escribe. Son utilidades de
+  presentación (ver D9 de `docs/CONTEXT.md`).
 - **Fechas:** `NeoDateField` + `showDatePicker` localizado (ya está `es`);
   `NeoMonthPicker` para plan/presupuesto/analítica.
 - **Sliders:** pista gruesa, thumb cuadrado/redondo con borde y sombra; valor
@@ -342,7 +346,15 @@ migró las últimas pantallas de cuenta y el bloqueo por actualización, habilit
 el modo oscuro del sistema y verificó dark mode y contraste en el emulador.
 Además, las tarjetas usan color por rol (amarillo, cian, magenta, verde,
 lavanda y naranja) con tinta oscura sobre color, para aprovechar la paleta sin
-perder legibilidad. Tests y goldens claro/oscuro (438 tests verdes).
+perder legibilidad.
+
+**Pulido posterior:** `NeoSliverAppBar` para el encabezado de marca con scroll
+(floating/snap) y saludo personalizado en Inicio; plan con grupos plegables,
+resumen con CTA a Presupuesto y estado «Pagado» derivado de `real ≥ planificado`;
+selector de categorías con recientes/frecuentes, iconos y agrupación por tipo;
+regla con estado de suma, ayuda contextual y edición precisa de porcentajes; y
+formateadores de entrada de dinero y RUT. Tests y goldens claro/oscuro (469
+tests verdes).
 
 ## 11. Riesgos y mitigaciones
 
@@ -372,5 +384,6 @@ perder legibilidad. Tests y goldens claro/oscuro (438 tests verdes).
 7. **Densidad:** variable por jerarquía (`hero`, `section`, `list`, `table`).
 8. **Goldens:** adoptados para átomos y charts, con plataforma/fuente fijas.
 
-**Fase 0 cerrada.** La Fase 1 (tokens + `SaveUpTheme` + `ThemeExtension` + átomos
-base + showcase + tests/goldens) es la siguiente y no toca lógica.
+**Fases 0–8 cerradas.** El mantenimiento del sistema es incremental: cualquier
+pantalla nueva usa tokens/átomos existentes, y un componente nuevo entra al
+showcase con sus estados y tests antes de usarse en features.

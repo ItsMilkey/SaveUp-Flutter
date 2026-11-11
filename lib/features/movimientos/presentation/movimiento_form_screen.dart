@@ -4,12 +4,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/design_system/design_system.dart';
 import '../../../core/money/money.dart';
+import '../../../core/money/money_input_formatter.dart';
 import '../domain/categoria.dart';
 import '../domain/movimiento.dart';
 import '../domain/movimiento_tipo.dart';
 import '../domain/sugerencia_categoria.dart';
+import 'categoria_picker.dart';
 import 'categoria_sugerencia_controller.dart';
+import 'categoria_visual.dart';
 import 'movimiento_labels.dart';
+import 'movimientos_controller.dart';
 import 'nuevo_movimiento_controller.dart';
 
 /// Formulario de movimiento (alta y edición comparten pantalla).
@@ -51,7 +55,7 @@ class _MovimientoFormScreenState extends ConsumerState<MovimientoFormScreen> {
     if (inicial != null) {
       _descripcionController.text = inicial.descripcion;
       // El campo de monto es positivo: el signo lo impone el tipo.
-      _montoController.text = inicial.monto.abs().toString();
+      _montoController.text = MoneyInputFormatter.format(inicial.monto.abs());
       _categoriaSeleccionada = inicial.categoria?.id;
     }
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -77,6 +81,36 @@ class _MovimientoFormScreenState extends ConsumerState<MovimientoFormScreen> {
     ref
         .read(sugerenciaCategoriaProvider.notifier)
         .actualizarTexto(_descripcionController.text, contexto: _contexto);
+  }
+
+  Categoria? _categoriaDe(List<Categoria>? lista, int id) {
+    for (final Categoria categoria in lista ?? const <Categoria>[]) {
+      if (categoria.id == id) {
+        return categoria;
+      }
+    }
+    return null;
+  }
+
+  Widget _chipSugerencia(
+    SugerenciaCategoria sugerencia,
+    List<Categoria>? catalogo,
+  ) {
+    final Categoria? categoria = _categoriaDe(
+      catalogo,
+      sugerencia.categoriaId,
+    );
+    return ChoiceChip(
+      avatar: categoria == null
+          ? Icon(iconoDeCategoriaPorCodigo(sugerencia.codigo), size: 18)
+          : IconoCategoria(categoria: categoria, size: 22),
+      label: Text(sugerencia.nombre),
+      selected: _categoriaSeleccionada == sugerencia.categoriaId,
+      onSelected: (_) => setState(() {
+        _categoriaSeleccionada = sugerencia.categoriaId;
+        _seleccionManual = true;
+      }),
+    );
   }
 
   @override
@@ -171,7 +205,18 @@ class _MovimientoFormScreenState extends ConsumerState<MovimientoFormScreen> {
                     if (tipo == null) {
                       return;
                     }
-                    setState(() => _tipo = tipo);
+                    final List<Categoria>? lista = categorias.value;
+                    setState(() {
+                      _tipo = tipo;
+                      if (lista != null &&
+                          _categoriaSeleccionada != null &&
+                          !categoriasPermitidas(lista, tipo).any(
+                            (Categoria c) => c.id == _categoriaSeleccionada,
+                          )) {
+                        _categoriaSeleccionada = null;
+                        _seleccionManual = false;
+                      }
+                    });
                     if (_descripcionController.text.trim().isNotEmpty) {
                       _consultarSugerencia();
                     }
@@ -206,15 +251,7 @@ class _MovimientoFormScreenState extends ConsumerState<MovimientoFormScreen> {
                   runSpacing: AppSpacing.xs,
                   children: <Widget>[
                     for (final SugerenciaCategoria sugerencia in _sugerencias)
-                      ChoiceChip(
-                        label: Text(sugerencia.nombre),
-                        selected:
-                            _categoriaSeleccionada == sugerencia.categoriaId,
-                        onSelected: (_) => setState(() {
-                          _categoriaSeleccionada = sugerencia.categoriaId;
-                          _seleccionManual = true;
-                        }),
-                      ),
+                      _chipSugerencia(sugerencia, categorias.value),
                   ],
                 ),
               ],
@@ -238,12 +275,15 @@ class _MovimientoFormScreenState extends ConsumerState<MovimientoFormScreen> {
                 label: 'Monto',
                 hint: '12.500',
                 prefixIcon: Icons.attach_money,
+                inputFormatters: moneyInputFormatters,
                 error: errorFor('monto'),
               ),
               const SizedBox(height: AppSpacing.md),
               _CategoriaSelector(
                 categorias: categorias,
                 seleccionada: _categoriaSeleccionada,
+                tipo: _tipo,
+                movimientos: ref.watch(movimientosProvider).items,
                 onChanged: (int? id) => setState(() {
                   _categoriaSeleccionada = id;
                   _seleccionManual = true;
@@ -305,6 +345,8 @@ class _CategoriaSelector extends StatelessWidget {
   const _CategoriaSelector({
     required this.categorias,
     required this.seleccionada,
+    required this.tipo,
+    required this.movimientos,
     required this.onChanged,
     this.errorText,
     required this.onReintentar,
@@ -312,6 +354,8 @@ class _CategoriaSelector extends StatelessWidget {
 
   final AsyncValue<List<Categoria>> categorias;
   final int? seleccionada;
+  final MovimientoTipo tipo;
+  final List<Movimiento> movimientos;
   final ValueChanged<int?> onChanged;
   final String? errorText;
   final VoidCallback onReintentar;
@@ -330,27 +374,55 @@ class _CategoriaSelector extends StatelessWidget {
         ],
       ),
       data: (List<Categoria> lista) {
-        final bool existe = lista.any((Categoria c) => c.id == seleccionada);
-        return DropdownButtonFormField<int>(
-          key: ValueKey<int?>(seleccionada),
-          initialValue: existe ? seleccionada : null,
-          isExpanded: true,
-          decoration: InputDecoration(
-            labelText: 'Categoría',
-            prefixIcon: const Icon(Icons.category_outlined),
-            errorText: errorText,
-          ),
-          items: <DropdownMenuItem<int>>[
-            for (final Categoria categoria in lista)
-              DropdownMenuItem<int>(
-                value: categoria.id,
-                child: Text(categoria.nombre),
+        final Categoria? actual = _buscar(lista);
+        final ThemeData theme = Theme.of(context);
+        final SaveUpColors colors = theme.extension<SaveUpColors>()!;
+        return InkWell(
+          onTap: () => _elegir(context, lista),
+          borderRadius: AppRadii.mdAll,
+          child: InputDecorator(
+            decoration: InputDecoration(
+              labelText: 'Categoría',
+              prefixIcon: actual == null
+                  ? const Icon(Icons.category_outlined)
+                  : Padding(
+                      padding: const EdgeInsets.all(10),
+                      child: IconoCategoria(categoria: actual, size: 28),
+                    ),
+              suffixIcon: const Icon(Icons.expand_more),
+              errorText: errorText,
+            ),
+            child: Text(
+              actual?.nombre ?? 'Elegir categoría',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: actual == null ? colors.muted : null,
               ),
-          ],
-          onChanged: onChanged,
-          validator: (_) => null,
+            ),
+          ),
         );
       },
     );
+  }
+
+  Categoria? _buscar(List<Categoria> lista) {
+    for (final Categoria categoria in lista) {
+      if (categoria.id == seleccionada) {
+        return categoria;
+      }
+    }
+    return null;
+  }
+
+  Future<void> _elegir(BuildContext context, List<Categoria> lista) async {
+    final int? id = await CategoriaPicker.show(
+      context,
+      categorias: lista,
+      tipo: tipo,
+      movimientos: movimientos,
+      seleccionada: seleccionada,
+    );
+    if (id != null) {
+      onChanged(id);
+    }
   }
 }

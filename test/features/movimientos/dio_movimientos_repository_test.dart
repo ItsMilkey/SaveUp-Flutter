@@ -161,6 +161,27 @@ void main() {
         categoriaId: 3,
       );
     });
+
+    test('envía partidaId cuando el gasto se imputa a una partida', () async {
+      adapter.handler = (RequestOptions options) async {
+        expect(options.method, 'POST');
+        expect(options.path.endsWith('/movimientos'), isTrue);
+        expect(jsonBodyOf(options), <String, Object?>{
+          'monto': 7200,
+          'descripcion': 'Netflix',
+          'tipoMovimiento': 'GASTO_GENERAL',
+          'partidaId': 42,
+        });
+        return jsonResponse(movimientoJson(monto: -7200));
+      };
+
+      await movimientos.registrar(
+        monto: Decimal.parse('7200'),
+        descripcion: 'Netflix',
+        tipo: MovimientoTipo.gastoGeneral,
+        partidaId: 42,
+      );
+    });
   });
 
   group('editar', () {

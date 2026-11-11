@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/design_system/design_system.dart';
 import '../../../core/money/money.dart';
+import '../../../core/money/money_input_formatter.dart';
 import '../../../core/time/calendar_date.dart';
 import '../domain/deuda.dart';
 import '../domain/simulacion.dart';
@@ -107,6 +108,7 @@ class _SimuladorScreenState extends ConsumerState<SimuladorScreen> {
               label: 'Capital',
               hint: '500.000',
               prefixIcon: Icons.attach_money,
+              inputFormatters: moneyInputFormatters,
             ),
             const SizedBox(height: AppSpacing.md),
             SegmentedButton<bool>(
@@ -176,6 +178,7 @@ class _SimuladorScreenState extends ConsumerState<SimuladorScreen> {
                 validator: _moneyRequerido,
                 label: 'Valor de la cuota',
                 prefixIcon: Icons.payments_outlined,
+                inputFormatters: moneyInputFormatters,
               ),
             ],
             const SizedBox(height: AppSpacing.md),
@@ -184,6 +187,7 @@ class _SimuladorScreenState extends ConsumerState<SimuladorScreen> {
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
               validator: _moneyOpcional,
               label: 'Gastos iniciales (opcional)',
+              inputFormatters: moneyInputFormatters,
             ),
             const SizedBox(height: AppSpacing.md),
             NeoInput(
@@ -191,6 +195,7 @@ class _SimuladorScreenState extends ConsumerState<SimuladorScreen> {
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
               validator: _moneyOpcional,
               label: 'Costo adicional por cuota (opcional)',
+              inputFormatters: moneyInputFormatters,
             ),
             const SizedBox(height: AppSpacing.md),
             NeoInput(
@@ -199,6 +204,7 @@ class _SimuladorScreenState extends ConsumerState<SimuladorScreen> {
               validator: _moneyOpcional,
               label: 'Ingreso mensual (opcional)',
               helper: 'Para el resumen educativo',
+              inputFormatters: moneyInputFormatters,
             ),
             const SizedBox(height: AppSpacing.md),
             NeoInput(

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/design_system/design_system.dart';
 import '../../../../core/money/money.dart';
+import '../../../../core/money/money_input_formatter.dart';
 import '../../domain/meta_ahorro.dart';
 
 /// Sentido de la operación sobre una meta.
@@ -136,6 +137,7 @@ class _MovimientoMetaDialogState extends State<MovimientoMetaDialog> {
               ),
               label: 'Monto',
               error: _errorMonto,
+              inputFormatters: moneyInputFormatters,
             ),
             const SizedBox(height: AppSpacing.md),
             NeoInput(

@@ -1,5 +1,10 @@
 # F6 — Presupuesto: regla, ejecución y límites
 
+> **Avance posterior (2026-11-11): pulido de la regla.** La suma 100.00 se
+> muestra como estado válido/inválido, cada interruptor tiene ayuda contextual
+> en diálogo y los porcentajes se editan con hasta 2 decimales (el resto se
+> rebalancea). Solo `presentation`.
+
 > **Avance Bloque 1 (2026-11-07): dominio, DTOs y repositorios.**
 > Modelos con `Decimal` para porcentajes/límites/consumos: regla y sugerencia,
 > ejecución global/historial/por categoría, límites y preferencias. DTOs a mano

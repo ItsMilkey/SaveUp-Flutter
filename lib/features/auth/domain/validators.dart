@@ -93,21 +93,17 @@ String? validateLoginPassword(String? value) {
 }
 
 /// Normaliza un RUT: quita puntos y espacios, pasa la K a mayúscula y agrega
-/// el guion si el usuario escribió solo dígitos (con o sin K final).
+/// el guion si el usuario escribió solo dígitos (cuerpo de 7 u 8 dígitos, con
+/// o sin K final).
 String normalizeRut(String raw) {
   String text = raw.replaceAll(RegExp(r'[.\s]'), '').toUpperCase();
   final bool sinGuion = !text.contains('-');
-  if (sinGuion && text.length == 8) {
-    if (RegExp(r'^\d+$').hasMatch(text)) {
-      text = '${text.substring(0, 7)}-${text.substring(7)}';
-    }
-    return text;
-  }
   if (sinGuion &&
-      text.length == 9 &&
-      text.endsWith('K') &&
-      RegExp(r'^\d{8}$').hasMatch(text.substring(0, 8))) {
-    text = '${text.substring(0, 8)}-${text.substring(8)}';
+      (text.length == 8 || text.length == 9) &&
+      RegExp(r'^\d{7,8}[\dkK]$').hasMatch(text)) {
+    text =
+        '${text.substring(0, text.length - 1)}-'
+        '${text.substring(text.length - 1)}';
   }
   return text;
 }

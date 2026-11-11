@@ -1,5 +1,12 @@
 # F6a — Plan mensual: partidas, grupos, sliders con cálculo local y lote atómico
 
+> **Avance posterior (2026-11-11): pulido del plan.** Grupos plegables (estado
+> en memoria), resumen con CTA a Presupuesto, botón **Pagar** por partida que
+> registra un `GASTO_GENERAL` con `partidaId`, estado **Pagado** derivado de
+> `real ≥ planificado`, `deudaNombre` en partidas vinculadas y montos con
+> separador de miles. Sin cambios de cálculo ni de contrato (salvo el campo
+> aditivo `deudaNombre`).
+
 > **Avance Bloque 1 (2026-11-06): motor puro + vectores.**
 > `CalculadoraPlanDart` en `lib/features/presupuesto/domain/services/` porta
 > `CalculadoraPlan.java` con `Decimal` (HALF_UP) y `porcentajeUsado` truncado

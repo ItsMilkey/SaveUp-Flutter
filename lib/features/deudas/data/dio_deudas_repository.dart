@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/network/api_client.dart';
 import '../../../core/network/json_reading.dart';
+import '../../../core/time/calendar_date.dart';
 import '../domain/deuda.dart';
 import '../domain/deudas_repository.dart';
 import '../domain/pago_deuda.dart';
@@ -62,6 +63,17 @@ class DioDeudasRepository implements DeudasRepository {
       () => client.put<dynamic>(
         '/deudas/$id',
         data: DeudaCreacionDto(deuda: deuda).toJson(),
+      ),
+    );
+    return parseJson(() => DeudaDto.fromJson(body));
+  }
+
+  @override
+  Future<Deuda> actualizarFechaPrimeraCuota(int id, CalendarDate fecha) async {
+    final Map<String, dynamic> body = await readObject(
+      () => client.patch<dynamic>(
+        '/deudas/$id/fecha-primera-cuota',
+        data: <String, Object?>{'fechaPrimeraCuota': fecha.toJson()},
       ),
     );
     return parseJson(() => DeudaDto.fromJson(body));

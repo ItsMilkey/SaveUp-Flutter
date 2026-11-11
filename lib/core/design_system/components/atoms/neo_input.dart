@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 /// Campo de texto neo-brutalista (la decoración vive en el tema).
 class NeoInput extends StatelessWidget {
@@ -23,6 +24,7 @@ class NeoInput extends StatelessWidget {
     this.autofocus = false,
     this.errorMaxLines,
     this.maxLength,
+    this.inputFormatters,
   });
 
   final TextEditingController? controller;
@@ -44,6 +46,7 @@ class NeoInput extends StatelessWidget {
   final bool autofocus;
   final int? errorMaxLines;
   final int? maxLength;
+  final List<TextInputFormatter>? inputFormatters;
 
   @override
   Widget build(BuildContext context) {
@@ -60,6 +63,7 @@ class NeoInput extends StatelessWidget {
       enabled: enabled,
       autofocus: autofocus,
       maxLength: maxLength,
+      inputFormatters: inputFormatters,
       decoration: InputDecoration(
         labelText: label,
         hintText: hint,

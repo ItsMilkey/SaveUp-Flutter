@@ -14,11 +14,15 @@ abstract interface class MovimientosRepository {
   });
 
   /// `POST /movimientos` (el signo lo impone el tipo en el backend).
+  ///
+  /// `partidaId` solo aplica a `GASTO_GENERAL`/`PAGO_DEUDA` y debe pertenecer
+  /// al mes del movimiento; el backend deriva la categoría de la partida.
   Future<void> registrar({
     required Decimal monto,
     required String descripcion,
     required MovimientoTipo tipo,
     int? categoriaId,
+    int? partidaId,
   });
 
   /// `PUT /movimientos/{id}`: edición **parcial**.

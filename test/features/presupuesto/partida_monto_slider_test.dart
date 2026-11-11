@@ -102,6 +102,7 @@ void main() {
           tipo: TipoPresupuesto.necesidad,
           monto: d('43500'),
           deudaId: 77,
+          deudaNombre: 'Crédito auto',
         ),
       ],
     );
@@ -128,6 +129,7 @@ void main() {
     await tester.pump();
 
     expect(find.byType(Slider), findsNothing);
+    expect(find.text('Deuda: Crédito auto'), findsOneWidget);
     expect(
       find.text('El monto lo define la cuota de la deuda.'),
       findsOneWidget,

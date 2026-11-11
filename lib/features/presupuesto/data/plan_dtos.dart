@@ -113,6 +113,7 @@ class PlanMensualDto {
           estadoCuota: estadoCuota,
           grupoId: _intOpt(p, 'grupoId'),
           deudaId: _intOpt(p, 'deudaId'),
+          deudaNombre: p['deudaNombre'] as String?,
           vinculoDesactualizado: p['vinculoDesactualizado'] == true,
           orden: _int(p, 'orden'),
           actualizadoEn: parseInstant(_string(p, 'actualizadoEn')),

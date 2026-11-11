@@ -18,6 +18,12 @@
 >   CAE. 230 tests verdes y `flutter analyze` limpio.
 > - Datos demo dejados a propósito: una deuda activa (para vincular partidas
 >   en F6a) y una cancelada; el pago demo deja saldo `-$10.000`.
+>
+> **Avance posterior (2026-11-11): vínculo con el plan.** El detalle permite
+> asociar la deuda a una partida del mes (`POST /planes/{mes}/partidas` con
+> `deudaId`) y el alta ofrece un switch; si falla, la deuda queda creada y se
+> avisa. `PATCH /deudas/{id}/fecha-primera-cuota` completa las fechas (también
+> con pagos) para habilitar el vínculo; el plan muestra `deudaNombre`.
 
 ## Objetivo
 Gestionar los pasivos del usuario (listar, crear/editar condiciones, pagar cuotas o abonos, ver
@@ -46,6 +52,9 @@ y `docs/contrato/openapi.json`. Reglas de negocio del backend: `backend/docs/tar
   `estado`, `montoPagado`, `previa`).
 - `PATCH /deudas/{deudaId}/cancelar` → `200 DeudaResponseDTO`
   (409 si la deuda ya está `PAGADA`; **no** genera movimiento ni mueve el saldo).
+- `PATCH /deudas/{deudaId}/fecha-primera-cuota` con `{fechaPrimeraCuota}` →
+  `200 DeudaResponseDTO` (posterior, T10d: fija el calendario sin tocar montos ni
+  condiciones, también con pagos; 409 si está cancelada).
 - `POST /simulaciones/credito` con `SimulacionCreditoRequestDTO` →
   `200 SimulacionCreditoResponseDTO` (sin persistencia).
 

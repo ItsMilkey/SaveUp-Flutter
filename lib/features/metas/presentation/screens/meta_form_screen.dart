@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/design_system/design_system.dart';
 import '../../../../core/money/money.dart';
+import '../../../../core/money/money_input_formatter.dart';
 import '../../../../core/time/calendar_date.dart';
 import '../../domain/meta_ahorro.dart';
 import '../controllers/meta_form_controller.dart';
@@ -35,7 +36,9 @@ class _MetaFormScreenState extends ConsumerState<MetaFormScreen> {
     final MetaAhorro? meta = widget.meta;
     if (meta != null) {
       _nombre.text = meta.nombre;
-      _montoObjetivo.text = meta.montoObjetivo?.toString() ?? '';
+      _montoObjetivo.text = meta.montoObjetivo == null
+          ? ''
+          : MoneyInputFormatter.format(meta.montoObjetivo!);
       _fechaLimite = meta.fechaLimite;
       _esPorDefecto = meta.esPorDefecto;
     }
@@ -123,6 +126,7 @@ class _MetaFormScreenState extends ConsumerState<MetaFormScreen> {
                   validator: _validarMonto,
                   label: 'Monto objetivo',
                   prefixIcon: Icons.flag_outlined,
+                  inputFormatters: moneyInputFormatters,
                   error: errorFor('montoObjetivo'),
                 ),
                 const SizedBox(height: AppSpacing.md),

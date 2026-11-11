@@ -67,6 +67,10 @@ abstract interface class DeudasRepository {
   /// `PUT /deudas/{id}` (mismo `DeudaCreacionDTO`).
   Future<Deuda> editar(int id, DeudaCreacion deuda);
 
+  /// `PATCH /deudas/{id}/fecha-primera-cuota`: fija el calendario sin tocar
+  /// montos ni condiciones (también con pagos registrados).
+  Future<Deuda> actualizarFechaPrimeraCuota(int id, CalendarDate fecha);
+
   /// `GET /deudas/{id}/amortizacion`.
   Future<List<CuotaAmortizacion>> amortizacion(int id);
 

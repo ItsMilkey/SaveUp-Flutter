@@ -34,6 +34,12 @@
 > (`-$15.000`). Swipe + diálogo en "supermercado": `Eliminar` borró la fila en
 > BD, saldo `-$5.000`; repetido con "comida": cuenta limpia ($0, 0
 > movimientos, tabla vacía).
+>
+> **Avance posterior (2026-11-11): pulido de UI.** Encabezado de marca centrado
+> (`NeoSliverAppBar`) y saludo con el nombre en Inicio; selector de categoría con
+> recientes/frecuentes, iconos y agrupación por tipo (respeta el contexto
+> GASTO/INGRESO del contrato); montos con separador de miles mientras se
+> escriben. Todo en `presentation`.
 
 ## Objetivo
 Que una persona autenticada vea su **saldo actual** y sus **movimientos paginados** con

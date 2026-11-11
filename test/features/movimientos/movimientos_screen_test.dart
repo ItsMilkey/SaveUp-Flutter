@@ -150,7 +150,7 @@ void main() {
     expect(find.text('Once'), findsNothing);
 
     // Llegar cerca del final dispara la siguiente página.
-    await tester.drag(find.byType(ListView), const Offset(0, -1200));
+    await tester.drag(find.byType(CustomScrollView), const Offset(0, -1200));
     await tester.pumpAndSettle();
 
     expect(find.text('Once'), findsOneWidget);
@@ -287,7 +287,15 @@ void main() {
     expect(find.text('Editar movimiento'), findsOneWidget);
     // Precarga del formulario (tipo fijo, monto absoluto, categoría).
     expect(find.text('Supermercado'), findsOneWidget);
-    expect(find.text('12500'), findsOneWidget);
+    expect(
+      tester
+          .widget<TextFormField>(
+            find.widgetWithText(TextFormField, 'Monto'),
+          )
+          .controller!
+          .text,
+      '12.500',
+    );
 
     await tester.enterText(
       find.widgetWithText(TextFormField, 'Descripción'),

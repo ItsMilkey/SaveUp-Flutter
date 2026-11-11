@@ -18,7 +18,7 @@ Copiar al repo (solo lectura, no editar a mano):
   backend (`PlanVectoresTest`). Si aumenta su `version`, los tests de la app deben fallar hasta
   portar los cambios.
 
-Si el backend cambia, se reemplazan esos dos archivos y se actualiza este documento.
+Si el backend cambia, se reemplazan esos cuatro archivos y se actualiza este documento.
 Ante contradicción entre este documento y el contrato, manda el contrato.
 
 ## Arquitectura
@@ -28,12 +28,17 @@ Ante contradicción entre este documento y el contrato, manda el contrato.
 - Capas transversales en `lib/core/`:
   - `network/`: cliente HTTP (Dio), interceptores, almacenamiento de tokens.
   - `errors/`: fallas de la app y su mapeo desde `application/problem+json`.
-  - `money/`: dinero con `Decimal` y su (de)serialización JSON.
+  - `money/`: dinero con `Decimal`, su (de)serialización JSON y el formateador de
+    entrada de montos.
   - `time/`: instantes UTC, fechas de calendario y zona de negocio.
+  - `design_system/`: tokens, tema claro/oscuro y componentes Neo (átomos, moléculas,
+    navegación y patrones). Las features importan solo el barrel; el sistema no
+    conoce ninguna feature ni contiene lógica de negocio.
 - Arranque: `lib/main.dart` (`ProviderScope` + `MaterialApp.router`).
 - Configuración: `lib/app/config.dart` (solo `--dart-define`, sin defaults).
 - Navegación: `lib/app/router.dart` (`go_router`, con redirección según sesión).
-- Tema: `lib/app/theme.dart` (Material 3 claro/oscuro con `ColorScheme.fromSeed`).
+- Tema: `lib/app/theme.dart` (delega en `SaveUpTheme` del design system; Material 3
+  claro/oscuro con tokens Neo).
 
 Regla de dependencias: `presentation` → `domain` ← `data`. `domain` no conoce Flutter ni
 Dio. Nada de lógica de negocio en widgets. El backend es la única fuente de aritmética
@@ -105,6 +110,11 @@ planificados se recalculan localmente durante el arrastre de sliders, con las f�
 
 - Registro: `rut` (`^\d{7,8}-[\dkK]$`, sin puntos, con guion), `nombre` y `apellido`
   (2–50), `email`, `contrasena`.
+- El campo RUT se formatea mientras se escribe (`RutInputFormatter`):
+  `123456789` → `12345678-9`, `12345678k` → `12345678-K`; limpia puntos y guiones,
+  deja la K en mayúscula y limita a cuerpo de 7–8 dígitos + DV. `normalizeRut`
+  agrega el guion a un cuerpo de 7 u 8 dígitos, con o sin K final, y el validador
+  exige el formato anterior más el dígito verificador (módulo 11).
 - **Política de contraseña** (registro, cambio y restablecimiento; el login NO la valida):
   8–64 caracteres, al menos una letra y un número, máximo 72 bytes en UTF-8 (tildes y 'ñ'
   pesan 2 bytes).
@@ -152,6 +162,12 @@ Un `codigo` desconocido cae en una falla genérica conservando status y `detail`
 - Porcentajes y tasas llegan **en porcentaje** (`1.5` = 1,5 %). No dividir ni multiplicar por 100.
 - Presentación en CLP sin decimales: `$1.234.567`. Es solo formato; el valor interno conserva
   sus decimales. TODO: confirmar con producto si se muestran centavos en algún caso.
+- **Entrada de montos:** todos los campos de dinero usan `MoneyInputFormatter`
+  (`moneyInputFormatters`): agrupa miles con punto mientras se escribe (`1000` →
+  `1.000`), acepta coma decimal con máximo 2 decimales (`1000.50` → `1.000,50`) y al
+  editar precarga el valor con `MoneyInputFormatter.format`. `Money.parseUserInput`
+  acepta el texto ya formateado. Las tasas y porcentajes no usan este formateador
+  porque no son dinero.
 
 ## Fechas y zonas horarias
 
@@ -182,7 +198,9 @@ Un `codigo` desconocido cae en una falla genérica conservando status y `detail`
   `ambigua=true` si la 1ª y la 2ª difieren en menos de 0.10), `PUT /categorias/{id}/tipo-preferido`,
   `GET /categorias/preferencias`.
 - **Deudas:** `POST /deudas`, `GET /deudas/me`, `GET/PUT /deudas/{id}`, `POST /deudas/{id}/pagar`,
-  `GET /deudas/{id}/pagos`, `GET /deudas/{id}/amortizacion`, `PATCH /deudas/{id}/cancelar`.
+  `GET /deudas/{id}/pagos`, `GET /deudas/{id}/amortizacion`, `PATCH /deudas/{id}/cancelar`,
+  `PATCH /deudas/{id}/fecha-primera-cuota` (fija el calendario sin cambiar montos ni
+  condiciones, incluso con pagos; la última cuota se deriva al leer).
 - **Simulador:** `POST /simulaciones/credito` (no persiste).
 - **Presupuesto:** `GET/POST /presupuestos/me`, `GET/PUT /presupuestos/categorias/me`,
   `GET /presupuestos/{ejecucion,historial}/me`, `GET /presupuestos/categorias/ejecucion/me`,
@@ -193,6 +211,7 @@ Un `codigo` desconocido cae en una falla genérica conservando status y `detail`
   1 a 100 cambios, "todo o nada"; responde el plan completo; 409 sobre partidas vinculadas
   a deuda), `PUT /planes/{mes}/ingreso-referencia`, `POST /planes/{mes}/copiar-desde/{mesOrigen}`
   (los avisos van en `avisos[]`), `GET/POST /planes/grupos`, `PUT/DELETE /planes/grupos/{id}`.
+  Las partidas traen `deudaNombre` cuando están vinculadas a una deuda.
 - **Metas:** `POST /metas`, `GET /metas/me`, `PUT/DELETE /metas/{id}`, `POST /metas/{id}/{abonar,retirar}`.
 - **Reportes:** `GET /reportes/movimientos/exportar` (bytes + `Content-Disposition`).
 - **Push:** `GET/POST/DELETE /notificaciones/dispositivos`. (`/notificaciones/recordatorios/ejecutar`
@@ -220,6 +239,45 @@ Un `codigo` desconocido cae en una falla genérica conservando status y `detail`
   en la suite de tests. Al soltar el slider: `PATCH /planes/{mes}/montos` y el estado local se
   reemplaza por el plan que devuelve el servidor. Tope del slider:
   `monto actual + max(remanenteLibre, 0)`; sobreasignar es válido con aviso informativo.
+- **D7 — Pago desde la partida.** La tarjeta de una partida general del mes actual ofrece
+  **Pagar**: registra un `GASTO_GENERAL` con `partidaId` (`POST /movimientos`, contrato ya
+  existente) y recarga el plan. El monto se precarga con `planificado − real` y es editable
+  (permite pagos parciales). El estado **Pagado** no se persiste: se deriva de
+  `real ≥ planificado` (tarjeta verde, slider congelado y botón reemplazado por el cartel);
+  si se borra el movimiento, la partida vuelve sola a pendiente. Las partidas vinculadas a
+  una deuda y los meses distintos al actual no muestran el botón.
+- **D8 — Asociar una deuda a una partida.** Desde el detalle de una deuda (junto al estado) se
+  puede crear la partida del mes en curso; el alta de deuda ofrece la misma opción con un switch
+  (desactivado por defecto). Usa `POST /planes/{mes}/partidas` con `deudaId` y, si falla, la deuda
+  queda creada igual y el aviso se muestra al volver. La partida vinculada muestra `deudaNombre`
+  (campo aditivo del contrato) en el plan; si la deuda no tiene cuota en el mes, el backend
+  responde 409 y se muestra su `detail`. La asociación exige que la deuda tenga cuotas con fecha
+  (`fechaPrimeraCuota`): el alta solo habilita el switch con el plazo "Por fechas". Si la deuda no
+  tiene fechas, el detalle ofrece **Agregar fechas**: `PATCH /deudas/{id}/fecha-primera-cuota`
+  (también con pagos; no toca montos ni condiciones) y sugiere la primera cuota para que la próxima
+  impaga caiga en el mes actual.
+- **D9 — Formato de entrada de dinero y RUT (solo presentación).** Todos los campos de
+  dinero usan `MoneyInputFormatter` (`moneyInputFormatters`, en `core/money/`): agrupa
+  miles con punto mientras se escribe (`1000` → `1.000`), acepta coma decimal con hasta
+  2 decimales y al editar precarga el valor con `MoneyInputFormatter.format`; las tasas y
+  porcentajes no lo usan. El RUT usa `RutInputFormatter`
+  (`features/auth/presentation/`): `123456789` → `12345678-9`, `12345678k` →
+  `12345678-K`, limpia puntos/guiones y limita a 7–8 dígitos más DV. `normalizeRut` cubre
+  cuerpos de 7 y 8 dígitos, con o sin K. No cambia lo que se envía al backend.
+- **D10 — Selector de categoría con uso e iconos.** El alta y la edición de movimientos
+  eligen la categoría en una hoja inferior con `Recientes` (las 4 más recientes del mismo
+  tipo) y `Frecuentes` (hasta 4 con 2 o más usos, solo cuando hay al menos 5 movimientos
+  del tipo), y luego el catálogo agrupado en Necesidades/Deseos/Ahorro/Otros con icono y
+  color. Respeta el contexto del contrato: ingreso solo SUELDO/OTROS; gasto excluye
+  SUELDO/AHORRO. Las sugerencias del backend conservan su icono. Usa los movimientos ya
+  cargados, así que no agrega peticiones.
+- **D11 — Presentación del plan y la regla.** El inicio usa `NeoSliverAppBar` con la marca
+  centrada y un saludo con el nombre; las secciones del plan se pliegan por grupo (el
+  estado de plegado vive solo en memoria) y el resumen muestra la guía del presupuesto con
+  un CTA a Presupuesto. En la regla, la suma se muestra como estado (válida/inválida), los
+  interruptores tienen ayuda contextual en un diálogo y cada porcentaje se edita con hasta
+  2 decimales; el resto se rebalancea para sumar 100.00. Son cambios de `presentation` y no
+  alteran cálculos ni contrato.
 
 ## Pendientes / fuera del alcance actual
 

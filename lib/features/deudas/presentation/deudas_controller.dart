@@ -3,13 +3,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/errors/app_failure.dart';
 import '../../../core/errors/failure_messages.dart';
+import '../../../core/time/business_month.dart';
+import '../../../core/time/calendar_date.dart';
 import '../../movimientos/presentation/movimientos_controller.dart';
+import '../../presupuesto/data/dio_plan_mensual_repository.dart';
 import '../data/dio_deudas_repository.dart';
 import '../data/dio_simulador_repository.dart';
 import '../domain/deuda.dart';
 import '../domain/deudas_repository.dart';
 import '../domain/pago_deuda.dart';
 import '../domain/simulacion.dart';
+import 'deuda_partida_controller.dart';
 
 /// Listado de deudas (todas; la pantalla separa activas/historial).
 final AsyncNotifierProvider<DeudasController, List<Deuda>> deudasProvider =
@@ -77,9 +81,13 @@ class DeudaFormError extends DeudaFormUiState {
 }
 
 class DeudaFormSuccess extends DeudaFormUiState {
-  const DeudaFormSuccess(this.deuda);
+  const DeudaFormSuccess(this.deuda, {this.avisoPartida});
 
   final Deuda deuda;
+
+  /// Si se pidió crear la partida del plan y falló, mensaje para mostrar al
+  /// volver (la deuda sí quedó creada).
+  final String? avisoPartida;
 }
 
 final NotifierProvider<DeudaFormController, DeudaFormUiState>
@@ -97,7 +105,15 @@ class DeudaFormController extends Notifier<DeudaFormUiState> {
 
   /// Crea (`id == null`) o edita una deuda. El backend responde 409 si la
   /// deuda ya tiene pagos y se intentan cambiar las condiciones.
-  Future<void> submit({required DeudaCreacion deuda, int? id}) async {
+  ///
+  /// Al crear, [crearPartida] asocia la deuda al plan del mes en curso
+  /// (`POST /planes/{mes}/partidas` con `deudaId`). Si esa asociación falla,
+  /// la deuda igual queda creada y el aviso viaja en [DeudaFormSuccess].
+  Future<void> submit({
+    required DeudaCreacion deuda,
+    int? id,
+    bool crearPartida = false,
+  }) async {
     if (state is DeudaFormSubmitting) {
       return;
     }
@@ -107,7 +123,26 @@ class DeudaFormController extends Notifier<DeudaFormUiState> {
       final Deuda resultado = id == null
           ? await repository.crear(deuda)
           : await repository.editar(id, deuda);
-      state = DeudaFormSuccess(resultado);
+      String? avisoPartida;
+      if (id == null && crearPartida) {
+        try {
+          final String mes = BusinessMonth.fromInstant(
+            DateTime.now(),
+          ).toString();
+          await ref
+              .read(planMensualRepositoryProvider)
+              .crearPartida(
+                mes,
+                nombre: resultado.nombre,
+                deudaId: resultado.id,
+              );
+        } on AppFailure catch (failure) {
+          avisoPartida =
+              'La deuda se creó, pero no se pudo crear la partida: '
+              '${failureMessage(failure)}';
+        }
+      }
+      state = DeudaFormSuccess(resultado, avisoPartida: avisoPartida);
     } on ValidationFailure catch (failure) {
       state = _fieldErrors(failure.errors);
     } on AppFailure catch (failure) {
@@ -195,6 +230,45 @@ class DeudaAccionesController extends Notifier<AsyncValue<void>> {
       return null;
     } on AppFailure catch (failure, stack) {
       state = AsyncError<void>(failure, stack);
+      return failure;
+    }
+  }
+
+  /// Crea la partida del mes en curso vinculada a la deuda.
+  ///
+  /// El backend decide si la deuda tiene una cuota que venza en el mes y
+  /// devuelve 409 si no; ese detalle se muestra tal cual en el diálogo.
+  Future<AppFailure?> asociarPartida(
+    int deudaId, {
+    required String nombre,
+  }) async {
+    try {
+      final String mes = BusinessMonth.fromInstant(DateTime.now()).toString();
+      await ref
+          .read(planMensualRepositoryProvider)
+          .crearPartida(mes, nombre: nombre, deudaId: deudaId);
+      ref.invalidate(partidaDeDeudaProvider(deudaId));
+      return null;
+    } on AppFailure catch (failure) {
+      return failure;
+    }
+  }
+
+  /// Fija la fecha de la primera cuota (también con pagos) y refresca el
+  /// detalle y el cronograma.
+  Future<AppFailure?> actualizarFechaPrimeraCuota(
+    int deudaId,
+    CalendarDate fecha,
+  ) async {
+    try {
+      await ref
+          .read(deudasRepositoryProvider)
+          .actualizarFechaPrimeraCuota(deudaId, fecha);
+      ref.invalidate(deudaDetalleProvider(deudaId));
+      ref.invalidate(amortizacionProvider(deudaId));
+      ref.invalidate(deudasProvider);
+      return null;
+    } on AppFailure catch (failure) {
       return failure;
     }
   }

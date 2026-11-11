@@ -13,6 +13,8 @@ import '../../../core/errors/failure_messages.dart';
 import '../../../core/money/money.dart';
 import '../../../core/time/calendar_date.dart';
 import '../../../core/time/time_zones.dart';
+import '../../auth/domain/auth_session.dart';
+import '../../auth/presentation/auth_controllers.dart';
 import '../domain/movimiento.dart';
 import '../domain/movimiento_filtro.dart';
 import '../domain/movimiento_tipo.dart';
@@ -73,24 +75,39 @@ class _MovimientosScreenState extends ConsumerState<MovimientosScreen> {
     final MovimientosState estado = ref.watch(movimientosProvider);
 
     return NeoScaffold(
-      appBar: const NeoAppBar(title: AppConfig.appName),
       body: RefreshIndicator(
         onRefresh: () => ref.read(movimientosProvider.notifier).refrescar(),
-        child: ListView(
+        child: CustomScrollView(
           controller: _scroll,
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.fromLTRB(
-            AppSpacing.lg,
-            AppSpacing.lg,
-            AppSpacing.lg,
-            AppSpacing.xxxl * 3,
-          ),
-          children: <Widget>[
-            _TarjetaSaldo(estado: estado),
-            const SizedBox(height: AppSpacing.lg),
-            _Filtros(estado: estado),
-            const SizedBox(height: AppSpacing.sm),
-            ..._contenido(context, estado),
+          slivers: <Widget>[
+            const NeoSliverAppBar(
+              title: AppConfig.appName,
+              brand: true,
+              centerTitle: true,
+              floating: true,
+              snap: true,
+              toolbarHeight: 64,
+            ),
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.lg,
+                AppSpacing.lg,
+                AppSpacing.lg,
+                AppSpacing.xxxl * 3,
+              ),
+              sliver: SliverList(
+                delegate: SliverChildListDelegate(<Widget>[
+                  const _Saludo(),
+                  const SizedBox(height: AppSpacing.md),
+                  _TarjetaSaldo(estado: estado),
+                  const SizedBox(height: AppSpacing.lg),
+                  _Filtros(estado: estado),
+                  const SizedBox(height: AppSpacing.sm),
+                  ..._contenido(context, estado),
+                ]),
+              ),
+            ),
           ],
         ),
       ),
@@ -162,6 +179,47 @@ class _MovimientosScreenState extends ConsumerState<MovimientosScreen> {
       businessTimeZone,
     );
     return _fechaVisible.format(local);
+  }
+}
+
+/// Saludo personalizado sobre la tarjeta de saldo.
+class _Saludo extends ConsumerWidget {
+  const _Saludo();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final AuthSession session = ref.watch(authSessionProvider);
+    if (session is! SessionAuthenticated) {
+      return const SizedBox.shrink();
+    }
+    final String nombre = session.user.nombre.trim();
+    if (nombre.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    final SaveUpColors colors = Theme.of(context).extension<SaveUpColors>()!;
+    return Text.rich(
+      TextSpan(
+        children: <InlineSpan>[
+          TextSpan(
+            text: '¡Hola, ',
+            style: AppTypography.display(size: 26, color: colors.ink),
+          ),
+          TextSpan(
+            text: nombre,
+            style: AppTypography.display(
+              size: 26,
+              color: AppColors.magenta,
+            ),
+          ),
+          TextSpan(
+            text: '!',
+            style: AppTypography.display(size: 26, color: colors.ink),
+          ),
+        ],
+      ),
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+    );
   }
 }
 
@@ -249,8 +307,8 @@ class _TarjetaSaldo extends ConsumerWidget {
           Row(
             children: <Widget>[
               Container(
-                width: 36,
-                height: 36,
+                width: 40,
+                height: 40,
                 decoration: BoxDecoration(
                   color: colors.surface,
                   borderRadius: AppRadii.smAll,
@@ -261,7 +319,7 @@ class _TarjetaSaldo extends ConsumerWidget {
                 ),
                 child: const Icon(
                   Icons.account_balance_wallet,
-                  size: 20,
+                  size: 22,
                   color: AppColors.ink,
                 ),
               ),
@@ -270,9 +328,9 @@ class _TarjetaSaldo extends ConsumerWidget {
                 child: Text(
                   'Saldo disponible',
                   style: AppTypography.text(
-                    size: 12,
+                    size: 17,
                     weight: FontWeight.w700,
-                    letterSpacing: 0.5,
+                    letterSpacing: 0.2,
                     color: AppColors.ink,
                   ),
                 ),
