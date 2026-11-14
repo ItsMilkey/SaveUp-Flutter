@@ -46,6 +46,7 @@ class AppShell extends ConsumerWidget {
           label: 'Más',
           icon: Icons.grid_view_outlined,
           selectedIcon: Icons.grid_view,
+          dragSelectable: false,
         ),
       ];
 

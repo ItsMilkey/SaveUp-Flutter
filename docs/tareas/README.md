@@ -41,5 +41,7 @@ Al terminar, marcar aquí con `[x]`.
   categorías con `fl_chart`; entrada desde «Más»)
 - [x] **F11** asignaciones del ahorro a metas — `F11-asignaciones-presupuesto.md`
   (completa: sección «Distribución del ahorro» con `GET`/`POST`, autobalanceo a 100.00 y tests)
+- [x] **F12** navegación flotante neo brutalista, indicador elevado, selección por toque/arrastre,
+  accesibilidad y movimiento reducido — `F12-navegacion.md`
 
 Las tareas F2 en adelante se redactan cuando se acerque su turno, con el contrato real a mano.

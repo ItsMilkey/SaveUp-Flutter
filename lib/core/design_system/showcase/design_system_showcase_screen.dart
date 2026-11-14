@@ -483,6 +483,7 @@ class _DesignSystemShowcaseScreenState
                         label: 'Más',
                         icon: Icons.grid_view_outlined,
                         selectedIcon: Icons.grid_view,
+                        dragSelectable: false,
                       ),
                     ],
                     selectedIndex: _navIndex,

@@ -287,6 +287,13 @@ Un `codigo` desconocido cae en una falla genérica conservando status y `detail`
   del alta provienen de `DeudaResponseDTO`. Los formularios básico y avanzado mantienen valores
   separados al alternar. La opción de crear partida solo aparece con calendario y sigue siendo
   una operación posterior: si falla, la deuda permanece y se conserva el aviso existente.
+- **D13 — Navegación inferior flotante y deslizante.** `NeoBottomNav` mantiene los destinos y
+  recibe la selección confirmada desde `AppShell.location`; el indicador elevado y el icono
+  ampliado son animaciones efímeras de presentación. Tocar navega de inmediato; arrastrar por
+  los cuatro destinos reales previsualiza y navega una vez al soltar. `Más` sigue siendo una
+  acción por toque, no un destino ni una parada del gesto. Semantics ofrece botón/etiqueta/estado
+  seleccionado y el arrastre no es requisito de accesibilidad. Se respetan `AppMotion`, temas
+  claro/oscuro y `MediaQuery.disableAnimations`; no cambia el `ShellRoute` ni el backend.
 
 ## Pendientes / fuera del alcance actual
 
