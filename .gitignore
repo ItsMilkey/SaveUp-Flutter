@@ -51,3 +51,6 @@ app.*.map.json
 
 # Widget Preview related
 .widget_preview/
+
+# Salida de fallos de golden tests
+**/failures/
