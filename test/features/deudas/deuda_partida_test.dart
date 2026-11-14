@@ -212,9 +212,11 @@ void main() {
     expect(planRepo.partidasCreadas.single['mes'], mesActual());
   });
 
-  testWidgets('la opción de partida exige cuotas con fecha', (
+  testWidgets('la opción de partida solo aparece si hay calendario', (
     WidgetTester tester,
   ) async {
+    tester.view.physicalSize = const Size(1000, 1800);
+    tester.view.devicePixelRatio = 1;
     await tester.pumpWidget(
       ProviderScope(
         child: MaterialApp(
@@ -225,36 +227,32 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    final Finder switchFinder = find.widgetWithText(
-      SwitchListTile,
-      'Crear partida en el plan de ${mesActual()}',
-    );
-    await tester.scrollUntilVisible(
-      switchFinder,
-      200,
-      scrollable: find.byType(Scrollable).first,
-    );
-    // Por cuotas: la opción está deshabilitada.
-    expect(tester.widget<SwitchListTile>(switchFinder).value, isFalse);
-    expect(tester.widget<SwitchListTile>(switchFinder).onChanged, isNull);
+    final Finder switchFinder = find.byType(SwitchListTile);
+    expect(switchFinder, findsNothing);
 
-    await tester.scrollUntilVisible(
-      find.text('Por fechas'),
-      -200,
-      scrollable: find.byType(Scrollable).first,
-    );
-    await tester.tap(find.text('Por fechas'));
+    final Finder fechaFinder = find.text('Primera cuota (opcional)');
+    await tester.ensureVisible(fechaFinder);
+    await tester.tap(fechaFinder);
     await tester.pumpAndSettle();
+    await tester.tap(find.text('OK'));
+    await tester.pumpAndSettle();
+    expect(switchFinder, findsOneWidget);
 
     await tester.scrollUntilVisible(
       switchFinder,
       200,
       scrollable: find.byType(Scrollable).first,
     );
-    expect(tester.widget<SwitchListTile>(switchFinder).onChanged, isNotNull);
-
     await tester.tap(switchFinder);
     await tester.pumpAndSettle();
     expect(tester.widget<SwitchListTile>(switchFinder).value, isTrue);
+
+    await tester.ensureVisible(find.text('Quitar fecha'));
+    await tester.tap(find.text('Quitar fecha'));
+    await tester.pumpAndSettle();
+    expect(switchFinder, findsNothing);
+
+    tester.view.resetPhysicalSize();
+    tester.view.resetDevicePixelRatio();
   });
 }

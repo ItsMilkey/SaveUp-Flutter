@@ -150,11 +150,15 @@ class DeudaFormController extends Notifier<DeudaFormUiState> {
     }
   }
 
-  DeudaFormFieldErrors _fieldErrors(List<FieldError> errors) {    const Set<String> known = <String>{
+  DeudaFormFieldErrors _fieldErrors(List<FieldError> errors) {
+    const Set<String> known = <String>{
       'nombre',
       'descripcion',
       'tipoDeuda',
       'cuotasPagadasPrevias',
+      'cuotaFija.valorCuota',
+      'cuotaFija.cantidadCuotas',
+      'cuotaFija.fechaPrimeraCuota',
       'condiciones.montoCapital',
       'condiciones.cantidadCuotas',
       'condiciones.fechaPrimeraCuota',

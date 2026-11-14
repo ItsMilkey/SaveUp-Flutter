@@ -24,6 +24,12 @@
 > `deudaId`) y el alta ofrece un switch; si falla, la deuda queda creada y se
 > avisa. `PATCH /deudas/{id}/fecha-primera-cuota` completa las fechas (también
 > con pagos) para habilitar el vínculo; el plan muestra `deudaNombre`.
+>
+> **Avance (2026-11-14): alta básica de cuota fija (F3 del plan de deuda).** El alta parte en
+> modo Básico y envía solo `cuotaFija` más metadatos permitidos; no calcula ni envía el total.
+> Avanzado y edición conservan el formulario de condiciones actual. La respuesta del backend
+> alimenta el resumen de cuota, total y plazo. Alternar conserva los datos de ambos modos y la
+> asociación a partida sigue dependiendo de que exista calendario.
 
 ## Objetivo
 Gestionar los pasivos del usuario (listar, crear/editar condiciones, pagar cuotas o abonos, ver
@@ -122,7 +128,15 @@ Query `page`/`size` solo en pagos. Errores ya traducidos por `ApiClient`.
   mostrar el mensaje), **Cancelar** (diálogo defensivo, `PATCH cancelar`).
 
 ### 5. Alta/edición — `/deudas/nueva` y `/deudas/{id}/editar`
-Formulario con el mismo `DeudaCreacionDTO`:
+En alta, el selector `Básico/Avanzado` inicia en Básico. Básico conserva nombre, descripción
+opcional y tipo, y pide monto por cuota, cantidad (1–360) y fecha opcional de primera cuota; la
+ayuda indica explícitamente que es una cuota fija sin interés adicional. Envía `cuotaFija` y no
+envía `condiciones`, `montoTotal` ni `cuotasPagadasPrevias`. No calcula el total: el resumen tras
+crear muestra `valorCuota`, `montoTotal` y `cantidadCuotas` de la respuesta del servidor.
+Avanzado conserva las modalidades y condiciones descritas abajo. La edición no muestra el
+selector y permanece en el flujo avanzado.
+
+Formulario avanzado con el mismo `DeudaCreacionDTO`:
 nombre, descripción, tipo; **modalidad** (`SIN_INTERES`, `TASA_CONOCIDA`, `CUOTA_CONOCIDA`);
 `montoCapital`; plazo por **cuotas** o por **fechas** (exactamente una vía);
 tasa mensual **o** anual (una sola, en %); `valorCuota` (solo CUOTA_CONOCIDA);
@@ -155,8 +169,9 @@ reparte por campo (`errores[]`). Al 200: volver al detalle/lista con la deuda ac
 - Listado: progreso y próxima cuota, separación activas/canceladas.
 - Detalle: cronograma con estados, historial paginado sin duplicados, pago refresca la ficha
   (y el saldo al volver), cancelar exige confirmación.
-- Formulario: reglas por modalidad/plazo (validaciones locales y del backend), 409 al editar
-  con pagos.
+- Formulario: modo Básico inicial solo en alta, validación de cuota/plazo, payload exacto de
+  `cuotaFija`, resumen con valores de la respuesta; modo avanzado conserva modalidades/plazos;
+  alternar no borra los valores de cada modo; 409 al editar con pagos.
 - Simulador: reglas cruzadas del request, render de tabla/comparación/advertencias.
 
 ## Seguridad

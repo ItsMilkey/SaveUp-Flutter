@@ -221,6 +221,8 @@ void main() {
     // Alta.
     await tester.tap(find.text('Nueva deuda'));
     await tester.pumpAndSettle();
+    await tester.tap(find.text('Avanzado'));
+    await tester.pumpAndSettle();
     await tester.enterText(
       find.widgetWithText(TextFormField, 'Nombre'),
       'Crédito test',

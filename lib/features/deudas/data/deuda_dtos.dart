@@ -89,35 +89,48 @@ class DeudaCreacionDto {
   final DeudaCreacion deuda;
 
   Map<String, Object?> toJson() {
-    final CondicionesCredito condiciones = deuda.condiciones;
+    final CondicionesCredito? condiciones = deuda.condiciones;
+    final CuotaFija? cuotaFija = deuda.cuotaFija;
+    if ((condiciones == null) == (cuotaFija == null)) {
+      throw ArgumentError('La deuda debe tener una sola entrada financiera.');
+    }
     return <String, Object?>{
       'nombre': deuda.nombre,
       if (deuda.descripcion != null && deuda.descripcion!.isNotEmpty)
         'descripcion': deuda.descripcion,
       'tipoDeuda': deuda.tipo.codigo,
-      'cuotasPagadasPrevias': deuda.cuotasPagadasPrevias,
-      'condiciones': <String, Object?>{
-        'modalidad': condiciones.modalidad.codigo,
-        'montoCapital': moneyToJson(condiciones.montoCapital),
-        if (condiciones.cantidadCuotas != null)
-          'cantidadCuotas': condiciones.cantidadCuotas,
-        if (condiciones.fechaPrimeraCuota != null)
-          'fechaPrimeraCuota': condiciones.fechaPrimeraCuota!.toJson(),
-        if (condiciones.fechaUltimaCuota != null)
-          'fechaUltimaCuota': condiciones.fechaUltimaCuota!.toJson(),
-        if (condiciones.tasaMensual != null)
-          'tasaMensual': moneyToJson(condiciones.tasaMensual!),
-        if (condiciones.tasaAnualEfectiva != null)
-          'tasaAnualEfectiva': moneyToJson(condiciones.tasaAnualEfectiva!),
-        if (condiciones.valorCuota != null)
-          'valorCuota': moneyToJson(condiciones.valorCuota!),
-        if (condiciones.gastosIniciales != null)
-          'gastosIniciales': moneyToJson(condiciones.gastosIniciales!),
-        if (condiciones.costoAdicionalPorCuota != null)
-          'costoAdicionalPorCuota': moneyToJson(
-            condiciones.costoAdicionalPorCuota!,
-          ),
-      },
+      if (condiciones != null)
+        'cuotasPagadasPrevias': deuda.cuotasPagadasPrevias,
+      if (cuotaFija != null)
+        'cuotaFija': <String, Object?>{
+          'valorCuota': moneyToJson(cuotaFija.valorCuota),
+          'cantidadCuotas': cuotaFija.cantidadCuotas,
+          if (cuotaFija.fechaPrimeraCuota != null)
+            'fechaPrimeraCuota': cuotaFija.fechaPrimeraCuota!.toJson(),
+        },
+      if (condiciones != null)
+        'condiciones': <String, Object?>{
+          'modalidad': condiciones.modalidad.codigo,
+          'montoCapital': moneyToJson(condiciones.montoCapital),
+          if (condiciones.cantidadCuotas != null)
+            'cantidadCuotas': condiciones.cantidadCuotas,
+          if (condiciones.fechaPrimeraCuota != null)
+            'fechaPrimeraCuota': condiciones.fechaPrimeraCuota!.toJson(),
+          if (condiciones.fechaUltimaCuota != null)
+            'fechaUltimaCuota': condiciones.fechaUltimaCuota!.toJson(),
+          if (condiciones.tasaMensual != null)
+            'tasaMensual': moneyToJson(condiciones.tasaMensual!),
+          if (condiciones.tasaAnualEfectiva != null)
+            'tasaAnualEfectiva': moneyToJson(condiciones.tasaAnualEfectiva!),
+          if (condiciones.valorCuota != null)
+            'valorCuota': moneyToJson(condiciones.valorCuota!),
+          if (condiciones.gastosIniciales != null)
+            'gastosIniciales': moneyToJson(condiciones.gastosIniciales!),
+          if (condiciones.costoAdicionalPorCuota != null)
+            'costoAdicionalPorCuota': moneyToJson(
+              condiciones.costoAdicionalPorCuota!,
+            ),
+        },
     };
   }
 }

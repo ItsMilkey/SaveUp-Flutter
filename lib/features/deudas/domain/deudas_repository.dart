@@ -36,6 +36,19 @@ class CondicionesCredito {
   final Decimal? costoAdicionalPorCuota;
 }
 
+/// Entrada básica de cuota fija sin interés adicional (`CuotaFijaInput`).
+class CuotaFija {
+  const CuotaFija({
+    required this.valorCuota,
+    required this.cantidadCuotas,
+    this.fechaPrimeraCuota,
+  });
+
+  final Decimal valorCuota;
+  final int cantidadCuotas;
+  final CalendarDate? fechaPrimeraCuota;
+}
+
 /// Datos de creación/edición (`DeudaCreacionDTO`).
 class DeudaCreacion {
   const DeudaCreacion({
@@ -43,14 +56,20 @@ class DeudaCreacion {
     this.descripcion,
     required this.tipo,
     this.cuotasPagadasPrevias = 0,
-    required this.condiciones,
+    this.condiciones,
+    this.cuotaFija,
   });
 
   final String nombre;
   final String? descripcion;
   final TipoDeuda tipo;
   final int cuotasPagadasPrevias;
-  final CondicionesCredito condiciones;
+
+  /// Solo presente para alta/edición avanzada.
+  final CondicionesCredito? condiciones;
+
+  /// Solo presente para la entrada básica de cuota fija.
+  final CuotaFija? cuotaFija;
 }
 
 /// Contrato de datos de deudas (F4; los pagos llegan en la fase 2).

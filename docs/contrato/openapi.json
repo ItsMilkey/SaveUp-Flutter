@@ -1260,6 +1260,7 @@
       "put" : {
         "tags" : [ "Deudas" ],
         "summary" : "Edita una deuda existente",
+        "description" : "Acepta exactamente una entrada financiera: condiciones, el formato histórico montoTotal + cantidadCuotas, o cuotaFija {valorCuota, cantidadCuotas, fechaPrimeraCuota?}. No combines estas formas: responde 400 VALIDACION_FALLIDA con errores[] y los campos en conflicto. Un total derivado fuera del máximo señala cuotaFija.valorCuota. cuotaFija representa SIN_INTERES y no admite cuotas pagadas previas. El total derivado no puede superar 9.999.999.999.999,99. Las condiciones financieras no se pueden cambiar si la deuda ya tiene pagos (409 CONFLICTO_REGLA_NEGOCIO).",
         "operationId" : "editarDeuda",
         "parameters" : [ {
           "name" : "deudaId",
@@ -2555,8 +2556,8 @@
           "required" : true
         },
         "responses" : {
-          "200" : {
-            "description" : "El dispositivo ya existía y se refrescó",
+          "201" : {
+            "description" : "Dispositivo registrado",
             "content" : {
               "application/json" : {
                 "schema" : {
@@ -2565,8 +2566,8 @@
               }
             }
           },
-          "201" : {
-            "description" : "Dispositivo registrado",
+          "200" : {
+            "description" : "El dispositivo ya existía y se refrescó",
             "content" : {
               "application/json" : {
                 "schema" : {
@@ -3114,6 +3115,7 @@
       "post" : {
         "tags" : [ "Deudas" ],
         "summary" : "Registra una deuda del usuario autenticado",
+        "description" : "Usa exactamente una entrada financiera: condiciones, el formato histórico montoTotal + cantidadCuotas, o cuotaFija {valorCuota, cantidadCuotas, fechaPrimeraCuota?}. No combines estas formas: responde 400 VALIDACION_FALLIDA con errores[] y los campos en conflicto. Un total derivado fuera del máximo señala cuotaFija.valorCuota. cuotaFija representa SIN_INTERES y no admite cuotas pagadas previas. El total derivado no puede superar 9.999.999.999.999,99.",
         "operationId" : "crearDeuda",
         "requestBody" : {
           "content" : {
@@ -6683,10 +6685,40 @@
             "description" : "Costo adicional cobrado en cada cuota, con escala 2."
           }
         },
-        "description" : "Condiciones del crédito. Obligatorio en la práctica para calcular la tabla."
+        "description" : "Entrada avanzada de condiciones del crédito. Mutuamente excluyente con cuotaFija y con el formato histórico montoTotal/cantidadCuotas."
+      },
+      "CuotaFijaInput" : {
+        "required" : [ "cantidadCuotas", "valorCuota" ],
+        "type" : "object",
+        "properties" : {
+          "valorCuota" : {
+            "maximum" : 9.99999999999999E12,
+            "minimum" : 0.01,
+            "type" : "number",
+            "description" : "Monto fijo que se paga en cada período, con escala 2."
+          },
+          "cantidadCuotas" : {
+            "maximum" : 360,
+            "minimum" : 1,
+            "type" : "integer",
+            "description" : "Cantidad total de cuotas, entre 1 y 360.",
+            "format" : "int32"
+          },
+          "fechaPrimeraCuota" : {
+            "type" : "string",
+            "description" : "Fecha opcional de vencimiento de la primera cuota, formato yyyy-MM-dd.",
+            "format" : "date"
+          }
+        },
+        "description" : "Entrada básica de monto fijo por cuota y plazo, sin intereses ni costos separados.",
+        "example" : {
+          "valorCuota" : 15000.0,
+          "cantidadCuotas" : 24,
+          "fechaPrimeraCuota" : "2026-12-05"
+        }
       },
       "DeudaCreacionDTO" : {
-        "required" : [ "cantidadCuotas", "montoTotal", "nombre" ],
+        "required" : [ "nombre" ],
         "type" : "object",
         "properties" : {
           "nombre" : {
@@ -6712,17 +6744,20 @@
           "condiciones" : {
             "$ref" : "#/components/schemas/CondicionesCreditoInput"
           },
+          "cuotaFija" : {
+            "$ref" : "#/components/schemas/CuotaFijaInput"
+          },
           "montoTotal" : {
             "type" : "number",
-            "description" : "Monto total a pagar, con escala 2."
+            "description" : "Formato histórico: total a pagar, con escala 2. Se usa junto con cantidadCuotas y es mutuamente excluyente con condiciones y cuotaFija."
           },
           "cantidadCuotas" : {
             "type" : "integer",
-            "description" : "Cantidad total de cuotas.",
+            "description" : "Formato histórico: cantidad total de cuotas, entre 1 y 360.",
             "format" : "int32"
           }
         },
-        "description" : "Datos para crear o editar una deuda."
+        "description" : "Datos para crear o editar una deuda. Además de nombre, se acepta exactamente una entrada financiera: condiciones, el formato histórico montoTotal + cantidadCuotas, o cuotaFija."
       },
       "DeudaResponseDTO" : {
         "required" : [ "cantidadCuotas", "cargaAnualEquivalente", "costoAdicionalPorCuota", "costoTotalCredito", "cuotasPagadas", "cuotasPagadasPrevias", "estado", "fechaCreacion", "gastosIniciales", "id", "interesesPagados", "modalidadCalculo", "montoCapital", "montoPagado", "montoPagadoPrevio", "montoPagadoReal", "montoRestante", "montoTotal", "nombre", "saldoCapital", "tasaAnualEfectiva", "tasaMensual", "tipoDeuda", "totalPorPagar" ],

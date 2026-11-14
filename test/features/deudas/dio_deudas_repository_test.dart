@@ -134,6 +134,70 @@ void main() {
       expect(deuda.id, 1);
     });
 
+    test('envía cuotaFija sin total ni condiciones', () async {
+      adapter.handler = (RequestOptions options) async {
+        expect(jsonBodyOf(options), <String, Object?>{
+          'nombre': 'Equipo',
+          'tipoDeuda': 'TIENDA',
+          'cuotaFija': <String, Object?>{
+            'valorCuota': 15000,
+            'cantidadCuotas': 24,
+            'fechaPrimeraCuota': '2026-12-05',
+          },
+        });
+        return jsonResponse(
+          deudaJson(
+              modalidad: 'SIN_INTERES',
+              tasaMensual: 0,
+              tasaAnualEfectiva: 0,
+              valorCuota: 15000,
+            )
+            ..['montoTotal'] = 360000.00
+            ..['cantidadCuotas'] = 24,
+        );
+      };
+
+      final Deuda deuda = await repository.crear(
+        DeudaCreacion(
+          nombre: 'Equipo',
+          tipo: TipoDeuda.tienda,
+          cuotaFija: CuotaFija(
+            valorCuota: Decimal.parse('15000'),
+            cantidadCuotas: 24,
+            fechaPrimeraCuota: CalendarDate(2026, 12, 5),
+          ),
+        ),
+      );
+      expect(deuda.valorCuota?.toString(), '15000');
+      expect(deuda.montoTotal.toString(), '360000');
+      expect(deuda.cantidadCuotas, 24);
+    });
+
+    test('omite fechaPrimeraCuota cuando no se especifica', () async {
+      adapter.handler = (RequestOptions options) async {
+        expect(jsonBodyOf(options), <String, Object?>{
+          'nombre': 'Compra',
+          'tipoDeuda': 'OTRO',
+          'cuotaFija': <String, Object?>{
+            'valorCuota': 2500,
+            'cantidadCuotas': 6,
+          },
+        });
+        return jsonResponse(deudaJson());
+      };
+
+      await repository.crear(
+        DeudaCreacion(
+          nombre: 'Compra',
+          tipo: TipoDeuda.otro,
+          cuotaFija: CuotaFija(
+            valorCuota: Decimal.parse('2500'),
+            cantidadCuotas: 6,
+          ),
+        ),
+      );
+    });
+
     test('editar usa PUT con el mismo DTO', () async {
       adapter.handler = (RequestOptions options) async {
         expect(options.method, 'PUT');
@@ -164,10 +228,7 @@ void main() {
     test('PATCH con la fecha y parsea la deuda actualizada', () async {
       adapter.handler = (RequestOptions options) async {
         expect(options.method, 'PATCH');
-        expect(
-          options.path.endsWith('/deudas/7/fecha-primera-cuota'),
-          isTrue,
-        );
+        expect(options.path.endsWith('/deudas/7/fecha-primera-cuota'), isTrue);
         expect(jsonBodyOf(options), <String, Object?>{
           'fechaPrimeraCuota': '2026-09-15',
         });
@@ -236,7 +297,9 @@ void main() {
           'descripcion': 'Pago Cuota 1',
           'modoPago': 'CUOTA_CALCULADA',
         });
-        return jsonResponse(deudaJson(montoPagadoReal: 45000, cuotasPagadas: 1));
+        return jsonResponse(
+          deudaJson(montoPagadoReal: 45000, cuotasPagadas: 1),
+        );
       };
 
       final Deuda deuda = await repository.pagar(

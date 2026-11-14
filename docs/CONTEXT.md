@@ -278,6 +278,15 @@ Un `codigo` desconocido cae en una falla genérica conservando status y `detail`
   interruptores tienen ayuda contextual en un diálogo y cada porcentaje se edita con hasta
   2 decimales; el resto se rebalancea para sumar 100.00. Son cambios de `presentation` y no
   alteran cálculos ni contrato.
+- **D12 — Alta sencilla de cuota fija para deudas.** El alta ofrece `Básico` (inicial) y
+  `Avanzado`; la edición permanece en el formulario avanzado. El modo básico es solo para una
+  cuota fija **sin interés adicional**: envía `cuotaFija` (`valorCuota`, `cantidadCuotas` y
+  `fechaPrimeraCuota` opcional) junto al nombre, tipo y descripción opcional. No envía
+  `condiciones`, `montoTotal` ni un total calculado, y no multiplica cuota por plazo en Flutter.
+  Montos en `Decimal` con `MoneyInputFormatter`; cuota, total y plazo que se muestran después
+  del alta provienen de `DeudaResponseDTO`. Los formularios básico y avanzado mantienen valores
+  separados al alternar. La opción de crear partida solo aparece con calendario y sigue siendo
+  una operación posterior: si falla, la deuda permanece y se conserva el aviso existente.
 
 ## Pendientes / fuera del alcance actual
 

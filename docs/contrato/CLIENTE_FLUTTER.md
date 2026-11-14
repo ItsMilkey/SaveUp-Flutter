@@ -97,6 +97,40 @@ final dio = Dio(BaseOptions(baseUrl: 'https://lite-backend-1wn9.onrender.com/api
 - **Paginación**: `page` empieza en 0 y `size` debe estar entre 1 y 100 (por defecto 50 en movimientos y 20 en pagos).
 - **Reportes**: `GET /reportes/movimientos/exportar` devuelve bytes y `Content-Disposition`; guárdalos como archivo, no como JSON.
 
+### Alta y edición de deudas con cuota fija
+
+`POST /deudas` y `PUT /deudas/{id}` aceptan **una sola** de estas formas de entrada financiera:
+
+1. `condiciones`, para las modalidades avanzadas existentes.
+2. El formato histórico `{ "montoTotal": 360000.00, "cantidadCuotas": 24 }`.
+3. La alternativa explícita `cuotaFija`, para una obligación sin interés adicional:
+
+```json
+{
+  "nombre": "Equipo en 24 cuotas",
+  "cuotaFija": {
+    "valorCuota": 15000.00,
+    "cantidadCuotas": 24,
+    "fechaPrimeraCuota": "2026-12-05"
+  }
+}
+```
+
+- `valorCuota` debe ser mayor que cero, hasta 13 dígitos enteros y 2 decimales; `cantidadCuotas` va de 1 a 360.
+  `fechaPrimeraCuota` es opcional y usa `yyyy-MM-dd`. Si se omite, la deuda queda sin calendario de vencimientos.
+- El backend deriva el capital/total con `BigDecimal` exacto (`valorCuota × cantidadCuotas`) y normaliza la entrada a
+  `SIN_INTERES` mediante el motor financiero vigente. El total derivado también debe caber en el máximo monetario de
+  13 enteros y 2 decimales. La respuesta conserva el DTO de deuda existente; la app no calcula ni envía el total.
+- La tabla calculada debe conservar exactamente el valor ingresado en cada cuota, incluida la última. Este modo no
+  admite tasas/costos separados ni `cuotasPagadasPrevias` distinto de cero.
+- No combines `cuotaFija` con `condiciones`, `montoTotal` o `cantidadCuotas`; tampoco mezcles `condiciones` con el
+  formato histórico. Las combinaciones o la falta de una forma financiera responden `400 VALIDACION_FALLIDA` con
+  `errores[]` asociado a los campos implicados. Si el total derivado supera el máximo, el error señala
+  `cuotaFija.valorCuota`; errores de rango también responden `400 VALIDACION_FALLIDA` por campo.
+- Crear no registra pagos ni modifica el saldo. Al editar, las condiciones financieras (incluida `cuotaFija`) siguen
+  bloqueadas si ya hay pagos (`409 CONFLICTO_REGLA_NEGOCIO`). Los payloads válidos avanzados e históricos continúan
+  aceptándose.
+
 ### Catálogo de categorías y estados (T10a)
 
 - `GET /categorias` devuelve el catálogo completo (18 categorías) con `id`, `codigo`, `nombre`, `iconId`, `colorHex` y
