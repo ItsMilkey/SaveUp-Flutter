@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/design_system/design_system.dart';
 import '../../../../core/money/money.dart';
 import '../../../../core/money/money_input_formatter.dart';
+import '../../../../core/money/money_json.dart';
 import '../../../../core/time/calendar_date.dart';
 import '../../domain/meta_ahorro.dart';
 import '../controllers/meta_form_controller.dart';
@@ -184,6 +185,10 @@ class _MetaFormScreenState extends ConsumerState<MetaFormScreen> {
       final Decimal monto = Money.parseUserInput(value);
       if (monto <= Decimal.zero) {
         return 'El monto debe ser mayor a 0.';
+      }
+      final String? errorSerializacion = validateMoneyForJson(monto);
+      if (errorSerializacion != null) {
+        return errorSerializacion;
       }
     } on FormatException {
       return 'Ingresa un monto válido.';

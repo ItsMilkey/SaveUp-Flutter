@@ -6,6 +6,7 @@ import '../../../../core/design_system/design_system.dart';
 import '../../../../core/errors/failure_messages.dart';
 import '../../../../core/money/money.dart';
 import '../../../../core/money/money_input_formatter.dart';
+import '../../../../core/money/money_json.dart';
 import '../../../movimientos/domain/categoria.dart';
 import '../../domain/ejecucion_presupuesto.dart';
 import '../../domain/plan_calculo.dart';
@@ -387,6 +388,11 @@ class _LimiteDialogState extends State<_LimiteDialog> {
     }
     if (monto <= Decimal.zero) {
       setState(() => _error = 'El límite debe ser mayor a 0.');
+      return;
+    }
+    final String? errorMonto = validateMoneyForJson(monto);
+    if (errorMonto != null) {
+      setState(() => _error = errorMonto);
       return;
     }
     final int? categoriaId = _categoriaId;

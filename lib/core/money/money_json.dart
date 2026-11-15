@@ -11,6 +11,30 @@ import 'package:decimal/decimal.dart';
 /// Máximo valor permitido: 10^13 (13 dígitos enteros, sin signo).
 final Decimal _maxAmount = Decimal.fromInt(10000000000000);
 
+/// Valida si [value] puede serializarse con las restricciones del contrato.
+///
+/// Devuelve `null` si es válido o un mensaje apto para mostrar desde un
+/// validador Flutter. Por ejemplo:
+/// ```dart
+/// validator: (value) => value == null ? null : validateMoneyForJson(value),
+/// ```
+/// La escala admitida es ≤ 2 y la magnitud absoluta debe ser menor que 10^13.
+String? validateMoneyForJson(Decimal value) {
+  if (value.scale > 2) {
+    return 'El monto no puede tener más de 2 decimales.';
+  }
+
+  if (value.abs() >= _maxAmount) {
+    return 'El monto excede el máximo (13 enteros + 2 decimales).';
+  }
+
+  return null;
+}
+
+/// Convierte un [Decimal] que no representa dinero (p. ej. una tasa) a número
+/// JSON sin aplicar los límites de escala y magnitud de un monto.
+num decimalToJsonNumber(Decimal value) => num.parse(value.toString());
+
 /// Convierte un número JSON (int o double) a [Decimal].
 ///
 /// Lanza [FormatException] si el valor es `null`, un `String`, no es finito
@@ -44,20 +68,9 @@ Decimal moneyFromJson(Object? value) {
 /// Valida escala ≤ 2 y magnitud < 10^13; lanza [ArgumentError] si no se cumple
 /// (es un error de programación, no de datos del usuario).
 num moneyToJson(Decimal value) {
-  if (value.scale > 2) {
-    throw ArgumentError.value(
-      value,
-      'value',
-      'El monto no puede tener más de 2 decimales.',
-    );
-  }
-
-  if (value.abs() >= _maxAmount) {
-    throw ArgumentError.value(
-      value,
-      'value',
-      'El monto excede el máximo (13 enteros + 2 decimales).',
-    );
+  final String? validationError = validateMoneyForJson(value);
+  if (validationError != null) {
+    throw ArgumentError.value(value, 'value', validationError);
   }
 
   if (value.scale == 0) {

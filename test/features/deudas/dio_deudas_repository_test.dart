@@ -113,7 +113,7 @@ void main() {
             'modalidad': 'TASA_CONOCIDA',
             'montoCapital': 500000,
             'cantidadCuotas': 12,
-            'tasaMensual': 1.5,
+            'tasaMensual': 1.234,
           },
         });
         return jsonResponse(deudaJson());
@@ -127,7 +127,7 @@ void main() {
             modalidad: ModalidadCalculo.tasaConocida,
             montoCapital: Decimal.parse('500000'),
             cantidadCuotas: 12,
-            tasaMensual: Decimal.parse('1.5'),
+            tasaMensual: Decimal.parse('1.234'),
           ),
         ),
       );

@@ -119,9 +119,11 @@ class DeudaCreacionDto {
           if (condiciones.fechaUltimaCuota != null)
             'fechaUltimaCuota': condiciones.fechaUltimaCuota!.toJson(),
           if (condiciones.tasaMensual != null)
-            'tasaMensual': moneyToJson(condiciones.tasaMensual!),
+            'tasaMensual': decimalToJsonNumber(condiciones.tasaMensual!),
           if (condiciones.tasaAnualEfectiva != null)
-            'tasaAnualEfectiva': moneyToJson(condiciones.tasaAnualEfectiva!),
+            'tasaAnualEfectiva': decimalToJsonNumber(
+              condiciones.tasaAnualEfectiva!,
+            ),
           if (condiciones.valorCuota != null)
             'valorCuota': moneyToJson(condiciones.valorCuota!),
           if (condiciones.gastosIniciales != null)

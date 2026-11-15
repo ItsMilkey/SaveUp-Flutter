@@ -70,28 +70,31 @@ class AnaliticaController extends Notifier<AnaliticaState> {
 
     final DateTime inicio = DateTime(objetivo.year, objetivo.month - 5);
     List<HistorialPresupuesto> historial = const <HistorialPresupuesto>[];
-    AppFailure? errorHistorial;
-    try {
-      historial = await ref
-          .read(presupuestoRepositoryProvider)
-          .historial(
-            desde: _mes(inicio.year, inicio.month),
-            hasta: objetivo.toString(),
-          );
-    } on AppFailure catch (failure) {
-      errorHistorial = failure;
-    }
-    if (generacion != _generacion) {
-      return;
-    }
-
-    // El catálogo es cosmético (nombre/color): si falla, se usa el código.
     List<Categoria> catalogo = const <Categoria>[];
-    try {
-      catalogo = await ref.read(categoriasRepositoryProvider).listar();
-    } on AppFailure {
-      catalogo = const <Categoria>[];
-    }
+    AppFailure? errorHistorial;
+    // Historial y catálogo son independientes una vez cargado el plan.
+    await Future.wait<void>(<Future<void>>[
+      () async {
+        try {
+          historial = await ref
+              .read(presupuestoRepositoryProvider)
+              .historial(
+                desde: _mes(inicio.year, inicio.month),
+                hasta: objetivo.toString(),
+              );
+        } on AppFailure catch (failure) {
+          errorHistorial = failure;
+        }
+      }(),
+      () async {
+        // El catálogo es cosmético (nombre/color): si falla, se usa el código.
+        try {
+          catalogo = await ref.read(categoriasRepositoryProvider).listar();
+        } on AppFailure {
+          catalogo = const <Categoria>[];
+        }
+      }(),
+    ]);
     if (generacion != _generacion) {
       return;
     }

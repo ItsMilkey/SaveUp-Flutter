@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:decimal/decimal.dart';
 import 'package:saveup_app/core/errors/app_failure.dart';
 import 'package:saveup_app/core/time/calendar_date.dart';
@@ -53,6 +55,10 @@ class FakeMetasRepository implements MetasRepository {
   AppFailure? errorRetiro;
 
   int llamadasListar = 0;
+  int llamadasEliminar = 0;
+  int llamadasAbonar = 0;
+  int llamadasRetirar = 0;
+  Future<void>? accionPendiente;
   MetaAhorroDatos? creado;
   int? editadoId;
   MetaAhorroDatos? editado;
@@ -113,6 +119,8 @@ class FakeMetasRepository implements MetasRepository {
 
   @override
   Future<void> eliminar(int id) async {
+    llamadasEliminar += 1;
+    await accionPendiente;
     eliminadoId = id;
     if (errorEliminar != null) {
       throw errorEliminar!;
@@ -129,6 +137,8 @@ class FakeMetasRepository implements MetasRepository {
     required Decimal monto,
     required String descripcion,
   }) async {
+    llamadasAbonar += 1;
+    await accionPendiente;
     abonoId = id;
     abonoMonto = monto;
     abonoDescripcion = descripcion;
@@ -144,6 +154,8 @@ class FakeMetasRepository implements MetasRepository {
     required Decimal monto,
     required String descripcion,
   }) async {
+    llamadasRetirar += 1;
+    await accionPendiente;
     retiroId = id;
     retiroMonto = monto;
     retiroDescripcion = descripcion;

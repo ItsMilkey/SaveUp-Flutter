@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/design_system/design_system.dart';
 import '../../../../core/money/money.dart';
 import '../../../../core/money/money_input_formatter.dart';
+import '../../../../core/money/money_json.dart';
 import '../../domain/meta_ahorro.dart';
 
 /// Sentido de la operación sobre una meta.
@@ -82,6 +83,11 @@ class _MovimientoMetaDialogState extends State<MovimientoMetaDialog> {
     }
     if (monto <= Decimal.zero) {
       setState(() => _errorMonto = 'El monto debe ser mayor a 0.');
+      return;
+    }
+    final String? errorSerializacion = validateMoneyForJson(monto);
+    if (errorSerializacion != null) {
+      setState(() => _errorMonto = errorSerializacion);
       return;
     }
     if (!_esAbono && monto > widget.meta.montoActual) {

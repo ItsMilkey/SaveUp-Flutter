@@ -64,6 +64,8 @@ movimientosProvider =
     );
 
 class MovimientosController extends Notifier<MovimientosState> {
+  int _versionCargaPagina = 0;
+
   @override
   MovimientosState build() => const MovimientosState();
 
@@ -179,6 +181,8 @@ class MovimientosController extends Notifier<MovimientosState> {
   }
 
   Future<void> _cargarPagina(int page) async {
+    final MovimientoFiltro filtro = state.filtro;
+    final int version = ++_versionCargaPagina;
     final MovimientosRepository repository = ref.read(
       movimientosRepositoryProvider,
     );
@@ -189,9 +193,12 @@ class MovimientosController extends Notifier<MovimientosState> {
     );
     try {
       final PaginaMovimientos resultado = await repository.pagina(
-        filtro: state.filtro,
+        filtro: filtro,
         page: page,
       );
+      if (version != _versionCargaPagina) {
+        return;
+      }
       final Set<int> ids = <int>{
         for (final Movimiento item in state.items) item.id,
       };
@@ -213,6 +220,9 @@ class MovimientosController extends Notifier<MovimientosState> {
         errorPagina: null,
       );
     } on AppFailure catch (failure) {
+      if (version != _versionCargaPagina) {
+        return;
+      }
       state = _copy(
         cargandoPagina: false,
         cargandoMas: false,

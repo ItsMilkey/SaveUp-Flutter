@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:saveup_app/core/errors/app_failure.dart';
@@ -152,6 +154,33 @@ void main() {
     expect(await store.read(), isNull);
   });
 
+  test(
+    'NO_AUTENTICADO privado borra tokens y emite sesión expirada sin refresh',
+    () async {
+      await saveTokens();
+
+      int refreshCalls = 0;
+      adapter.handler = (RequestOptions options) async {
+        if (options.path.endsWith('/auth/refresh')) {
+          refreshCalls++;
+          return _refreshResponse();
+        }
+        return problemResponse('NO_AUTENTICADO', statusCode: 401);
+      };
+
+      final Future<SessionEvent> expired = events.events.first;
+
+      await expectLater(
+        client.get('/movimientos/me'),
+        throwsA(isA<NotAuthenticatedFailure>()),
+      );
+
+      expect(await expired, isA<SessionExpired>());
+      expect(await store.read(), isNull);
+      expect(refreshCalls, 0);
+    },
+  );
+
   test('si el reintento vuelve a dar 401 no hay tercer intento', () async {
     await saveTokens();
 
@@ -197,6 +226,36 @@ void main() {
     );
     expect(refreshCalls, 0);
   });
+
+  test(
+    'NO_AUTENTICADO en ruta pública conserva tokens y no emite expiración',
+    () async {
+      await saveTokens();
+
+      int refreshCalls = 0;
+      final List<SessionEvent> emittedEvents = <SessionEvent>[];
+      final StreamSubscription<SessionEvent> subscription =
+          events.events.listen(emittedEvents.add);
+      adapter.handler = (RequestOptions options) async {
+        if (options.path.endsWith('/auth/refresh')) {
+          refreshCalls++;
+          return _refreshResponse();
+        }
+        return problemResponse('NO_AUTENTICADO', statusCode: 401);
+      };
+
+      await expectLater(
+        client.get('/app/version'),
+        throwsA(isA<NotAuthenticatedFailure>()),
+      );
+      await Future<void>.delayed(Duration.zero);
+
+      expect((await store.read())?.token, 'viejo');
+      expect(emittedEvents, isEmpty);
+      expect(refreshCalls, 0);
+      await subscription.cancel();
+    },
+  );
 
   test('las rutas públicas no llevan Authorization', () async {
     await saveTokens();

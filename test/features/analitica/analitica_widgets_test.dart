@@ -79,6 +79,36 @@ void main() {
     expect(find.text('60.0 %'), findsOneWidget);
     expect(find.text('40.0 %'), findsOneWidget);
     expect(find.byType(PieChart), findsOneWidget);
+
+    await tester.tap(find.text('Ocio'));
+    await tester.pump();
+
+    final SemanticsHandle semantics = tester.ensureSemantics();
+    try {
+      expect(
+        tester.getSemantics(find.bySemanticsLabel('Ocio, 40.0 %, \$40.000')),
+        matchesSemantics(
+          label: 'Ocio, 40.0 %, \$40.000',
+          isButton: true,
+          isSelected: true,
+          hasSelectedState: true,
+          hasTapAction: true,
+        ),
+      );
+      expect(
+        tester.getSemantics(
+          find.bySemanticsLabel('Alimentación Básica, 60.0 %, \$60.000'),
+        ),
+        matchesSemantics(
+          label: 'Alimentación Básica, 60.0 %, \$60.000',
+          isButton: true,
+          hasSelectedState: true,
+          hasTapAction: true,
+        ),
+      );
+    } finally {
+      semantics.dispose();
+    }
   });
 
   testWidgets('barras muestran meses y leyenda', (WidgetTester tester) async {

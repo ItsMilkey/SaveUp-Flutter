@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/design_system/design_system.dart';
 import '../../../../core/money/money.dart';
 import '../../../../core/money/money_input_formatter.dart';
+import '../../../../core/money/money_json.dart';
 
 /// Resultado del diálogo de ingreso de referencia: [monto] nulo = quitarlo.
 class IngresoReferenciaValor {
@@ -102,10 +103,10 @@ class _IngresoReferenciaDialogState extends State<IngresoReferenciaDialog> {
                   if (monto < Decimal.zero) {
                     return 'No puede ser negativo.';
                   }
+                  return validateMoneyForJson(monto);
                 } on FormatException {
                   return 'Monto inválido.';
                 }
-                return null;
               },
               label: 'Ingreso mensual',
               prefixIcon: Icons.attach_money,

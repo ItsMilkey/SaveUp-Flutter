@@ -7,7 +7,7 @@ import '../../../core/errors/app_failure.dart';
 import '../../../core/errors/failure_messages.dart';
 import '../../../core/money/money.dart';
 import '../../../core/money/money_input_formatter.dart';
-import '../../movimientos/presentation/movimientos_controller.dart';
+import '../../../core/money/money_json.dart';
 import '../domain/deuda.dart';
 import '../domain/pago_deuda.dart';
 import 'deudas_controller.dart';
@@ -132,10 +132,10 @@ class _PagoDeudaDialogState extends ConsumerState<PagoDeudaDialog> {
                       if (monto <= Decimal.zero) {
                         return 'Debe ser mayor que cero.';
                       }
+                      return validateMoneyForJson(monto);
                     } on FormatException {
                       return 'Monto inválido.';
                     }
-                    return null;
                   },
                   label: 'Monto',
                   prefixIcon: Icons.attach_money,
@@ -192,8 +192,6 @@ class _PagoDeudaDialogState extends ConsumerState<PagoDeudaDialog> {
       });
       return;
     }
-    // El backend ya creó el PAGO_DEUDA: refrescar movimientos/saldo.
-    await ref.read(movimientosProvider.notifier).refrescar();
     if (mounted) {
       Navigator.of(context).pop(true);
     }

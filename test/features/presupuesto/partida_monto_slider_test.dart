@@ -136,4 +136,90 @@ void main() {
     );
     expect(find.textContaining('Cuota pendiente'), findsOneWidget);
   });
+
+  testWidgets('el máximo del slider no supera el remanente documentado', (
+    WidgetTester tester,
+  ) async {
+    final PlanMensual plan = planDePrueba(
+      ingresoReferencia: d('400000'),
+      partidas: <PartidaSpec>[
+        PartidaSpec(
+          id: 1,
+          nombre: 'Arriendo',
+          categoriaId: 4,
+          codigo: 'VIVIENDA_SUMINISTROS',
+          tipo: TipoPresupuesto.necesidad,
+          monto: d('400000'),
+        ),
+      ],
+    );
+    final ProviderContainer container = ProviderContainer(
+      overrides: [
+        planMensualRepositoryProvider.overrideWithValue(
+          FakePlanMensualRepository(plan: plan),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+    await container.read(planMensualProvider.notifier).cargar('2026-11');
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: MaterialApp(
+          theme: SaveUpTheme.light(),
+          home: const Scaffold(body: PartidaMontoSlider(partidaId: 1)),
+        ),
+      ),
+    );
+
+    final Slider slider = tester.widget<Slider>(find.byType(Slider));
+    expect(slider.max, 400000);
+    expect(slider.value, 400000);
+    // Sin remanente aún se puede bajar la asignación.
+    expect(slider.onChanged, isNotNull);
+  });
+
+  testWidgets('sin monto ni remanente no muestra un slider con rango ficticio', (
+    WidgetTester tester,
+  ) async {
+    final PlanMensual plan = planDePrueba(
+      ingresoReferencia: d('0'),
+      partidas: <PartidaSpec>[
+        PartidaSpec(
+          id: 1,
+          nombre: 'Arriendo',
+          categoriaId: 4,
+          codigo: 'VIVIENDA_SUMINISTROS',
+          tipo: TipoPresupuesto.necesidad,
+          monto: d('0'),
+        ),
+      ],
+    );
+    final ProviderContainer container = ProviderContainer(
+      overrides: [
+        planMensualRepositoryProvider.overrideWithValue(
+          FakePlanMensualRepository(plan: plan),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+    await container.read(planMensualProvider.notifier).cargar('2026-11');
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: MaterialApp(
+          theme: SaveUpTheme.light(),
+          home: const Scaffold(body: PartidaMontoSlider(partidaId: 1)),
+        ),
+      ),
+    );
+
+    expect(find.byType(Slider), findsNothing);
+    expect(
+      find.text('No hay remanente disponible para asignar.'),
+      findsOneWidget,
+    );
+  });
 }

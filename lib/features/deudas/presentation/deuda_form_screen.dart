@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/design_system/design_system.dart';
 import '../../../core/money/money.dart';
 import '../../../core/money/money_input_formatter.dart';
+import '../../../core/money/money_json.dart';
 import '../../../core/time/business_month.dart';
 import '../../../core/time/calendar_date.dart';
 import '../domain/deuda.dart';
@@ -380,7 +381,7 @@ class _DeudaFormScreenState extends ConsumerState<DeudaFormScreen> {
                     keyboardType: const TextInputType.numberWithOptions(
                       decimal: true,
                     ),
-                    validator: _validateMoney,
+                    validator: _validateRate,
                     label: _tasaAnual
                         ? 'Tasa anual efectiva (%)'
                         : 'Tasa mensual (%)',
@@ -550,8 +551,23 @@ class _DeudaFormScreenState extends ConsumerState<DeudaFormScreen> {
       if (monto <= Decimal.zero) {
         return 'Debe ser mayor que cero.';
       }
+      return validateMoneyForJson(monto);
     } on FormatException {
       return 'Monto inválido.';
+    }
+  }
+
+  String? _validateRate(String? value) {
+    final String text = value?.trim() ?? '';
+    if (text.isEmpty) {
+      return 'Ingresa una tasa.';
+    }
+    try {
+      if (Money.parseUserInput(text) <= Decimal.zero) {
+        return 'Debe ser mayor que cero.';
+      }
+    } on FormatException {
+      return 'Tasa inválida.';
     }
     return null;
   }

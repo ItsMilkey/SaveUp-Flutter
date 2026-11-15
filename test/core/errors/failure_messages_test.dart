@@ -100,10 +100,10 @@ void main() {
     );
   });
 
-  test('UnknownFailure usa el detail cuando existe', () {
+  test('UnknownFailure usa un mensaje genérico y no expone el detail', () {
     expect(
-      failureMessage(const UnknownFailure(detail: 'Algo raro pasó')),
-      'Algo raro pasó',
+      failureMessage(const UnknownFailure(detail: 'detalle interno sensible')),
+      'Ocurrió un error inesperado.',
     );
   });
 

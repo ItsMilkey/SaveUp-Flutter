@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:saveup_app/core/errors/app_failure.dart';
@@ -5,10 +7,12 @@ import 'package:saveup_app/core/time/business_month.dart';
 import 'package:saveup_app/features/analitica/presentation/controllers/analitica_controller.dart';
 import 'package:saveup_app/features/movimientos/data/dio_categorias_repository.dart';
 import 'package:saveup_app/features/movimientos/domain/categoria.dart';
+import 'package:saveup_app/features/movimientos/domain/categorias_repository.dart';
 import 'package:saveup_app/features/presupuesto/data/dio_plan_mensual_repository.dart';
 import 'package:saveup_app/features/presupuesto/data/dio_presupuesto_repository.dart';
 import 'package:saveup_app/features/presupuesto/domain/ejecucion_presupuesto.dart';
 import 'package:saveup_app/features/presupuesto/domain/plan_calculo.dart';
+import 'package:saveup_app/features/presupuesto/domain/presupuesto_repository.dart';
 
 import '../presupuesto/presupuesto_fixtures.dart';
 import 'analitica_fixtures.dart';
@@ -26,8 +30,7 @@ void main() {
   }) {
     planRepo = plan ?? FakePlanAnaliticaRepository();
     presupuestoRepo = presupuesto ?? FakePresupuestoRepository();
-    categoriasRepo =
-        categorias ?? FakeCategoriasAnaliticaRepository();
+    categoriasRepo = categorias ?? FakeCategoriasAnaliticaRepository();
     container = ProviderContainer(
       overrides: [
         planMensualRepositoryProvider.overrideWithValue(planRepo),
@@ -91,10 +94,35 @@ void main() {
     expect(state.resumen!.tendencia, hasLength(1));
   });
 
-  test('si falla el plan no hay resumen y no se pide historial', () async {
-    montar(
-      plan: FakePlanAnaliticaRepository(error: const NetworkFailure()),
+  test('inicia historial y catálogo en paralelo después del plan', () async {
+    final _HistorialBloqueado historial = _HistorialBloqueado();
+    final _CategoriasBloqueadas categorias = _CategoriasBloqueadas();
+    container = ProviderContainer(
+      overrides: [
+        planMensualRepositoryProvider.overrideWithValue(
+          FakePlanAnaliticaRepository(),
+        ),
+        presupuestoRepositoryProvider.overrideWithValue(historial),
+        categoriasRepositoryProvider.overrideWithValue(categorias),
+      ],
     );
+    addTearDown(container.dispose);
+
+    final Future<void> carga = controller().cargar(
+      mes: const BusinessMonth(2026, 11),
+    );
+    await historial.iniciada.future;
+    final bool ambasIniciadas = categorias.iniciada.isCompleted;
+    historial.continuar.complete();
+    categorias.continuar.complete();
+    await carga;
+
+    expect(ambasIniciadas, isTrue);
+    expect(estado().resumen, isNotNull);
+  });
+
+  test('si falla el plan no hay resumen y no se pide historial', () async {
+    montar(plan: FakePlanAnaliticaRepository(error: const NetworkFailure()));
 
     await controller().cargar(mes: const BusinessMonth(2026, 11));
 
@@ -109,9 +137,7 @@ void main() {
       plan: FakePlanAnaliticaRepository(
         plan: planAnalitica(
           gastos: '100',
-          categorias: <CategoriaResultado>[
-            categoriaResultado('A', '100'),
-          ],
+          categorias: <CategoriaResultado>[categoriaResultado('A', '100')],
         ),
       ),
       presupuesto: FakePresupuestoRepository(
@@ -162,9 +188,7 @@ void main() {
   });
 
   test('reintentar recupera el resumen tras un error', () async {
-    montar(
-      plan: FakePlanAnaliticaRepository(error: const TimeoutFailure()),
-    );
+    montar(plan: FakePlanAnaliticaRepository(error: const TimeoutFailure()));
     await controller().cargar(mes: const BusinessMonth(2026, 11));
     expect(estado().error, isA<TimeoutFailure>());
 
@@ -174,4 +198,37 @@ void main() {
     expect(estado().error, isNull);
     expect(estado().resumen, isNotNull);
   });
+}
+
+class _HistorialBloqueado implements PresupuestoRepository {
+  final Completer<void> iniciada = Completer<void>();
+  final Completer<void> continuar = Completer<void>();
+
+  @override
+  Future<List<HistorialPresupuesto>> historial({
+    required String desde,
+    required String hasta,
+  }) async {
+    iniciada.complete();
+    await continuar.future;
+    return <HistorialPresupuesto>[];
+  }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+class _CategoriasBloqueadas implements CategoriasRepository {
+  final Completer<void> iniciada = Completer<void>();
+  final Completer<void> continuar = Completer<void>();
+
+  @override
+  Future<List<Categoria>> listar() async {
+    iniciada.complete();
+    await continuar.future;
+    return <Categoria>[];
+  }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }

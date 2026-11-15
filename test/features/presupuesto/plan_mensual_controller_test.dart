@@ -229,6 +229,9 @@ void main() {
       estado.plan!.partida(1)!.montoPlanificado.compareTo(d('500000')),
       0,
     );
+    await controller.cargar('2026-10');
+    expect(container.read(planMensualProvider).mes, '2026-11');
+    expect(repo.consultas, <String>['2026-11']);
 
     repo.error = null;
     await controller.reintentar();
@@ -238,6 +241,7 @@ void main() {
     expect(estado.errorLote, isNull);
     expect(estado.cambiosPendientes, isEmpty);
     expect(repo.lotes, hasLength(2));
+    expect(repo.mesesLotes, <String>['2026-11', '2026-11']);
   });
 
   testWidgets('un lote nunca supera 100 cambios', (
@@ -312,6 +316,73 @@ void main() {
       container.read(planMensualProvider).incluirReferencias,
       isTrue,
     );
+  });
+
+  testWidgets('cargar aplica solo la respuesta de la solicitud más reciente', (
+    WidgetTester tester,
+  ) async {
+    montar(planBase());
+    final PlanMensualController controller = container.read(
+      planMensualProvider.notifier,
+    );
+    final Completer<PlanMensual> cargaAntigua = Completer<PlanMensual>();
+    final Completer<PlanMensual> cargaNueva = Completer<PlanMensual>();
+    repo.cargasDiferidas['2026-10'] = cargaAntigua;
+    repo.cargasDiferidas['2026-11'] = cargaNueva;
+
+    final Future<void> antigua = controller.cargar('2026-10');
+    final Future<void> nueva = controller.cargar('2026-11');
+    cargaNueva.complete(
+      planDePrueba(mes: '2026-11', ingresoReferencia: d('900000')),
+    );
+    await nueva;
+    cargaAntigua.complete(
+      planDePrueba(mes: '2026-10', ingresoReferencia: d('700000')),
+    );
+    await antigua;
+
+    final PlanMensualState estado = container.read(planMensualProvider);
+    expect(estado.mes, '2026-11');
+    expect(estado.plan!.mes, '2026-11');
+    expect(estado.plan!.ingresoReferencia!.compareTo(d('900000')), 0);
+  });
+
+  testWidgets('cambiar de mes espera que la cola de montos quede vacía', (
+    WidgetTester tester,
+  ) async {
+    montar(planBase());
+    await cargar();
+    final PlanMensualController controller = container.read(
+      planMensualProvider.notifier,
+    );
+    final Completer<PlanMensual> patchDiferido = Completer<PlanMensual>();
+    repo.pendiente = patchDiferido;
+    controller.moverPartida(1, d('450000'));
+
+    final Future<void> envio = controller.soltar();
+    await tester.pump();
+    await controller.cargar('2026-10');
+
+    expect(container.read(planMensualProvider).mes, '2026-11');
+    expect(repo.consultas, <String>['2026-11']);
+    expect(repo.mesesLotes, <String>['2026-11']);
+
+    repo.pendiente = null;
+    patchDiferido.complete(
+      repo.aplicar(<CambioMonto>[
+        CambioMonto(partidaId: 1, monto: d('450000')),
+      ]),
+    );
+    await envio;
+    expect(container.read(planMensualProvider).cambiosPendientes, isEmpty);
+
+    repo.plan = planDePrueba(
+      mes: '2026-10',
+      ingresoReferencia: d('500000'),
+    );
+    await controller.cargar('2026-10');
+    expect(repo.consultas, <String>['2026-11', '2026-10']);
+    expect(container.read(planMensualProvider).plan!.mes, '2026-10');
   });
 
   testWidgets('actualizarIngreso recalcula remanente y margen', (

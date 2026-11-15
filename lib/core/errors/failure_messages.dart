@@ -22,10 +22,7 @@ String failureMessage(AppFailure failure) => switch (failure) {
       NetworkFailure() => 'Sin conexión. Revisa tu red e intenta nuevamente.',
       TimeoutFailure() =>
         'El servidor está tardando demasiado. Intenta nuevamente.',
-      UnknownFailure(:final String? detail) =>
-        detail != null && detail.isNotEmpty
-            ? detail
-            : 'Ocurrió un error inesperado.',
+      UnknownFailure() => 'Ocurrió un error inesperado.',
     };
 
 String _conflictMessage(String codigo, String? detail) {

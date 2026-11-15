@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -112,5 +114,41 @@ void main() {
       findsWidgets,
     );
     expect(sharer.compartido, isNull);
+  });
+
+  testWidgets('bloquea cambios de opciones durante la exportación', (
+    WidgetTester tester,
+  ) async {
+    final Completer<ReporteArchivo> pendiente = Completer<ReporteArchivo>();
+    final FakeReportesRepository repo = FakeReportesRepository()
+      ..respuestaFutura = pendiente.future;
+    await montar(
+      tester,
+      repo: repo,
+      sharer: FakeReporteSharer(),
+    );
+
+    await tester.tap(find.text('Exportar'));
+    await tester.pump();
+
+    expect(
+      tester
+          .widget<SegmentedButton<ReporteAlcance>>(
+            find.byType(SegmentedButton<ReporteAlcance>),
+          )
+          .onSelectionChanged,
+      isNull,
+    );
+    expect(
+      tester
+          .widget<SegmentedButton<ReporteFormato>>(
+            find.byType(SegmentedButton<ReporteFormato>),
+          )
+          .onSelectionChanged,
+      isNull,
+    );
+
+    pendiente.complete(archivoDePrueba());
+    await tester.pumpAndSettle();
   });
 }

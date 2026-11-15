@@ -209,6 +209,42 @@ void main() {
     expect(repo.consultas, hasLength(2));
   });
 
+  testWidgets('Pagar rechaza montos fuera del límite JSON', (
+    WidgetTester tester,
+  ) async {
+    final PlanMensual plan = planNetflix();
+    final FakePlanMensualRepository repo = FakePlanMensualRepository(
+      plan: plan,
+    );
+    final FakeMovimientosRepository movimientos = FakeMovimientosRepository();
+    await montar(
+      tester,
+      plan: plan,
+      repo: repo,
+      movimientos: movimientos,
+    );
+
+    await tester.tap(find.text('Pagar'));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Monto'),
+      '10000000000000',
+    );
+    await tester.tap(
+      find.descendant(
+        of: find.byType(NeoDialog),
+        matching: find.text('Pagar'),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(movimientos.registros, isEmpty);
+    expect(
+      find.text('El monto excede el máximo (13 enteros + 2 decimales).'),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('una partida cubierta muestra Pagado y congela el slider', (
     WidgetTester tester,
   ) async {

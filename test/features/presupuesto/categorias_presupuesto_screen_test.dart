@@ -79,6 +79,28 @@ void main() {
     expect(find.text('Límites guardados.'), findsOneWidget);
   });
 
+  testWidgets('el límite de categoría valida la magnitud JSON', (
+    WidgetTester tester,
+  ) async {
+    await montar(
+      tester,
+      presupuesto: FakePresupuestoRepository(),
+      categorias: FakeCategoriasRepository(),
+      preferencias: FakePreferenciasRepository(),
+    );
+
+    await tester.tap(find.text('Agregar límite'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), '10000000000000');
+    await tester.tap(find.text('Guardar'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('El monto excede el máximo (13 enteros + 2 decimales).'),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('cambia y quita el tipo preferido de una categoría', (
     WidgetTester tester,
   ) async {

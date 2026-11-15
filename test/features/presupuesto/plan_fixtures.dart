@@ -99,6 +99,7 @@ class FakePlanMensualRepository implements PlanMensualRepository {
 
   PlanMensual plan;
   final List<List<CambioMonto>> lotes = <List<CambioMonto>>[];
+  final List<String> mesesLotes = <String>[];
   final List<String> consultas = <String>[];
   final List<bool> consultasReferencias = <bool>[];
   final List<(String destino, String origen)> copias =
@@ -120,6 +121,10 @@ class FakePlanMensualRepository implements PlanMensualRepository {
   /// Si no es null, la próxima llamada espera a que este completer se complete.
   Completer<PlanMensual>? pendiente;
 
+  /// Cargas diferidas para probar respuestas fuera de orden.
+  final Map<String, Completer<PlanMensual>> cargasDiferidas =
+      <String, Completer<PlanMensual>>{};
+
   /// Si no es null, la próxima llamada lanza esta falla.
   AppFailure? error;
 
@@ -132,6 +137,10 @@ class FakePlanMensualRepository implements PlanMensualRepository {
   }) async {
     consultas.add(mes);
     consultasReferencias.add(incluirReferencias);
+    final Completer<PlanMensual>? diferida = cargasDiferidas[mes];
+    if (diferida != null) {
+      return diferida.future;
+    }
     return plan;
   }
 
@@ -141,6 +150,7 @@ class FakePlanMensualRepository implements PlanMensualRepository {
     List<CambioMonto> cambios,
   ) async {
     lotes.add(cambios);
+    mesesLotes.add(mes);
     if (error != null) {
       throw error!;
     }

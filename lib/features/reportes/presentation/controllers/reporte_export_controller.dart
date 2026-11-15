@@ -27,6 +27,9 @@ reporteExportProvider =
     );
 
 class ReporteExportController extends Notifier<ReporteExportState> {
+  bool _enCurso = false;
+  int _version = 0;
+
   @override
   ReporteExportState build() => const ReporteExportState();
 
@@ -37,32 +40,52 @@ class ReporteExportController extends Notifier<ReporteExportState> {
     ReporteSolicitud solicitud, {
     ui.Rect? origen,
   }) async {
-    if (state.enviando) {
+    if (_enCurso) {
       return null;
     }
+    _enCurso = true;
+    final int version = _version;
     state = const ReporteExportState(enviando: true);
     try {
       final ReporteArchivo archivo = await ref
           .read(reportesRepositoryProvider)
           .exportar(solicitud);
+      if (version != _version) {
+        return null;
+      }
       await ref
           .read(reporteSharerProvider)
           .compartir(archivo, origen: origen);
+      if (version != _version) {
+        return null;
+      }
       state = ReporteExportState(archivo: archivo);
       return null;
     } on AppFailure catch (failure) {
+      if (version != _version) {
+        return null;
+      }
       state = ReporteExportState(error: failure);
       return failure;
     } catch (_) {
+      if (version != _version) {
+        return null;
+      }
       const AppFailure failure = UnknownFailure(
         detail: 'No se pudo compartir el archivo.',
       );
       state = const ReporteExportState(error: failure);
       return failure;
+    } finally {
+      _enCurso = false;
+      if (version != _version) {
+        state = const ReporteExportState();
+      }
     }
   }
 
   void reset() {
-    state = const ReporteExportState();
+    _version += 1;
+    state = ReporteExportState(enviando: _enCurso);
   }
 }

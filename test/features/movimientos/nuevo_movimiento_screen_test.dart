@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -83,10 +85,7 @@ void main() {
     expect(find.text('Descripción'), findsOneWidget);
   }
 
-  Future<void> escribirDescripcion(
-    WidgetTester tester,
-    String texto,
-  ) async {
+  Future<void> escribirDescripcion(WidgetTester tester, String texto) async {
     await tester.enterText(
       find.widgetWithText(TextFormField, 'Descripción'),
       texto,
@@ -150,10 +149,7 @@ void main() {
     await escribirDescripcion(tester, 'cena aniversario');
 
     // Mensaje de ambigüedad y chips visibles; sin selección automática.
-    expect(
-      find.textContaining('más de una categoría posible'),
-      findsOneWidget,
-    );
+    expect(find.textContaining('más de una categoría posible'), findsOneWidget);
     expect(find.text('Regalos y Celebraciones'), findsOneWidget);
 
     // Elección explícita del segundo chip.
@@ -169,6 +165,145 @@ void main() {
 
     // Volvió al home y refrescó saldo/listado.
     expect(find.text('Saldo disponible'), findsOneWidget);
+  });
+
+  testWidgets(
+    'una respuesta ambigua nueva invalida la categoría manual previa',
+    (WidgetTester tester) async {
+      int registros = 0;
+      final Completer<ResponseBody> respuestaAmbigua =
+          Completer<ResponseBody>();
+
+      ResponseBody sugerencia(String texto) => jsonResponse(<String, Object?>{
+        'texto': texto,
+        'sugerencias': <Object?>[
+          <String, Object?>{
+            'categoriaId': texto == 'supermercado' ? 1 : 17,
+            'codigo': texto == 'supermercado'
+                ? 'ALIMENTACION_BASE'
+                : 'REGALOS_CELEBRACIONES',
+            'nombre': texto == 'supermercado'
+                ? 'Alimentación Básica'
+                : 'Regalos y Celebraciones',
+            'confianza': 0.9,
+            'motivo': 'PALABRA_CLAVE',
+          },
+          if (texto != 'supermercado')
+            <String, Object?>{
+              'categoriaId': 1,
+              'codigo': 'ALIMENTACION_BASE',
+              'nombre': 'Alimentación Básica',
+              'confianza': 0.9,
+              'motivo': 'PALABRA_CLAVE',
+            },
+        ],
+        'ambigua': texto != 'supermercado',
+      });
+
+      adapter.handler = (RequestOptions options) async {
+        final ResponseBody? base = baseGet(options);
+        if (base != null) {
+          return base;
+        }
+        if (options.path.endsWith('/categorias/sugerencia')) {
+          final String texto = options.queryParameters['texto'] as String;
+          return texto == 'supermercado'
+              ? sugerencia(texto)
+              : respuestaAmbigua.future;
+        }
+        if (options.path.endsWith('/movimientos') && options.method == 'POST') {
+          registros += 1;
+          return jsonResponse(<String, Object?>{
+            'id': 101,
+            'monto': -1200,
+            'descripcion': 'cena especial',
+            'fecha': '2026-11-06T16:31:00.000Z',
+            'tipoMovimiento': 'GASTO_GENERAL',
+          });
+        }
+        fail('petición inesperada: ${options.method} ${options.path}');
+      };
+
+      await abrirAlta(tester);
+      await escribirDescripcion(tester, 'supermercado');
+      // La persona confirma manualmente la sugerencia anterior.
+      await tester.tap(find.byType(ChoiceChip).first);
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'Monto'),
+        '1200',
+      );
+
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'Descripción'),
+        'cena especial',
+      );
+      await tester.tap(find.text('Guardar movimiento'));
+      await tester.pump();
+      expect(registros, 0);
+      expect(find.text('Buscando sugerencia de categoría…'), findsOneWidget);
+
+      // La consulta todavía está en debounce: sigue sin poder guardar.
+      await tester.pump(const Duration(milliseconds: 401));
+      await tester.pump();
+      expect(registros, 0);
+      expect(find.text('Buscando sugerencia de categoría…'), findsOneWidget);
+
+      // Incluso con la consulta en vuelo, el guardado sigue bloqueado.
+      await tester.tap(find.text('Guardar movimiento'));
+      await tester.pump();
+      expect(registros, 0);
+
+      respuestaAmbigua.complete(sugerencia('cena especial'));
+      await tester.pumpAndSettle();
+      expect(find.text('Elegir categoría'), findsOneWidget);
+
+      await tester.tap(find.text('Guardar movimiento'));
+      await tester.pumpAndSettle();
+      expect(
+        find.text('Elige una categoría para esta descripción.'),
+        findsOneWidget,
+      );
+      expect(registros, 0);
+
+      await tester.tap(find.text('Regalos y Celebraciones'));
+      await tester.pumpAndSettle();
+      expect(find.text('Elegir categoría'), findsNothing);
+      await tester.tap(find.text('Guardar movimiento'));
+      await tester.pumpAndSettle();
+      expect(registros, 1);
+    },
+  );
+
+  testWidgets('rechaza el monto que alcanza el límite JSON', (
+    WidgetTester tester,
+  ) async {
+    int registros = 0;
+    adapter.handler = (RequestOptions options) async {
+      final ResponseBody? base = baseGet(options);
+      if (base != null) {
+        return base;
+      }
+      if (options.path.endsWith('/movimientos') && options.method == 'POST') {
+        registros += 1;
+        return jsonResponse(<String, Object?>{});
+      }
+      fail('petición inesperada: ${options.method} ${options.path}');
+    };
+
+    await abrirAlta(tester);
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Monto'),
+      '10000000000000',
+    );
+    await tester.tap(find.text('Guardar movimiento'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('El monto excede el máximo (13 enteros + 2 decimales).'),
+      findsOneWidget,
+    );
+    expect(registros, 0);
   });
 
   testWidgets('sugerencia no ambigua preselecciona la primera categoría', (
@@ -210,15 +345,9 @@ void main() {
     await abrirAlta(tester);
     await escribirDescripcion(tester, 'supermercado');
 
-    expect(
-      find.textContaining('puedes cambiarla'),
-      findsOneWidget,
-    );
+    expect(find.textContaining('puedes cambiarla'), findsOneWidget);
 
-    await tester.enterText(
-      find.widgetWithText(TextFormField, 'Monto'),
-      '8000',
-    );
+    await tester.enterText(find.widgetWithText(TextFormField, 'Monto'), '8000');
     await tester.tap(find.text('Guardar movimiento'));
     await tester.pumpAndSettle();
 

@@ -13,6 +13,8 @@ import 'token_store.dart';
 /// - Ante `401 TOKEN_EXPIRADO` hace **un solo** refresh (single-flight: las
 ///   peticiones concurrentes comparten el mismo `Future`) y reintenta la
 ///   petición original **una sola vez**.
+/// - Ante `401 NO_AUTENTICADO` en rutas privadas, borra los tokens y emite
+///   `SessionExpired` sin intentar refresh.
 /// - Si el refresh falla con `REFRESH_INVALIDO` o el reintento vuelve a dar
 ///   401, borra los tokens y emite `SessionExpired`.
 class AuthInterceptor extends Interceptor {
@@ -67,6 +69,12 @@ class AuthInterceptor extends Interceptor {
     DioException err,
     ErrorInterceptorHandler handler,
   ) async {
+    if (_shouldExpireOnNotAuthenticated(err)) {
+      await _expireSession();
+      handler.next(err);
+      return;
+    }
+
     if (!_shouldRefresh(err)) {
       handler.next(err);
       return;
@@ -119,6 +127,19 @@ class AuthInterceptor extends Interceptor {
       body: error.response?.data,
     );
     return failure is TokenExpiredFailure;
+  }
+
+  bool _shouldExpireOnNotAuthenticated(DioException error) {
+    if (error.response?.statusCode != 401 ||
+        isPublicPath(error.requestOptions.path)) {
+      return false;
+    }
+
+    final AppFailure failure = failureFromProblemDetails(
+      statusCode: 401,
+      body: error.response?.data,
+    );
+    return failure is NotAuthenticatedFailure;
   }
 
   Future<AuthTokens?> _refreshOnce() {

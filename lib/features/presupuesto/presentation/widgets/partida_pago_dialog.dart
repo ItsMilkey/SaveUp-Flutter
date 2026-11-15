@@ -7,6 +7,7 @@ import '../../../../core/errors/app_failure.dart';
 import '../../../../core/errors/failure_messages.dart';
 import '../../../../core/money/money.dart';
 import '../../../../core/money/money_input_formatter.dart';
+import '../../../../core/money/money_json.dart';
 import '../../domain/plan_mensual.dart';
 import '../controllers/plan_mensual_controller.dart';
 
@@ -101,13 +102,14 @@ class _PartidaPagoDialogState extends ConsumerState<PartidaPagoDialog> {
                     return 'Ingresa el monto.';
                   }
                   try {
-                    if (Money.parseUserInput(text) <= Decimal.zero) {
+                    final Decimal monto = Money.parseUserInput(text);
+                    if (monto <= Decimal.zero) {
                       return 'Debe ser mayor que cero.';
                     }
+                    return validateMoneyForJson(monto);
                   } on FormatException {
                     return 'Monto inválido.';
                   }
-                  return null;
                 },
                 label: 'Monto',
                 prefixIcon: Icons.attach_money,

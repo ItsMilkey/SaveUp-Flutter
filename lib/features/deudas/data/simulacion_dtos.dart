@@ -34,9 +34,10 @@ class SimulacionRequestDto {
         'fechaPrimeraCuota': r.fechaPrimeraCuota!.toJson(),
       if (r.fechaUltimaCuota != null)
         'fechaUltimaCuota': r.fechaUltimaCuota!.toJson(),
-      if (r.tasaMensual != null) 'tasaMensual': moneyToJson(r.tasaMensual!),
+      if (r.tasaMensual != null)
+        'tasaMensual': decimalToJsonNumber(r.tasaMensual!),
       if (r.tasaAnualEfectiva != null)
-        'tasaAnualEfectiva': moneyToJson(r.tasaAnualEfectiva!),
+        'tasaAnualEfectiva': decimalToJsonNumber(r.tasaAnualEfectiva!),
       if (r.valorCuota != null) 'valorCuota': moneyToJson(r.valorCuota!),
       if (r.gastosIniciales != null)
         'gastosIniciales': moneyToJson(r.gastosIniciales!),

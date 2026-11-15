@@ -71,6 +71,7 @@ void main() {
   late bool cancelada;
   late int saldoLlamadas;
   late int pagosPagina;
+  late int pagoRequests;
 
   setUp(() {
     adapter = FakeHttpAdapter();
@@ -80,12 +81,11 @@ void main() {
     cancelada = false;
     saldoLlamadas = 0;
     pagosPagina = 0;
+    pagoRequests = 0;
   });
 
-  DeudaActual deudaActual() => DeudaActual(
-    pagado: pagado,
-    cancelada: cancelada,
-  );
+  DeudaActual deudaActual() =>
+      DeudaActual(pagado: pagado, cancelada: cancelada);
 
   ResponseBody? base(RequestOptions options) {
     if (options.path.endsWith('/app/version')) {
@@ -143,6 +143,7 @@ void main() {
   Future<void> abrirDetalle(WidgetTester tester) async {
     adapter.handler = (RequestOptions options) async {
       if (options.path.endsWith('/deudas/1/pagar')) {
+        pagoRequests += 1;
         expect(options.method, 'POST');
         final Map<String, dynamic> body = jsonBodyOf(options);
         if (pagado) {
@@ -178,17 +179,15 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  testWidgets('pago CUOTA_CALCULADA y monto personalizado refrescan la deuda',
-      (WidgetTester tester) async {
+  testWidgets('pago CUOTA_CALCULADA y monto personalizado refrescan la deuda', (
+    WidgetTester tester,
+  ) async {
     await abrirDetalle(tester);
     final int saldoInicial = saldoLlamadas;
 
     await tester.tap(find.widgetWithText(FilledButton, 'Registrar pago'));
     await tester.pumpAndSettle();
-    expect(
-      find.textContaining('Próxima cuota:'),
-      findsOneWidget,
-    );
+    expect(find.textContaining('Próxima cuota:'), findsOneWidget);
 
     // Confirmar en el diálogo (la barra inferior también dice lo mismo).
     await tester.tap(
@@ -202,9 +201,10 @@ void main() {
     expect(find.textContaining('1 de 12 cuotas'), findsOneWidget);
     expect(find.text('Pago registrado.'), findsOneWidget);
     // El backend creó el PAGO_DEUDA: home refresca saldo/listado.
-    expect(saldoLlamadas, greaterThan(saldoInicial));
+    expect(saldoLlamadas - saldoInicial, 1);
 
     // Segundo pago con monto libre.
+    final int saldoAntesDelSegundoPago = saldoLlamadas;
     await tester.tap(find.widgetWithText(FilledButton, 'Registrar pago'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Otro monto'));
@@ -221,6 +221,45 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(find.textContaining('1 de 12 cuotas'), findsOneWidget);
+    expect(saldoLlamadas - saldoAntesDelSegundoPago, 1);
+  });
+
+  testWidgets('pago personalizado muestra errores de límite y escala', (
+    WidgetTester tester,
+  ) async {
+    await abrirDetalle(tester);
+    await tester.tap(find.widgetWithText(FilledButton, 'Registrar pago'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Otro monto'));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Monto'),
+      '10000000000000',
+    );
+    final Finder registrar = find.descendant(
+      of: find.byType(NeoDialog),
+      matching: find.widgetWithText(FilledButton, 'Registrar pago'),
+    );
+    await tester.tap(registrar);
+    await tester.pumpAndSettle();
+    expect(
+      find.text('El monto excede el máximo (13 enteros + 2 decimales).'),
+      findsOneWidget,
+    );
+    expect(pagoRequests, 0);
+
+    final TextEditingController monto = tester
+        .widget<TextFormField>(find.widgetWithText(TextFormField, 'Monto'))
+        .controller!;
+    monto.text = '20000,001';
+    await tester.tap(registrar);
+    await tester.pumpAndSettle();
+    expect(
+      find.text('El monto no puede tener más de 2 decimales.'),
+      findsOneWidget,
+    );
+    expect(pagoRequests, 0);
   });
 
   testWidgets('cancelación defensiva deja la deuda cancelada', (
@@ -246,9 +285,7 @@ void main() {
     expect(find.text('Registrar pago'), findsNothing);
   });
 
-  testWidgets('historial paginado con Cargar más', (
-    WidgetTester tester,
-  ) async {
+  testWidgets('historial paginado con Cargar más', (WidgetTester tester) async {
     await abrirDetalle(tester);
 
     await tester.scrollUntilVisible(
@@ -276,6 +313,7 @@ void main() {
       if (options.path.endsWith('/simulaciones/credito')) {
         solicitudes += 1;
         expect(jsonBodyOf(options)['modalidad'], 'TASA_CONOCIDA');
+        expect(jsonBodyOf(options)['tasaMensual'], 1.234);
         return jsonResponse(<String, Object?>{
           'condiciones': <String, Object?>{
             'modalidad': 'TASA_CONOCIDA',
@@ -331,9 +369,9 @@ void main() {
     );
     await tester.enterText(
       find.widgetWithText(TextFormField, 'Tasa mensual (%)'),
-      '1.5',
+      '1,234',
     );
-    expect(find.text('1.5'), findsOneWidget);
+    expect(find.text('1,234'), findsOneWidget);
     await tester.scrollUntilVisible(
       find.widgetWithText(FilledButton, 'Simular'),
       300,
@@ -365,6 +403,65 @@ void main() {
       scrollable: find.byType(Scrollable).first,
     );
     expect(find.textContaining('CAE mostrado es referencial'), findsOneWidget);
+  });
+
+  testWidgets('simulador valida límites y escala de montos en el campo', (
+    WidgetTester tester,
+  ) async {
+    // El ListView construye hijos bajo demanda. Mantener todo el formulario
+    // en el viewport deja registrados sus FormField al validar el submit.
+    tester.view.physicalSize = const Size(1000, 1800);
+    tester.view.devicePixelRatio = 1;
+    int solicitudes = 0;
+    adapter.handler = (RequestOptions options) async {
+      if (options.path.endsWith('/simulaciones/credito')) {
+        solicitudes += 1;
+        return jsonResponse(<String, Object?>{});
+      }
+      final ResponseBody? respuesta = base(options);
+      if (respuesta != null) {
+        return respuesta;
+      }
+      fail('petición inesperada: ${options.method} ${options.path}');
+    };
+
+    await tester.pumpWidget(testApp(adapter: adapter, tokenStore: tokenStore));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byIcon(Icons.account_balance_wallet_outlined));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Simular crédito'));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Capital'),
+      '10000000000000',
+    );
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Tasa mensual (%)'),
+      '1.5',
+    );
+    final Finder simular = find.widgetWithText(FilledButton, 'Simular');
+    await tester.tap(simular);
+    await tester.pumpAndSettle();
+    expect(
+      find.text('El monto excede el máximo (13 enteros + 2 decimales).'),
+      findsOneWidget,
+    );
+    expect(solicitudes, 0);
+
+    final TextEditingController capital = tester
+        .widget<TextFormField>(find.widgetWithText(TextFormField, 'Capital'))
+        .controller!;
+    capital.text = '500000,001';
+    await tester.tap(simular);
+    await tester.pumpAndSettle();
+    expect(
+      find.text('El monto no puede tener más de 2 decimales.'),
+      findsOneWidget,
+    );
+    expect(solicitudes, 0);
+
+    tester.view.resetPhysicalSize();
+    tester.view.resetDevicePixelRatio();
   });
 }
 

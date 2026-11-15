@@ -1,28 +1,25 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:saveup_app/core/design_system/design_system.dart';
 import 'package:saveup_app/features/metas/data/dio_metas_repository.dart';
 import 'package:saveup_app/features/metas/domain/meta_ahorro.dart';
+import 'package:saveup_app/features/metas/presentation/controllers/metas_controller.dart';
 import 'package:saveup_app/features/metas/presentation/screens/metas_screen.dart';
 import 'package:saveup_app/features/movimientos/presentation/movimientos_controller.dart';
 
 import 'metas_fixtures.dart';
 
-Future<void> montar(
-  WidgetTester tester,
-  FakeMetasRepository repo,
-) async {
+Future<void> montar(WidgetTester tester, FakeMetasRepository repo) async {
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
         metasRepositoryProvider.overrideWithValue(repo),
         movimientosProvider.overrideWith(FakeMovimientosController.new),
       ],
-      child: MaterialApp(
-        theme: SaveUpTheme.light(),
-        home: const MetasScreen(),
-      ),
+      child: MaterialApp(theme: SaveUpTheme.light(), home: const MetasScreen()),
     ),
   );
   await tester.pumpAndSettle();
@@ -35,10 +32,7 @@ void main() {
     await montar(tester, FakeMetasRepository());
 
     expect(find.text('Viaje a Japón'), findsOneWidget);
-    expect(
-      find.text(r'$250.000 de $1.500.000 (16.67 %)'),
-      findsOneWidget,
-    );
+    expect(find.text(r'$250.000 de $1.500.000 (16.67 %)'), findsOneWidget);
     expect(find.text('Fecha límite: 2027-06-30'), findsOneWidget);
     expect(find.text('Abonar'), findsOneWidget);
     expect(find.text('Retirar'), findsOneWidget);
@@ -60,10 +54,7 @@ void main() {
     expect(repo.abonoMonto!.toString(), '50000');
     expect(repo.abonoDescripcion, 'Abono a Viaje a Japón');
     expect(find.text('Abono registrado.'), findsOneWidget);
-    expect(
-      find.text(r'$300.000 de $1.500.000 (20 %)'),
-      findsOneWidget,
-    );
+    expect(find.text(r'$300.000 de $1.500.000 (20 %)'), findsOneWidget);
   });
 
   testWidgets('retirar más de lo ahorrado se bloquea en el diálogo', (
@@ -88,13 +79,54 @@ void main() {
     await tester.pumpAndSettle();
   });
 
+  testWidgets('deshabilita acciones mientras registra un abono', (
+    WidgetTester tester,
+  ) async {
+    final Completer<void> pendiente = Completer<void>();
+    final FakeMetasRepository repo = FakeMetasRepository()
+      ..accionPendiente = pendiente.future;
+    await montar(tester, repo);
+
+    await tester.tap(find.text('Abonar'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField).first, '50000');
+    await tester.tap(find.widgetWithText(FilledButton, 'Abonar'));
+    await tester.pump();
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    expect(repo.llamadasAbonar, 1);
+    expect(
+      ProviderScope.containerOf(tester.element(find.byType(MetasScreen)))
+          .read(metaAccionesProvider)
+          .isLoading,
+      isTrue,
+    );
+    final Iterable<NeoButton> botonesAbonar = tester.widgetList<NeoButton>(
+      find.widgetWithText(NeoButton, 'Abonar'),
+    );
+    final Iterable<NeoButton> botonesRetirar = tester.widgetList<NeoButton>(
+      find.widgetWithText(NeoButton, 'Retirar'),
+    );
+    expect(botonesAbonar, isNotEmpty);
+    expect(botonesRetirar, isNotEmpty);
+    expect(
+      botonesAbonar.every((NeoButton boton) => boton.onPressed == null),
+      isTrue,
+    );
+    expect(
+      botonesRetirar.every((NeoButton boton) => boton.onPressed == null),
+      isTrue,
+    );
+
+    pendiente.complete();
+    await tester.pumpAndSettle();
+  });
+
   testWidgets('estado vacío invita a crear la primera meta', (
     WidgetTester tester,
   ) async {
-    await montar(
-      tester,
-      FakeMetasRepository(metas: <MetaAhorro>[]),
-    );
+    await montar(tester, FakeMetasRepository(metas: <MetaAhorro>[]));
 
     expect(find.text('Aún no tienes metas de ahorro.'), findsOneWidget);
     expect(find.text('Crear mi primera meta'), findsOneWidget);

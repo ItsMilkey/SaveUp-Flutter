@@ -261,6 +261,22 @@ void main() {
           'totalPages': 1,
         });
       }
+      if (options.path.endsWith('/categorias/sugerencia')) {
+        expect(options.queryParameters['texto'], 'Supermercado editado');
+        return jsonResponse(<String, Object?>{
+          'texto': 'Supermercado editado',
+          'sugerencias': <Object?>[
+            <String, Object?>{
+              'categoriaId': 1,
+              'codigo': 'ALIMENTACION_BASE',
+              'nombre': 'Alimentación Básica',
+              'confianza': 0.9,
+              'motivo': 'PALABRA_CLAVE',
+            },
+          ],
+          'ambigua': false,
+        });
+      }
       if (options.method == 'PUT' &&
           options.path.endsWith('/movimientos/1')) {
         expect(jsonBodyOf(options), <String, Object?>{
@@ -301,6 +317,8 @@ void main() {
       find.widgetWithText(TextFormField, 'Descripción'),
       'Supermercado editado',
     );
+    await tester.pump(const Duration(milliseconds: 401));
+    await tester.pumpAndSettle();
     await tester.enterText(
       find.widgetWithText(TextFormField, 'Monto'),
       '13000',

@@ -75,6 +75,80 @@ void main() {
     expect(find.text('Ingresa el monto objetivo.'), findsOneWidget);
   });
 
+  testWidgets('mantiene la validación positiva del objetivo', (
+    WidgetTester tester,
+  ) async {
+    await abrirFormulario(tester, FakeMetasRepository());
+
+    await tester.enterText(find.byType(TextFormField).at(0), 'Notebook');
+    await tester.enterText(find.byType(TextFormField).at(1), '0');
+    await tester.tap(find.text('Guardar meta'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('El monto debe ser mayor a 0.'), findsOneWidget);
+  });
+
+  testWidgets('acepta el máximo serializable como monto objetivo', (
+    WidgetTester tester,
+  ) async {
+    final FakeMetasRepository repo = FakeMetasRepository(
+      metas: <MetaAhorro>[],
+    );
+    await abrirFormulario(tester, repo);
+
+    await tester.enterText(find.byType(TextFormField).at(0), 'Notebook');
+    await tester.enterText(
+      find.byType(TextFormField).at(1),
+      '9999999999999,99',
+    );
+    await tester.tap(find.text('Guardar meta'));
+    await tester.pumpAndSettle();
+
+    expect(repo.creado!.montoObjetivo!.toString(), '9999999999999.99');
+    expect(find.textContaining('El monto excede el máximo'), findsNothing);
+  });
+
+  testWidgets('rechaza objetivos que no se pueden serializar', (
+    WidgetTester tester,
+  ) async {
+    final FakeMetasRepository repo = FakeMetasRepository(
+      metas: <MetaAhorro>[],
+    );
+    await abrirFormulario(tester, repo);
+
+    await tester.enterText(find.byType(TextFormField).at(0), 'Notebook');
+    await tester.enterText(find.byType(TextFormField).at(1), '10000000000000');
+    await tester.tap(find.text('Guardar meta'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('El monto excede el máximo (13 enteros + 2 decimales).'),
+      findsOneWidget,
+    );
+    expect(repo.creado, isNull);
+  });
+
+  testWidgets('rechaza objetivos con más de dos decimales', (
+    WidgetTester tester,
+  ) async {
+    final FakeMetasRepository repo = FakeMetasRepository(metas: <MetaAhorro>[]);
+    await abrirFormulario(tester, repo);
+
+    await tester.enterText(find.byType(TextFormField).at(0), 'Notebook');
+    final TextField campoMonto = tester.widget<TextField>(
+      find.byType(TextField).at(1),
+    );
+    campoMonto.controller!.text = '1,234';
+    await tester.tap(find.text('Guardar meta'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('El monto no puede tener más de 2 decimales.'),
+      findsOneWidget,
+    );
+    expect(repo.creado, isNull);
+  });
+
   testWidgets('la meta por defecto solo permite cambiar el nombre', (
     WidgetTester tester,
   ) async {

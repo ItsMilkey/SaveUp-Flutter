@@ -177,10 +177,8 @@ class PartidaMontoSlider extends ConsumerWidget {
     final double actual = partida.montoPlanificado.toDouble();
     // El Slider trabaja en double solo para la posición visual; el monto viaja
     // como Decimal redondeado a peso.
-    double maximo = limite.toDouble();
-    if (maximo <= actual) {
-      maximo = actual + 1000;
-    }
+    final double maximo = limite.toDouble();
+    final bool sliderInmovil = actual == 0 && limite <= Decimal.zero;
 
     return NeoSurface(
       density: AppDensity.list,
@@ -197,21 +195,33 @@ class PartidaMontoSlider extends ConsumerWidget {
               thumbColor: fondo == null ? colors.primary : colors.ink,
               inactiveTrackColor: fondo == null ? null : colors.surface,
             ),
-            child: Slider(
-              value: actual.clamp(0, maximo),
-              max: maximo,
-              onChanged: pagada
-                  ? null
-                  : (double value) => ref
-                        .read(planMensualProvider.notifier)
-                        .moverPartida(
-                          partidaId,
-                          Decimal.parse(value.round().toString()),
-                        ),
-              onChangeEnd: pagada
-                  ? null
-                  : (_) => ref.read(planMensualProvider.notifier).soltar(),
-            ),
+            child: sliderInmovil
+                ? const Padding(
+                    padding: EdgeInsets.symmetric(vertical: AppSpacing.sm),
+                    child: Text('No hay remanente disponible para asignar.'),
+                  )
+                : Slider(
+                    value: actual.clamp(0, maximo),
+                    max: maximo,
+                    onChanged: pagada
+                        ? null
+                        : (double value) {
+                            final Decimal solicitado = Decimal.parse(
+                              value.round().toString(),
+                            );
+                            ref
+                                .read(planMensualProvider.notifier)
+                                .moverPartida(
+                                  partidaId,
+                                  solicitado > limite ? limite : solicitado,
+                                );
+                          },
+                    onChangeEnd: pagada
+                        ? null
+                        : (_) => ref
+                              .read(planMensualProvider.notifier)
+                              .soltar(),
+                  ),
           ),
           Row(
             children: <Widget>[

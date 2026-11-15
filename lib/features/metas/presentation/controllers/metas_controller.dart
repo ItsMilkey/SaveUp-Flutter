@@ -39,6 +39,8 @@ metaAccionesProvider =
     );
 
 class MetaAccionesController extends Notifier<AsyncValue<void>> {
+  bool _enCurso = false;
+
   @override
   AsyncValue<void> build() => const AsyncData<void>(null);
 
@@ -75,6 +77,10 @@ class MetaAccionesController extends Notifier<AsyncValue<void>> {
   }
 
   Future<AppFailure?> _ejecutar(Future<void> Function() accion) async {
+    if (_enCurso) {
+      return null;
+    }
+    _enCurso = true;
     state = const AsyncLoading<void>();
     try {
       await accion();
@@ -88,6 +94,8 @@ class MetaAccionesController extends Notifier<AsyncValue<void>> {
     } on AppFailure catch (failure, stack) {
       state = AsyncError<void>(failure, stack);
       return failure;
+    } finally {
+      _enCurso = false;
     }
   }
 }

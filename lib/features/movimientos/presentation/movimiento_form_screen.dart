@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/design_system/design_system.dart';
 import '../../../core/money/money.dart';
 import '../../../core/money/money_input_formatter.dart';
+import '../../../core/money/money_json.dart';
 import '../domain/categoria.dart';
 import '../domain/movimiento.dart';
 import '../domain/movimiento_tipo.dart';
@@ -44,6 +45,9 @@ class _MovimientoFormScreenState extends ConsumerState<MovimientoFormScreen> {
   bool _seleccionManual = false;
   List<SugerenciaCategoria> _sugerencias = const <SugerenciaCategoria>[];
   bool _ambigua = false;
+  bool _eleccionAmbigua = false;
+  bool _errorEleccionAmbigua = false;
+  bool _sugerenciaPendiente = false;
 
   bool get _esEdicion => widget.movimiento != null;
 
@@ -78,9 +82,28 @@ class _MovimientoFormScreenState extends ConsumerState<MovimientoFormScreen> {
       : ContextoSugerencia.gasto;
 
   void _consultarSugerencia() {
+    final String texto = _descripcionController.text;
+    setState(() {
+      _sugerenciaPendiente = texto.trim().isNotEmpty;
+    });
     ref
         .read(sugerenciaCategoriaProvider.notifier)
-        .actualizarTexto(_descripcionController.text, contexto: _contexto);
+        .actualizarTexto(texto, contexto: _contexto);
+  }
+
+  void _actualizarDescripcion(String texto) {
+    setState(() {
+      _categoriaSeleccionada = null;
+      _seleccionManual = false;
+      _ambigua = false;
+      _eleccionAmbigua = false;
+      _errorEleccionAmbigua = false;
+      _sugerencias = const <SugerenciaCategoria>[];
+      _sugerenciaPendiente = texto.trim().isNotEmpty;
+    });
+    ref
+        .read(sugerenciaCategoriaProvider.notifier)
+        .actualizarTexto(texto, contexto: _contexto);
   }
 
   Categoria? _categoriaDe(List<Categoria>? lista, int id) {
@@ -96,10 +119,7 @@ class _MovimientoFormScreenState extends ConsumerState<MovimientoFormScreen> {
     SugerenciaCategoria sugerencia,
     List<Categoria>? catalogo,
   ) {
-    final Categoria? categoria = _categoriaDe(
-      catalogo,
-      sugerencia.categoriaId,
-    );
+    final Categoria? categoria = _categoriaDe(catalogo, sugerencia.categoriaId);
     return ChoiceChip(
       avatar: categoria == null
           ? Icon(iconoDeCategoriaPorCodigo(sugerencia.codigo), size: 18)
@@ -109,6 +129,10 @@ class _MovimientoFormScreenState extends ConsumerState<MovimientoFormScreen> {
       onSelected: (_) => setState(() {
         _categoriaSeleccionada = sugerencia.categoriaId;
         _seleccionManual = true;
+        if (_ambigua) {
+          _eleccionAmbigua = true;
+          _errorEleccionAmbigua = false;
+        }
       }),
     );
   }
@@ -127,14 +151,40 @@ class _MovimientoFormScreenState extends ConsumerState<MovimientoFormScreen> {
       _,
       AsyncValue<RespuestaSugerencia?> next,
     ) {
+      if (next.isLoading) {
+        return;
+      }
+      if (next.hasError) {
+        setState(() {
+          _sugerenciaPendiente = false;
+          _sugerencias = const <SugerenciaCategoria>[];
+          _ambigua = false;
+          _eleccionAmbigua = false;
+          _errorEleccionAmbigua = false;
+        });
+        return;
+      }
       final RespuestaSugerencia? respuesta = next.value;
       if (respuesta == null) {
+        setState(() {
+          _sugerenciaPendiente = false;
+          _sugerencias = const <SugerenciaCategoria>[];
+          _ambigua = false;
+        });
         return;
       }
       setState(() {
+        _sugerenciaPendiente = false;
         _sugerencias = respuesta.sugerencias;
         _ambigua = respuesta.ambigua;
         final bool haySugerencias = respuesta.sugerencias.isNotEmpty;
+        if (respuesta.ambigua) {
+          // Una elección manual anterior pertenecía a otra descripción.
+          _categoriaSeleccionada = null;
+          _seleccionManual = false;
+          _eleccionAmbigua = false;
+          _errorEleccionAmbigua = false;
+        }
         // Preselección solo si NO es ambigua y la persona no eligió a mano.
         if (!respuesta.ambigua && haySugerencias && !_seleccionManual) {
           _categoriaSeleccionada = respuesta.sugerencias.first.categoriaId;
@@ -226,7 +276,7 @@ class _MovimientoFormScreenState extends ConsumerState<MovimientoFormScreen> {
               NeoInput(
                 controller: _descripcionController,
                 textInputAction: TextInputAction.next,
-                onChanged: (_) => _consultarSugerencia(),
+                onChanged: _actualizarDescripcion,
                 validator: (String? value) {
                   if (value == null || value.trim().isEmpty) {
                     return 'Describe el movimiento.';
@@ -237,6 +287,11 @@ class _MovimientoFormScreenState extends ConsumerState<MovimientoFormScreen> {
                 prefixIcon: Icons.notes,
                 error: errorFor('descripcion'),
               ),
+              if (_sugerenciaPendiente)
+                const Padding(
+                  padding: EdgeInsets.only(top: AppSpacing.xs),
+                  child: Text('Buscando sugerencia de categoría…'),
+                ),
               if (_sugerencias.isNotEmpty) ...<Widget>[
                 const SizedBox(height: AppSpacing.sm),
                 Text(
@@ -266,11 +321,11 @@ class _MovimientoFormScreenState extends ConsumerState<MovimientoFormScreen> {
                     return 'Ingresa el monto.';
                   }
                   try {
-                    Money.parseUserInput(value);
+                    final Decimal monto = Money.parseUserInput(value);
+                    return validateMoneyForJson(monto);
                   } on FormatException {
                     return 'Ingresa un monto válido.';
                   }
-                  return null;
                 },
                 label: 'Monto',
                 hint: '12.500',
@@ -287,8 +342,16 @@ class _MovimientoFormScreenState extends ConsumerState<MovimientoFormScreen> {
                 onChanged: (int? id) => setState(() {
                   _categoriaSeleccionada = id;
                   _seleccionManual = true;
+                  if (_ambigua) {
+                    _eleccionAmbigua = true;
+                    _errorEleccionAmbigua = false;
+                  }
                 }),
-                errorText: errorFor('categoriaId'),
+                errorText:
+                    errorFor('categoriaId') ??
+                    (_errorEleccionAmbigua
+                        ? 'Elige una categoría para esta descripción.'
+                        : null),
                 onReintentar: () => ref.invalidate(categoriasProvider),
               ),
               const SizedBox(height: AppSpacing.xl),
@@ -315,6 +378,13 @@ class _MovimientoFormScreenState extends ConsumerState<MovimientoFormScreen> {
   }
 
   Future<void> _submit() async {
+    if (_sugerenciaPendiente) {
+      return;
+    }
+    if (_ambigua && !_eleccionAmbigua) {
+      setState(() => _errorEleccionAmbigua = true);
+      return;
+    }
     if (!(_formKey.currentState?.validate() ?? false)) {
       return;
     }

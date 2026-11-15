@@ -93,12 +93,18 @@ class PlanMensualController extends Notifier<PlanMensualState> {
   /// está en vuelo).
   final Map<int, Decimal> _colaEnvio = <int, Decimal>{};
   bool _enviando = false;
+  int _versionCarga = 0;
 
   @override
   PlanMensualState build() => const PlanMensualState();
 
   /// Carga el plan del mes (calendario de negocio `yyyy-MM`).
   Future<void> cargar(String mes, {bool? incluirReferencias}) async {
+    // No descartar una vista local ni cambiar el destino de una cola pendiente.
+    if (_enviando || _colaEnvio.isNotEmpty || state.hayCambios) {
+      return;
+    }
+    final int version = ++_versionCarga;
     final bool referencias =
         incluirReferencias ?? state.incluirReferencias;
     state = PlanMensualState(
@@ -110,12 +116,18 @@ class PlanMensualController extends Notifier<PlanMensualState> {
       final PlanMensual plan = await ref
           .read(planMensualRepositoryProvider)
           .obtener(mes, incluirReferencias: referencias);
+      if (version != _versionCarga) {
+        return;
+      }
       state = PlanMensualState(
         mes: mes,
         plan: plan,
         incluirReferencias: referencias,
       );
     } on AppFailure catch (failure) {
+      if (version != _versionCarga) {
+        return;
+      }
       state = PlanMensualState(
         mes: mes,
         errorCarga: failure,
@@ -134,6 +146,8 @@ class PlanMensualController extends Notifier<PlanMensualState> {
     required Decimal monto,
     required String descripcion,
   }) async {
+    final String mes = state.mes;
+    final int version = _versionCarga;
     try {
       await ref
           .read(movimientosRepositoryProvider)
@@ -144,9 +158,14 @@ class PlanMensualController extends Notifier<PlanMensualState> {
             partidaId: partidaId,
           );
     } on AppFailure catch (failure) {
+      if (!_esSolicitudActual(mes, version)) {
+        return null;
+      }
       return failure;
     }
-    await cargar(state.mes);
+    if (_esSolicitudActual(mes, version)) {
+      await cargar(mes);
+    }
     return null;
   }
 
@@ -155,6 +174,8 @@ class PlanMensualController extends Notifier<PlanMensualState> {
   /// Los `avisos` del 200 quedan en el plan y se muestran como información,
   /// nunca como errores.
   Future<AppFailure?> copiarDesde(String mesOrigen) async {
+    final String mes = state.mes;
+    final int version = _versionCarga;
     if (state.plan == null) {
       return null;
     }
@@ -162,7 +183,10 @@ class PlanMensualController extends Notifier<PlanMensualState> {
     try {
       final PlanMensual copiado = await ref
           .read(planMensualRepositoryProvider)
-          .copiarDesde(state.mes, mesOrigen);
+          .copiarDesde(mes, mesOrigen);
+      if (!_esSolicitudActual(mes, version)) {
+        return null;
+      }
       state = state.copyWith(
         plan: copiado,
         copiando: false,
@@ -171,6 +195,9 @@ class PlanMensualController extends Notifier<PlanMensualState> {
       );
       return null;
     } on AppFailure catch (failure) {
+      if (!_esSolicitudActual(mes, version)) {
+        return null;
+      }
       state = state.copyWith(copiando: false);
       return failure;
     }
@@ -178,6 +205,8 @@ class PlanMensualController extends Notifier<PlanMensualState> {
 
   /// Actualiza el ingreso de referencia con vista local inmediata y `PUT`.
   Future<AppFailure?> actualizarIngreso(Decimal? monto) async {
+    final String mes = state.mes;
+    final int version = _versionCarga;
     final PlanMensual? previo = state.plan;
     if (previo == null) {
       return null;
@@ -199,10 +228,16 @@ class PlanMensualController extends Notifier<PlanMensualState> {
     try {
       final PlanMensual servidor = await ref
           .read(planMensualRepositoryProvider)
-          .actualizarIngreso(state.mes, monto);
+          .actualizarIngreso(mes, monto);
+      if (!_esSolicitudActual(mes, version)) {
+        return null;
+      }
       state = state.copyWith(plan: servidor);
       return null;
     } on AppFailure catch (failure) {
+      if (!_esSolicitudActual(mes, version)) {
+        return null;
+      }
       state = state.copyWith(plan: previo);
       return failure;
     }
@@ -215,16 +250,21 @@ class PlanMensualController extends Notifier<PlanMensualState> {
     required Decimal montoPlanificado,
     int? grupoId,
   }) async {
+    final String mes = state.mes;
+    final int version = _versionCarga;
     try {
       final PlanMensual plan = await ref
           .read(planMensualRepositoryProvider)
           .crearPartida(
-            state.mes,
+            mes,
             nombre: nombre,
             categoriaId: categoriaId,
             montoPlanificado: montoPlanificado,
             grupoId: grupoId,
           );
+      if (!_esSolicitudActual(mes, version)) {
+        return null;
+      }
       state = state.copyWith(
         plan: plan,
         cambiosPendientes: const <int, Decimal>{},
@@ -232,6 +272,9 @@ class PlanMensualController extends Notifier<PlanMensualState> {
       );
       return null;
     } on AppFailure catch (failure) {
+      if (!_esSolicitudActual(mes, version)) {
+        return null;
+      }
       return failure;
     }
   }
@@ -244,34 +287,50 @@ class PlanMensualController extends Notifier<PlanMensualState> {
     int? grupoId,
     bool quitarGrupo = false,
   }) async {
+    final String mes = state.mes;
+    final int version = _versionCarga;
     try {
       final PlanMensual plan = await ref
           .read(planMensualRepositoryProvider)
           .editarPartida(
-            state.mes,
+            mes,
             id,
             nombre: nombre,
             categoriaId: categoriaId,
             grupoId: grupoId,
             quitarGrupo: quitarGrupo,
           );
+      if (!_esSolicitudActual(mes, version)) {
+        return null;
+      }
       state = state.copyWith(plan: plan);
       return null;
     } on AppFailure catch (failure) {
+      if (!_esSolicitudActual(mes, version)) {
+        return null;
+      }
       return failure;
     }
   }
 
   /// Elimina una partida (204) y recarga el plan autoritativo.
   Future<AppFailure?> eliminarPartida(int id) async {
+    final String mes = state.mes;
+    final int version = _versionCarga;
     try {
       await ref.read(planMensualRepositoryProvider).eliminarPartida(
-        state.mes,
+        mes,
         id,
       );
+      if (!_esSolicitudActual(mes, version)) {
+        return null;
+      }
       final PlanMensual plan = await ref
           .read(planMensualRepositoryProvider)
-          .obtener(state.mes, incluirReferencias: state.incluirReferencias);
+          .obtener(mes, incluirReferencias: state.incluirReferencias);
+      if (!_esSolicitudActual(mes, version)) {
+        return null;
+      }
       state = state.copyWith(
         plan: plan,
         cambiosPendientes: const <int, Decimal>{},
@@ -279,6 +338,9 @@ class PlanMensualController extends Notifier<PlanMensualState> {
       );
       return null;
     } on AppFailure catch (failure) {
+      if (!_esSolicitudActual(mes, version)) {
+        return null;
+      }
       return failure;
     }
   }
@@ -338,6 +400,8 @@ class PlanMensualController extends Notifier<PlanMensualState> {
       return;
     }
     _enviando = true;
+    final String mesEnvio = state.mes;
+    final int versionCarga = _versionCarga;
     state = state.copyWith(enviandoLote: true, limpiarErrorLote: true);
     try {
       while (_colaEnvio.isNotEmpty) {
@@ -351,7 +415,7 @@ class PlanMensualController extends Notifier<PlanMensualState> {
         final PlanMensual planServidor = await ref
             .read(planMensualRepositoryProvider)
             .actualizarMontos(
-              state.mes,
+              mesEnvio,
               <CambioMonto>[
                 for (final MapEntry<int, Decimal> e in lote)
                   CambioMonto(partidaId: e.key, monto: e.value),
@@ -364,6 +428,9 @@ class PlanMensualController extends Notifier<PlanMensualState> {
           if (_colaEnvio[e.key] == e.value) {
             _colaEnvio.remove(e.key);
           }
+        }
+        if (!_esSolicitudActual(mesEnvio, versionCarga)) {
+          continue;
         }
         final Map<int, Decimal> buffer = <int, Decimal>{
           for (final MapEntry<int, Decimal> e in state.cambiosPendientes.entries)
@@ -390,6 +457,9 @@ class PlanMensualController extends Notifier<PlanMensualState> {
         );
       }
     } on AppFailure catch (failure) {
+      if (!_esSolicitudActual(mesEnvio, versionCarga)) {
+        return;
+      }
       state = state.copyWith(enviandoLote: false, errorLote: failure);
     } finally {
       _enviando = false;
@@ -414,4 +484,7 @@ class PlanMensualController extends Notifier<PlanMensualState> {
     final Decimal extra = remanente > Decimal.zero ? remanente : Decimal.zero;
     return partida.montoPlanificado + extra;
   }
+
+  bool _esSolicitudActual(String mes, int versionCarga) =>
+      state.mes == mes && _versionCarga == versionCarga;
 }

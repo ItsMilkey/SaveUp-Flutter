@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/design_system/design_system.dart';
 import '../../../core/money/money.dart';
 import '../../../core/money/money_input_formatter.dart';
+import '../../../core/money/money_json.dart';
 import '../../../core/time/calendar_date.dart';
 import '../domain/deuda.dart';
 import '../domain/simulacion.dart';
@@ -162,7 +163,7 @@ class _SimuladorScreenState extends ConsumerState<SimuladorScreen> {
               NeoInput(
                 controller: _tasa,
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                validator: _moneyRequerido,
+                validator: _rateRequired,
                 label: _tasaAnual
                     ? 'Tasa anual efectiva (%)'
                     : 'Tasa mensual (%)',
@@ -254,11 +255,27 @@ class _SimuladorScreenState extends ConsumerState<SimuladorScreen> {
       return 'Requerido.';
     }
     try {
+      final Decimal monto = Money.parseUserInput(text);
+      if (monto <= Decimal.zero) {
+        return 'Debe ser mayor que cero.';
+      }
+      return validateMoneyForJson(monto);
+    } on FormatException {
+      return 'Monto inválido.';
+    }
+  }
+
+  String? _rateRequired(String? value) {
+    final String text = value?.trim() ?? '';
+    if (text.isEmpty) {
+      return 'Ingresa una tasa.';
+    }
+    try {
       if (Money.parseUserInput(text) <= Decimal.zero) {
         return 'Debe ser mayor que cero.';
       }
     } on FormatException {
-      return 'Monto inválido.';
+      return 'Tasa inválida.';
     }
     return null;
   }

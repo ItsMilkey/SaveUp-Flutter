@@ -58,10 +58,12 @@ class _ReportesScreenState extends ConsumerState<ReportesScreen> {
               ),
             ],
             selected: <ReporteAlcance>{_alcance},
-            onSelectionChanged: (Set<ReporteAlcance> seleccion) {
-              ref.read(reporteExportProvider.notifier).reset();
-              setState(() => _alcance = seleccion.first);
-            },
+            onSelectionChanged: estado.enviando
+                ? null
+                : (Set<ReporteAlcance> seleccion) {
+                    ref.read(reporteExportProvider.notifier).reset();
+                    setState(() => _alcance = seleccion.first);
+                  },
           ),
           if (_alcance == ReporteAlcance.mensual) ...<Widget>[
             const SizedBox(height: AppSpacing.md),
@@ -106,10 +108,12 @@ class _ReportesScreenState extends ConsumerState<ReportesScreen> {
               ),
             ],
             selected: <ReporteFormato>{_formato},
-            onSelectionChanged: (Set<ReporteFormato> seleccion) {
-              ref.read(reporteExportProvider.notifier).reset();
-              setState(() => _formato = seleccion.first);
-            },
+            onSelectionChanged: estado.enviando
+                ? null
+                : (Set<ReporteFormato> seleccion) {
+                    ref.read(reporteExportProvider.notifier).reset();
+                    setState(() => _formato = seleccion.first);
+                  },
           ),
           const SizedBox(height: AppSpacing.sm),
           Text(
@@ -193,11 +197,14 @@ class _ReportesScreenState extends ConsumerState<ReportesScreen> {
     if (!mounted) {
       return;
     }
-    final ReporteArchivo? archivo = ref.read(reporteExportProvider).archivo;
+    final ReporteExportState resultado = ref.read(reporteExportProvider);
+    if (failure == null && resultado.archivo == null) {
+      return;
+    }
     NeoSnackbar.show(
       context,
       failure == null
-          ? 'Reporte listo: ${archivo?.nombre ?? 'archivo'}'
+          ? 'Reporte listo: ${resultado.archivo!.nombre}'
           : failureMessage(failure),
       tone: failure == null
           ? NeoSnackbarTone.success

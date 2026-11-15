@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:decimal/decimal.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -98,6 +100,52 @@ void main() {
     expect(movimientos.refrescos, 1);
     final List<dynamic> lista = await container.read(metasProvider.future);
     expect(lista, isEmpty);
+  });
+
+  test('ignora abonos, retiros y eliminaciones duplicados en curso', () async {
+    for (final String accion in <String>['abonar', 'retirar', 'eliminar']) {
+      final Completer<void> pendiente = Completer<void>();
+      final FakeMetasRepository fake = FakeMetasRepository()
+        ..accionPendiente = pendiente.future;
+      montar(fake);
+
+      final MetaAccionesController acciones =
+          container.read(metaAccionesProvider.notifier);
+      final Future<AppFailure?> primera = switch (accion) {
+        'abonar' => acciones.abonar(
+          3,
+          monto: Decimal.fromInt(1000),
+          descripcion: 'Abono',
+        ),
+        'retirar' => acciones.retirar(
+          3,
+          monto: Decimal.fromInt(1000),
+          descripcion: 'Retiro',
+        ),
+        _ => acciones.eliminar(3),
+      };
+      final Future<AppFailure?> segunda = switch (accion) {
+        'abonar' => acciones.abonar(
+          3,
+          monto: Decimal.fromInt(1000),
+          descripcion: 'Abono',
+        ),
+        'retirar' => acciones.retirar(
+          3,
+          monto: Decimal.fromInt(1000),
+          descripcion: 'Retiro',
+        ),
+        _ => acciones.eliminar(3),
+      };
+
+      expect(await segunda, isNull);
+      expect(fake.llamadasAbonar, accion == 'abonar' ? 1 : 0);
+      expect(fake.llamadasRetirar, accion == 'retirar' ? 1 : 0);
+      expect(fake.llamadasEliminar, accion == 'eliminar' ? 1 : 0);
+
+      pendiente.complete();
+      expect(await primera, isNull);
+    }
   });
 
   test('un error al listar queda en el AsyncValue', () async {

@@ -82,14 +82,18 @@ class _PlanScreenState extends ConsumerState<PlanScreen> {
                 icon: Icons.chevron_left,
                 tooltip: 'Mes anterior',
                 variant: NeoIconButtonVariant.ghost,
-                onPressed: () => _cambiarMes(-1),
+                onPressed: estado.hayCambios || estado.enviandoLote
+                    ? null
+                    : () => _cambiarMes(-1),
               ),
               Text('$_mes', style: Theme.of(context).textTheme.titleMedium),
               NeoIconButton(
                 icon: Icons.chevron_right,
                 tooltip: 'Mes siguiente',
                 variant: NeoIconButtonVariant.ghost,
-                onPressed: () => _cambiarMes(1),
+                onPressed: estado.hayCambios || estado.enviandoLote
+                    ? null
+                    : () => _cambiarMes(1),
               ),
             ],
           ),
@@ -295,6 +299,10 @@ class _PlanScreenState extends ConsumerState<PlanScreen> {
   }
 
   void _cambiarMes(int delta) {
+    final PlanMensualState estado = ref.read(planMensualProvider);
+    if (estado.hayCambios || estado.enviandoLote) {
+      return;
+    }
     final DateTime siguiente = DateTime(_mes.year, _mes.month + delta);
     setState(() => _mes = BusinessMonth(siguiente.year, siguiente.month));
     ref.read(planMensualProvider.notifier).cargar(_mes.toString());

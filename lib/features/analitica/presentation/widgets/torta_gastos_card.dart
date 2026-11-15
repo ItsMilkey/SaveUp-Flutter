@@ -152,57 +152,65 @@ class _LeyendaFila extends StatelessWidget {
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
     final SaveUpColors colors = theme.extension<SaveUpColors>()!;
-    return GestureDetector(
+    return Semantics(
+      button: true,
+      selected: seleccionada,
+      label:
+          '${categoria.nombre}, '
+          '${formatearPorcentaje(categoria.porcentaje)}, '
+          '${Money.formatClp(categoria.monto)}',
       onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 4),
-        decoration: BoxDecoration(
-          color: seleccionada ? colors.surfaceAlt : null,
-          borderRadius: AppRadii.smAll,
-        ),
-        child: Row(
-          children: <Widget>[
-            Container(
-              width: 12,
-              height: 12,
-              decoration: BoxDecoration(
-                color: color,
-                borderRadius: AppRadii.smAll,
-                border: Border.all(
-                  color: colors.border,
-                  width: AppBorders.thin,
+      child: ExcludeSemantics(
+        child: GestureDetector(
+          onTap: onTap,
+          behavior: HitTestBehavior.opaque,
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 4),
+            decoration: BoxDecoration(
+              color: seleccionada ? colors.surfaceAlt : null,
+              borderRadius: AppRadii.smAll,
+            ),
+            child: Row(
+              children: <Widget>[
+                Container(
+                  width: 12,
+                  height: 12,
+                  decoration: BoxDecoration(
+                    color: color,
+                    borderRadius: AppRadii.smAll,
+                    border: Border.all(
+                      color: colors.border,
+                      width: AppBorders.thin,
+                    ),
+                  ),
                 ),
-              ),
-            ),
-            const SizedBox(width: AppSpacing.sm),
-            Expanded(
-              child: Text(
-                categoria.nombre,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: AppTypography.text(
-                  size: 13,
-                  weight: seleccionada ? FontWeight.w700 : FontWeight.w500,
-                  color: colors.ink,
+                const SizedBox(width: AppSpacing.sm),
+                Expanded(
+                  child: Text(
+                    categoria.nombre,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTypography.text(
+                      size: 13,
+                      weight: seleccionada ? FontWeight.w700 : FontWeight.w500,
+                      color: colors.ink,
+                    ),
+                  ),
                 ),
-              ),
+                const SizedBox(width: AppSpacing.sm),
+                Text(
+                  formatearPorcentaje(categoria.porcentaje),
+                  style: AppTypography.text(
+                    size: 12,
+                    weight: FontWeight.w600,
+                    color: colors.muted,
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.md),
+                NeoMoneyText(amount: categoria.monto, size: NeoMoneySize.body),
+              ],
             ),
-            const SizedBox(width: AppSpacing.sm),
-            Text(
-              formatearPorcentaje(categoria.porcentaje),
-              style: AppTypography.text(
-                size: 12,
-                weight: FontWeight.w600,
-                color: colors.muted,
-              ),
-            ),
-            const SizedBox(width: AppSpacing.md),
-            NeoMoneyText(
-              amount: categoria.monto,
-              size: NeoMoneySize.body,
-            ),
-          ],
+          ),
         ),
       ),
     );

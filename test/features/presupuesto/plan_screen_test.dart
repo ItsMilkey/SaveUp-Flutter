@@ -3,12 +3,38 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:saveup_app/core/design_system/design_system.dart';
+import 'package:saveup_app/features/movimientos/data/dio_categorias_repository.dart';
+import 'package:saveup_app/features/movimientos/domain/categoria.dart';
+import 'package:saveup_app/features/movimientos/domain/categorias_repository.dart';
+import 'package:saveup_app/features/movimientos/domain/sugerencia_categoria.dart';
 import 'package:saveup_app/features/presupuesto/data/dio_plan_mensual_repository.dart';
 import 'package:saveup_app/features/presupuesto/domain/plan_calculo.dart';
 import 'package:saveup_app/features/presupuesto/domain/plan_mensual.dart';
 import 'package:saveup_app/features/presupuesto/presentation/screens/plan_screen.dart';
 
 import 'plan_fixtures.dart';
+
+class FakeCategoriasRepository implements CategoriasRepository {
+  final List<String> sugerenciasSolicitadas = <String>[];
+
+  @override
+  Future<List<Categoria>> listar() async => const <Categoria>[
+    Categoria(id: 4, codigo: 'VIVIENDA_SUMINISTROS', nombre: 'Vivienda'),
+  ];
+
+  @override
+  Future<RespuestaSugerencia> sugerir({
+    required String texto,
+    ContextoSugerencia contexto = ContextoSugerencia.gasto,
+  }) async {
+    sugerenciasSolicitadas.add(texto);
+    return RespuestaSugerencia(
+      texto: texto,
+      sugerencias: const <SugerenciaCategoria>[],
+      ambigua: false,
+    );
+  }
+}
 
 PlanMensual planConGrupos() {
   return planDePrueba(
@@ -330,6 +356,80 @@ void main() {
     expect(repo.ingresos.single.$2, d('900000'));
     expect(find.text(r'$900.000'), findsOneWidget);
     expect(find.text(r'$160.000'), findsOneWidget);
+  });
+
+  testWidgets('el ingreso de referencia valida el límite JSON', (
+    WidgetTester tester,
+  ) async {
+    final FakePlanMensualRepository repo = FakePlanMensualRepository(
+      plan: planConGrupos(),
+    );
+    await montar(tester, repo);
+
+    await tester.tap(find.byTooltip('Editar ingreso de referencia'));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Ingreso mensual'),
+      '10000000000000',
+    );
+    await tester.tap(find.text('Guardar'));
+    await tester.pumpAndSettle();
+
+    expect(repo.ingresos, isEmpty);
+    expect(
+      find.text('El monto excede el máximo (13 enteros + 2 decimales).'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('el alta de partida valida el límite JSON antes de crear', (
+    WidgetTester tester,
+  ) async {
+    final FakePlanMensualRepository repo = FakePlanMensualRepository(
+      plan: planConGrupos(),
+    );
+    final FakeCategoriasRepository categorias = FakeCategoriasRepository();
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          planMensualRepositoryProvider.overrideWithValue(repo),
+          categoriasRepositoryProvider.overrideWithValue(categorias),
+        ],
+        child: MaterialApp(
+          theme: SaveUpTheme.light(),
+          home: const PlanScreen(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Agregar al plan'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Crear partida'));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Nombre'),
+      'Nueva partida',
+    );
+    await tester.pump(const Duration(milliseconds: 500));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(DropdownButtonFormField<int>));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Vivienda').last);
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Monto planificado'),
+      '10000000000000',
+    );
+    await tester.tap(find.text('Guardar'));
+    await tester.pumpAndSettle();
+
+    expect(repo.partidasCreadas, isEmpty);
+    expect(categorias.sugerenciasSolicitadas, contains('Nueva partida'));
+    expect(
+      find.text('El monto excede el máximo (13 enteros + 2 decimales).'),
+      findsOneWidget,
+    );
   });
 
   testWidgets('eliminar una partida pide confirmación y llama al DELETE', (

@@ -7,6 +7,7 @@ import '../../../../core/errors/app_failure.dart';
 import '../../../../core/errors/failure_messages.dart';
 import '../../../../core/money/money.dart';
 import '../../../../core/money/money_input_formatter.dart';
+import '../../../../core/money/money_json.dart';
 import '../../../movimientos/domain/categoria.dart';
 import '../../../movimientos/domain/sugerencia_categoria.dart';
 import '../../../movimientos/presentation/categoria_sugerencia_controller.dart';
@@ -210,13 +211,14 @@ class _PartidaFormDialogState extends ConsumerState<PartidaFormDialog> {
                         return 'Ingresa el monto planificado.';
                       }
                       try {
-                        if (Money.parseUserInput(text) < Decimal.zero) {
+                        final Decimal monto = Money.parseUserInput(text);
+                        if (monto < Decimal.zero) {
                           return 'No puede ser negativo.';
                         }
+                        return validateMoneyForJson(monto);
                       } on FormatException {
                         return 'Monto inválido.';
                       }
-                      return null;
                     },
                     label: 'Monto planificado',
                     prefixIcon: Icons.attach_money,

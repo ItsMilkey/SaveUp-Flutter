@@ -183,6 +183,92 @@ void main() {
     tester.view.resetPhysicalSize();
     tester.view.resetDevicePixelRatio();
   });
+
+  testWidgets('alta muestra en el campo el error por exceder el límite', (
+    WidgetTester tester,
+  ) async {
+    final _FakeDeudasRepository repository = _FakeDeudasRepository();
+    await _abrirFormulario(tester, repository);
+
+    await tester.enterText(find.byType(TextFormField).at(0), 'Equipo');
+    await tester.enterText(
+      find.byType(TextFormField).at(2),
+      '10000000000000',
+    );
+    await tester.enterText(find.byType(TextFormField).at(3), '24');
+    await tester.ensureVisible(find.text('Crear deuda'));
+    await tester.tap(find.text('Crear deuda'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('El monto excede el máximo (13 enteros + 2 decimales).'),
+      findsOneWidget,
+    );
+    expect(repository.creada, isNull);
+
+    tester.view.resetPhysicalSize();
+    tester.view.resetDevicePixelRatio();
+  });
+
+  testWidgets('alta muestra en el campo el error por escala mayor a dos', (
+    WidgetTester tester,
+  ) async {
+    final _FakeDeudasRepository repository = _FakeDeudasRepository();
+    await _abrirFormulario(tester, repository);
+
+    await tester.enterText(find.byType(TextFormField).at(0), 'Equipo');
+    final TextEditingController cuota = tester
+        .widget<TextFormField>(find.byType(TextFormField).at(2))
+        .controller!;
+    cuota.text = '15000,001';
+    await tester.enterText(find.byType(TextFormField).at(3), '24');
+    await tester.ensureVisible(find.text('Crear deuda'));
+    await tester.tap(find.text('Crear deuda'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('El monto no puede tener más de 2 decimales.'),
+      findsOneWidget,
+    );
+    expect(repository.creada, isNull);
+
+    tester.view.resetPhysicalSize();
+    tester.view.resetDevicePixelRatio();
+  });
+
+  testWidgets('edición valida el límite del capital en su campo', (
+    WidgetTester tester,
+  ) async {
+    final _FakeDeudasRepository repository = _FakeDeudasRepository();
+    tester.view.physicalSize = const Size(1000, 1800);
+    tester.view.devicePixelRatio = 1;
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [deudasRepositoryProvider.overrideWithValue(repository)],
+        child: MaterialApp(
+          theme: SaveUpTheme.light(),
+          home: DeudaFormScreen(deuda: _respuestaServidor),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final TextEditingController capital = tester
+        .widget<TextFormField>(find.byType(TextFormField).at(2))
+        .controller!;
+    capital.text = '10000000000000';
+    await tester.ensureVisible(find.text('Guardar cambios'));
+    await tester.tap(find.text('Guardar cambios'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('El monto excede el máximo (13 enteros + 2 decimales).'),
+      findsOneWidget,
+    );
+
+    tester.view.resetPhysicalSize();
+    tester.view.resetDevicePixelRatio();
+  });
 }
 
 Finder _findValue(String value) => find.byWidgetPredicate(

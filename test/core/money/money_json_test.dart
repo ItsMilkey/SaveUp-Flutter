@@ -66,6 +66,47 @@ void main() {
     });
   });
 
+  group('validateMoneyForJson', () {
+    test('acepta montos con escala 0, 1 o 2', () {
+      expect(validateMoneyForJson(Decimal.fromInt(10)), isNull);
+      expect(validateMoneyForJson(Decimal.parse('10.1')), isNull);
+      expect(validateMoneyForJson(Decimal.parse('10.12')), isNull);
+    });
+
+    test('rechaza escala mayor que 2', () {
+      expect(
+        validateMoneyForJson(Decimal.parse('10.123')),
+        'El monto no puede tener más de 2 decimales.',
+      );
+    });
+
+    test('acepta magnitudes inmediatamente bajo 10^13, en ambos signos', () {
+      expect(validateMoneyForJson(Decimal.parse('9999999999999.99')), isNull);
+      expect(validateMoneyForJson(Decimal.parse('-9999999999999.99')), isNull);
+    });
+
+    test('rechaza magnitud igual o superior a 10^13', () {
+      expect(
+        validateMoneyForJson(Decimal.parse('10000000000000')),
+        'El monto excede el máximo (13 enteros + 2 decimales).',
+      );
+      expect(
+        validateMoneyForJson(Decimal.parse('-10000000000000.01')),
+        'El monto excede el máximo (13 enteros + 2 decimales).',
+      );
+    });
+
+    test('moneyToJson usa la misma validación antes de serializar', () {
+      for (final Decimal value in <Decimal>[
+        Decimal.parse('1.001'),
+        Decimal.parse('10000000000000'),
+      ]) {
+        expect(validateMoneyForJson(value), isNotNull);
+        expect(() => moneyToJson(value), throwsArgumentError);
+      }
+    });
+  });
+
   group('ida y vuelta', () {
     const List<String> values = <String>[
       '0.00',
@@ -103,6 +144,12 @@ void main() {
           reason: 'valor $raw',
         );
       }
+    });
+  });
+
+  group('decimalToJsonNumber', () {
+    test('serializes a high-precision non-money decimal', () {
+      expect(decimalToJsonNumber(Decimal.parse('1.2345')), 1.2345);
     });
   });
 }

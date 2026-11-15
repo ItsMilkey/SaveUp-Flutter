@@ -122,4 +122,28 @@ void main() {
     expect(await primera, isNull);
     expect(estado().enviando, isFalse);
   });
+
+  test('reset invalida el resultado en curso sin liberar el bloqueo', () async {
+    final Completer<ReporteArchivo> pendiente = Completer<ReporteArchivo>();
+    montar(
+      repository: FakeReportesRepository()..respuestaFutura = pendiente.future,
+    );
+    const ReporteSolicitud solicitud = ReporteSolicitud(
+      alcance: ReporteAlcance.completo,
+      formato: ReporteFormato.csv,
+    );
+
+    final Future<AppFailure?> primera = controller().exportar(solicitud);
+    controller().reset();
+    expect(estado().enviando, isTrue);
+    expect(await controller().exportar(solicitud), isNull);
+    expect(repo.llamadas, 1);
+
+    pendiente.complete(archivoDePrueba());
+    expect(await primera, isNull);
+    expect(sharer.compartido, isNull);
+    expect(estado().enviando, isFalse);
+    expect(estado().archivo, isNull);
+    expect(estado().error, isNull);
+  });
 }

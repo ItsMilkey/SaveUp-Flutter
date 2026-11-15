@@ -19,6 +19,7 @@ class MetasScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final AsyncValue<List<MetaAhorro>> metas = ref.watch(metasProvider);
+    final bool accionesEnCurso = ref.watch(metaAccionesProvider).isLoading;
 
     return NeoScaffold(
       appBar: const NeoAppBar(title: 'Metas de ahorro'),
@@ -30,7 +31,12 @@ class MetasScreen extends ConsumerWidget {
               : 'No se pudieron cargar las metas.',
           onRetry: () => ref.invalidate(metasProvider),
         ),
-        data: (List<MetaAhorro> lista) => _lista(context, ref, lista),
+        data: (List<MetaAhorro> lista) => _lista(
+          context,
+          ref,
+          lista,
+          accionesEnCurso: accionesEnCurso,
+        ),
       ),
       floatingActionButton: NeoButton(
         onPressed: () => _abrirFormulario(context),
@@ -40,7 +46,12 @@ class MetasScreen extends ConsumerWidget {
     );
   }
 
-  Widget _lista(BuildContext context, WidgetRef ref, List<MetaAhorro> lista) {
+  Widget _lista(
+    BuildContext context,
+    WidgetRef ref,
+    List<MetaAhorro> lista, {
+    required bool accionesEnCurso,
+  }) {
     if (lista.isEmpty) {
       return ListView(
         padding: const EdgeInsets.all(AppSpacing.lg),
@@ -86,12 +97,17 @@ class MetasScreen extends ConsumerWidget {
               child: _MetaCard(
                 meta: lista[i],
                 color: chartPalette[i % chartPalette.length],
-                onAbonar: () => _abonar(context, ref, lista[i]),
-                onRetirar: () => _retirar(context, ref, lista[i]),
+                onAbonar: accionesEnCurso
+                    ? null
+                    : () => _abonar(context, ref, lista[i]),
+                onRetirar: accionesEnCurso
+                    ? null
+                    : () => _retirar(context, ref, lista[i]),
                 onEditar: () => _abrirFormulario(context, meta: lista[i]),
-                onEliminar: lista[i].esPorDefecto
+                onEliminar: lista[i].esPorDefecto || accionesEnCurso
                     ? null
                     : () => _eliminar(context, ref, lista[i]),
+                accionesEnCurso: accionesEnCurso,
               ),
             ),
         ],
@@ -122,6 +138,9 @@ class MetasScreen extends ConsumerWidget {
     if (valor == null || !context.mounted) {
       return;
     }
+    if (ref.read(metaAccionesProvider).isLoading) {
+      return;
+    }
     final AppFailure? failure = await ref
         .read(metaAccionesProvider.notifier)
         .abonar(meta.id, monto: valor.monto, descripcion: valor.descripcion);
@@ -146,6 +165,9 @@ class MetasScreen extends ConsumerWidget {
       modo: ModoMovimientoMeta.retiro,
     );
     if (valor == null || !context.mounted) {
+      return;
+    }
+    if (ref.read(metaAccionesProvider).isLoading) {
       return;
     }
     final AppFailure? failure = await ref
@@ -180,6 +202,9 @@ class MetasScreen extends ConsumerWidget {
     if (confirmado != true || !context.mounted) {
       return;
     }
+    if (ref.read(metaAccionesProvider).isLoading) {
+      return;
+    }
     final AppFailure? failure = await ref
         .read(metaAccionesProvider.notifier)
         .eliminar(meta.id);
@@ -210,13 +235,15 @@ class _MetaCard extends StatelessWidget {
     required this.onRetirar,
     required this.onEditar,
     required this.onEliminar,
+    required this.accionesEnCurso,
   });
 
   final MetaAhorro meta;
   final Color color;
-  final VoidCallback onAbonar;
-  final VoidCallback onRetirar;
+  final VoidCallback? onAbonar;
+  final VoidCallback? onRetirar;
   final VoidCallback onEditar;
+  final bool accionesEnCurso;
 
   /// `null` en la meta por defecto (no se puede eliminar).
   final VoidCallback? onEliminar;
@@ -269,9 +296,10 @@ class _MetaCard extends StatelessWidget {
                         value: _AccionMeta.editar,
                         child: Text('Editar'),
                       ),
-                      if (onEliminar != null)
-                        const PopupMenuItem<_AccionMeta>(
+                      if (!meta.esPorDefecto)
+                        PopupMenuItem<_AccionMeta>(
                           value: _AccionMeta.eliminar,
+                          enabled: !accionesEnCurso,
                           child: Text('Eliminar'),
                         ),
                     ],
