@@ -43,5 +43,7 @@ Al terminar, marcar aquí con `[x]`.
   (completa: sección «Distribución del ahorro» con `GET`/`POST`, autobalanceo a 100.00 y tests)
 - [x] **F12** navegación flotante neo brutalista, indicador elevado, selección por toque/arrastre,
   accesibilidad y movimiento reducido — `F12-navegacion.md`
+- [x] **F13** apariencia Bold, selector con previews desde «Más» y persistencia local —
+  `F13-tema-bold.md`
 
 Las tareas F2 en adelante se redactan cuando se acerque su turno, con el contrato real a mano.

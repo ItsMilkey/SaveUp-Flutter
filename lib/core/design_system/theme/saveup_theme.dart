@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../tokens/app_borders.dart';
-import '../tokens/app_colors.dart';
 import '../tokens/app_radii.dart';
 import '../tokens/app_spacing.dart';
 import '../tokens/app_typography.dart';
@@ -10,37 +9,48 @@ import 'saveup_shadows.dart';
 
 /// Tema único de SaveUp (claro y oscuro) con estética neo-brutalista.
 abstract final class SaveUpTheme {
-  static ThemeData light() => _build(Brightness.light);
+  static ThemeData light() => _build(
+    brightness: Brightness.light,
+    colors: SaveUpColors.light,
+    shadows: SaveUpShadows.light(),
+  );
 
-  static ThemeData dark() => _build(Brightness.dark);
+  static ThemeData dark() => _build(
+    brightness: Brightness.dark,
+    colors: SaveUpColors.dark,
+    shadows: SaveUpShadows.dark(),
+  );
 
-  static ThemeData _build(Brightness brightness) {
-    final bool isDark = brightness == Brightness.dark;
-    final SaveUpColors colors = isDark
-        ? SaveUpColors.dark
-        : SaveUpColors.light;
-    final SaveUpShadows shadows = isDark
-        ? SaveUpShadows.dark()
-        : SaveUpShadows.light();
+  static ThemeData bold() => _build(
+    brightness: Brightness.light,
+    colors: SaveUpColors.bold,
+    shadows: SaveUpShadows.light(),
+  );
 
-    final ColorScheme scheme = ColorScheme.fromSeed(
-      seedColor: AppColors.yellow,
-      brightness: brightness,
-    ).copyWith(
-      primary: AppColors.yellow,
-      onPrimary: AppColors.ink,
-      secondary: AppColors.cyan,
-      onSecondary: AppColors.ink,
-      tertiary: AppColors.magenta,
-      onTertiary: AppColors.ink,
-      error: AppColors.danger,
-      onError: AppColors.ink,
-      surface: colors.surface,
-      onSurface: colors.ink,
-      surfaceContainerHighest: colors.surfaceAlt,
-      outline: colors.border,
-      outlineVariant: colors.border,
-    );
+  static ThemeData _build({
+    required Brightness brightness,
+    required SaveUpColors colors,
+    required SaveUpShadows shadows,
+  }) {
+    final ColorScheme scheme =
+        ColorScheme.fromSeed(
+          seedColor: colors.primary,
+          brightness: brightness,
+        ).copyWith(
+          primary: colors.primary,
+          onPrimary: colors.onPrimary,
+          secondary: colors.secondary,
+          onSecondary: colors.onSecondary,
+          tertiary: colors.tertiary,
+          onTertiary: colors.onTertiary,
+          error: colors.danger,
+          onError: colors.onDanger,
+          surface: colors.surface,
+          onSurface: colors.ink,
+          surfaceContainerHighest: colors.surfaceAlt,
+          outline: colors.border,
+          outlineVariant: colors.border,
+        );
 
     final TextTheme text = AppTypography.textTheme(colors.ink);
     final BorderSide border = BorderSide(
@@ -49,9 +59,8 @@ abstract final class SaveUpTheme {
     );
     final WidgetStateProperty<Color?> selectedSurface =
         WidgetStateProperty.resolveWith<Color?>(
-          (Set<WidgetState> states) =>
-              states.contains(WidgetState.selected)
-              ? AppColors.yellow
+          (Set<WidgetState> states) => states.contains(WidgetState.selected)
+              ? colors.primary
               : colors.surface,
         );
 
@@ -86,14 +95,11 @@ abstract final class SaveUpTheme {
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
-          backgroundColor: AppColors.yellow,
-          foregroundColor: AppColors.ink,
+          backgroundColor: colors.primary,
+          foregroundColor: colors.onPrimary,
           disabledBackgroundColor: colors.surfaceAlt,
           disabledForegroundColor: colors.muted,
-          textStyle: AppTypography.text(
-            size: 15,
-            weight: FontWeight.w700,
-          ),
+          textStyle: AppTypography.text(size: 15, weight: FontWeight.w700),
           padding: const EdgeInsets.symmetric(
             horizontal: AppSpacing.xl,
             vertical: 14,
@@ -110,27 +116,19 @@ abstract final class SaveUpTheme {
         style: OutlinedButton.styleFrom(
           backgroundColor: colors.surface,
           foregroundColor: colors.ink,
-          textStyle: AppTypography.text(
-            size: 15,
-            weight: FontWeight.w600,
-          ),
+          textStyle: AppTypography.text(size: 15, weight: FontWeight.w600),
           padding: const EdgeInsets.symmetric(
             horizontal: AppSpacing.xl,
             vertical: 14,
           ),
           side: border,
-          shape: RoundedRectangleBorder(
-            borderRadius: AppRadii.pillAll,
-          ),
+          shape: RoundedRectangleBorder(borderRadius: AppRadii.pillAll),
         ),
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           foregroundColor: colors.ink,
-          textStyle: AppTypography.text(
-            size: 14,
-            weight: FontWeight.w600,
-          ),
+          textStyle: AppTypography.text(size: 14, weight: FontWeight.w600),
           padding: const EdgeInsets.symmetric(
             horizontal: AppSpacing.md,
             vertical: AppSpacing.sm,
@@ -151,7 +149,7 @@ abstract final class SaveUpTheme {
         ),
         hintStyle: AppTypography.text(size: 14, color: colors.muted),
         helperStyle: AppTypography.text(size: 12, color: colors.muted),
-        errorStyle: AppTypography.text(size: 12, color: AppColors.danger),
+        errorStyle: AppTypography.text(size: 12, color: colors.danger),
         prefixIconColor: colors.ink,
         suffixIconColor: colors.ink,
         border: OutlineInputBorder(
@@ -164,24 +162,18 @@ abstract final class SaveUpTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: AppRadii.mdAll,
-          borderSide: BorderSide(
-            color: AppColors.yellow,
-            width: AppBorders.bold,
-          ),
+          borderSide: BorderSide(color: colors.primary, width: AppBorders.bold),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: AppRadii.mdAll,
-          borderSide: const BorderSide(
-            color: AppColors.danger,
+          borderSide: BorderSide(
+            color: colors.danger,
             width: AppBorders.regular,
           ),
         ),
         focusedErrorBorder: OutlineInputBorder(
           borderRadius: AppRadii.mdAll,
-          borderSide: const BorderSide(
-            color: AppColors.danger,
-            width: AppBorders.bold,
-          ),
+          borderSide: BorderSide(color: colors.danger, width: AppBorders.bold),
         ),
         disabledBorder: OutlineInputBorder(
           borderRadius: AppRadii.mdAll,
@@ -194,10 +186,7 @@ abstract final class SaveUpTheme {
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: AppRadii.lgAll,
-          side: BorderSide(
-            color: colors.border,
-            width: AppBorders.bold,
-          ),
+          side: BorderSide(color: colors.border, width: AppBorders.bold),
         ),
         titleTextStyle: text.headlineSmall,
         contentTextStyle: text.bodyMedium,
@@ -212,19 +201,13 @@ abstract final class SaveUpTheme {
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
           borderRadius: AppRadii.mdAll,
-          side: BorderSide(
-            color: colors.border,
-            width: AppBorders.regular,
-          ),
+          side: BorderSide(color: colors.border, width: AppBorders.regular),
         ),
       ),
       chipTheme: ChipThemeData(
         backgroundColor: colors.surface,
-        selectedColor: AppColors.yellow,
-        side: BorderSide(
-          color: colors.border,
-          width: AppBorders.regular,
-        ),
+        selectedColor: colors.primary,
+        side: BorderSide(color: colors.border, width: AppBorders.regular),
         shape: const StadiumBorder(),
         labelStyle: AppTypography.text(
           size: 12,
@@ -237,9 +220,7 @@ abstract final class SaveUpTheme {
           backgroundColor: selectedSurface,
           foregroundColor: WidgetStatePropertyAll<Color>(colors.ink),
           side: WidgetStatePropertyAll<BorderSide>(border),
-          shape: const WidgetStatePropertyAll<OutlinedBorder>(
-            StadiumBorder(),
-          ),
+          shape: const WidgetStatePropertyAll<OutlinedBorder>(StadiumBorder()),
           textStyle: WidgetStatePropertyAll<TextStyle?>(
             AppTypography.text(size: 13, weight: FontWeight.w600),
           ),
@@ -247,7 +228,7 @@ abstract final class SaveUpTheme {
       ),
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: colors.surface,
-        indicatorColor: AppColors.yellow,
+        indicatorColor: colors.primary,
         labelTextStyle: WidgetStatePropertyAll<TextStyle?>(
           AppTypography.text(
             size: 11,
@@ -265,7 +246,7 @@ abstract final class SaveUpTheme {
         space: AppSpacing.lg,
       ),
       progressIndicatorTheme: ProgressIndicatorThemeData(
-        color: AppColors.yellow,
+        color: colors.primary,
         linearTrackColor: colors.surfaceAlt,
         circularTrackColor: colors.surfaceAlt,
       ),
@@ -273,10 +254,7 @@ abstract final class SaveUpTheme {
         decoration: BoxDecoration(
           color: colors.ink,
           borderRadius: AppRadii.smAll,
-          border: Border.all(
-            color: colors.border,
-            width: AppBorders.thin,
-          ),
+          border: Border.all(color: colors.border, width: AppBorders.thin),
         ),
         textStyle: AppTypography.text(
           size: 12,

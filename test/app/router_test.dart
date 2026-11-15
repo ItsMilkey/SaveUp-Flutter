@@ -121,6 +121,44 @@ void main() {
     expect(find.text('No hay movimientos para estos filtros.'), findsOneWidget);
   });
 
+  testWidgets('Más → Tema abre la pantalla de apariencia con sus previews', (
+    WidgetTester tester,
+  ) async {
+    await tokenStore.save(token: 'jwt.abc', refreshToken: 'refresh.xyz');
+    adapter.handler = (options) async {
+      if (options.path.endsWith('/app/version')) {
+        return versionResponse();
+      }
+      if (options.path.endsWith('/usuarios/me')) {
+        return jsonResponse(meBody());
+      }
+      if (options.path.endsWith('/saldos/me')) {
+        return saldoResponse();
+      }
+      if (options.path.endsWith('/movimientos/paginados/me')) {
+        return paginaVaciaResponse();
+      }
+      fail('petición inesperada: ${options.path}');
+    };
+
+    await tester.pumpWidget(testApp(adapter: adapter, tokenStore: tokenStore));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Más'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Tema'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Elige tu estilo'), findsOneWidget);
+    expect(find.byTooltip('Volver'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey<String>('appearance-preview-system')),
+      findsOneWidget,
+    );
+    await tester.tap(find.byTooltip('Volver'));
+    await tester.pumpAndSettle();
+    expect(find.text('Saldo disponible'), findsOneWidget);
+  });
+
   testWidgets('evento "sesión expirada" va al login con aviso', (
     WidgetTester tester,
   ) async {

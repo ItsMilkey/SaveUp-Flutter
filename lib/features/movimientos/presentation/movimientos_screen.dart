@@ -174,10 +174,7 @@ class _MovimientosScreenState extends ConsumerState<MovimientosScreen> {
 
   /// Formato local (America/Santiago) de la fecha del movimiento.
   static String fechaLocal(DateTime instant) {
-    final tz.TZDateTime local = tz.TZDateTime.from(
-      instant,
-      businessTimeZone,
-    );
+    final tz.TZDateTime local = tz.TZDateTime.from(instant, businessTimeZone);
     return _fechaVisible.format(local);
   }
 }
@@ -206,10 +203,7 @@ class _Saludo extends ConsumerWidget {
           ),
           TextSpan(
             text: nombre,
-            style: AppTypography.display(
-              size: 26,
-              color: AppColors.magenta,
-            ),
+            style: AppTypography.display(size: 26, color: colors.tertiary),
           ),
           TextSpan(
             text: '!',
@@ -246,7 +240,7 @@ class _TarjetaSaldo extends ConsumerWidget {
               style: AppTypography.text(
                 size: 14,
                 weight: FontWeight.w600,
-                color: AppColors.ink,
+                color: colors.ink,
               ),
             ),
           ),
@@ -262,9 +256,9 @@ class _TarjetaSaldo extends ConsumerWidget {
       content = Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
-          const LinearProgressIndicator(
-            color: AppColors.ink,
-            backgroundColor: AppColors.paper,
+          LinearProgressIndicator(
+            color: colors.ink,
+            backgroundColor: colors.surface,
           ),
           const SizedBox(height: AppSpacing.sm),
           Text(
@@ -272,7 +266,7 @@ class _TarjetaSaldo extends ConsumerWidget {
             style: AppTypography.text(
               size: 13,
               weight: FontWeight.w500,
-              color: AppColors.ink,
+              color: colors.ink,
             ),
           ),
         ],
@@ -290,7 +284,7 @@ class _TarjetaSaldo extends ConsumerWidget {
           Text(
             'Según los movimientos registrados.',
             style: theme.textTheme.bodySmall?.copyWith(
-              color: AppColors.ink.withValues(alpha: 0.8),
+              color: colors.ink.withValues(alpha: 0.8),
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -300,7 +294,7 @@ class _TarjetaSaldo extends ConsumerWidget {
 
     return NeoSurface(
       density: AppDensity.hero,
-      color: AppColors.yellow,
+      color: colors.primary,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
@@ -317,10 +311,10 @@ class _TarjetaSaldo extends ConsumerWidget {
                     width: AppBorders.regular,
                   ),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.account_balance_wallet,
                   size: 22,
-                  color: AppColors.ink,
+                  color: colors.ink,
                 ),
               ),
               const SizedBox(width: AppSpacing.sm),
@@ -331,15 +325,12 @@ class _TarjetaSaldo extends ConsumerWidget {
                     size: 17,
                     weight: FontWeight.w700,
                     letterSpacing: 0.2,
-                    color: AppColors.ink,
+                    color: colors.ink,
                   ),
                 ),
               ),
               if (negativo && estado.saldoError == null)
-                NeoBadge(
-                  label: 'Saldo negativo',
-                  color: AppColors.danger,
-                ),
+                NeoBadge(label: 'Saldo negativo', color: colors.danger),
             ],
           ),
           const SizedBox(height: AppSpacing.md),
@@ -358,6 +349,7 @@ class _Filtros extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final ThemeData theme = Theme.of(context);
+    final SaveUpColors colors = theme.extension<SaveUpColors>()!;
     final MovimientosController controller = ref.read(
       movimientosProvider.notifier,
     );
@@ -365,19 +357,17 @@ class _Filtros extends ConsumerWidget {
 
     return NeoSurface(
       density: AppDensity.list,
-      color: AppColors.cyan,
+      color: colors.secondary,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Row(
             children: <Widget>[
-              Icon(Icons.tune, size: 18, color: AppColors.ink),
+              Icon(Icons.tune, size: 18, color: colors.ink),
               const SizedBox(width: AppSpacing.sm),
               Text(
                 'Filtros',
-                style: theme.textTheme.titleSmall?.copyWith(
-                  color: AppColors.ink,
-                ),
+                style: theme.textTheme.titleSmall?.copyWith(color: colors.ink),
               ),
               const Spacer(),
               Text(
@@ -385,7 +375,7 @@ class _Filtros extends ConsumerWidget {
                     ? '${estado.totalItems} movimiento(s)'
                     : 'Cargando movimientos…',
                 style: theme.textTheme.bodySmall?.copyWith(
-                  color: AppColors.ink.withValues(alpha: 0.7),
+                  color: colors.ink.withValues(alpha: 0.7),
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -420,17 +410,17 @@ class _Filtros extends ConsumerWidget {
                   style: AppTypography.text(
                     size: 14,
                     weight: FontWeight.w600,
-                    color: AppColors.ink,
+                    color: colors.ink,
                   ),
                 ),
                 underline: const SizedBox.shrink(),
-                dropdownColor: AppColors.paper,
+                dropdownColor: colors.surface,
                 borderRadius: AppRadii.mdAll,
-                iconEnabledColor: AppColors.ink,
+                iconEnabledColor: colors.ink,
                 style: AppTypography.text(
                   size: 14,
                   weight: FontWeight.w600,
-                  color: AppColors.ink,
+                  color: colors.ink,
                 ),
                 items: <DropdownMenuItem<MovimientoTipo>>[
                   for (final MovimientoTipo tipo in MovimientoTipo.todos)
@@ -496,9 +486,7 @@ class _MovimientoFila extends ConsumerWidget {
 
     return Dismissible(
       key: ValueKey<String>('movimiento-${movimiento.id}'),
-      direction: editable
-          ? DismissDirection.endToStart
-          : DismissDirection.none,
+      direction: editable ? DismissDirection.endToStart : DismissDirection.none,
       background: Container(
         alignment: Alignment.centerRight,
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
@@ -506,10 +494,7 @@ class _MovimientoFila extends ConsumerWidget {
           color: theme.colorScheme.error,
           borderRadius: AppRadii.mdAll,
         ),
-        child: Icon(
-          Icons.delete_outline,
-          color: theme.colorScheme.onError,
-        ),
+        child: Icon(Icons.delete_outline, color: theme.colorScheme.onError),
       ),
       confirmDismiss: (_) => _confirmarEliminar(context, ref),
       child: _MovimientoTile(
@@ -533,10 +518,7 @@ class _MovimientoFila extends ConsumerWidget {
     }
   }
 
-  Future<bool> _confirmarEliminar(
-    BuildContext context,
-    WidgetRef ref,
-  ) async {
+  Future<bool> _confirmarEliminar(BuildContext context, WidgetRef ref) async {
     final bool? confirmado = await NeoConfirmDialog.show(
       context,
       title: '¿Eliminar movimiento?',
@@ -587,17 +569,14 @@ class _SinMovimientos extends StatelessWidget {
             width: 36,
             height: 36,
             decoration: BoxDecoration(
-              color: AppColors.yellow,
+              color: colors.primary,
               borderRadius: AppRadii.smAll,
-              border: Border.all(
-                color: colors.border,
-                width: AppBorders.thin,
-              ),
+              border: Border.all(color: colors.border, width: AppBorders.thin),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.receipt_long_outlined,
               size: 20,
-              color: AppColors.ink,
+              color: colors.ink,
             ),
           ),
           const SizedBox(width: AppSpacing.sm),
@@ -658,10 +637,7 @@ class _MovimientoTile extends StatelessWidget {
         decoration: BoxDecoration(
           color: colors.surfaceAlt,
           borderRadius: AppRadii.smAll,
-          border: Border.all(
-            color: colors.border,
-            width: AppBorders.thin,
-          ),
+          border: Border.all(color: colors.border, width: AppBorders.thin),
         ),
         child: Icon(
           negativo ? Icons.south_east : Icons.north_east,

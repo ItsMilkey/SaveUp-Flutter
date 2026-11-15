@@ -40,11 +40,7 @@ class MetasScreen extends ConsumerWidget {
     );
   }
 
-  Widget _lista(
-    BuildContext context,
-    WidgetRef ref,
-    List<MetaAhorro> lista,
-  ) {
+  Widget _lista(BuildContext context, WidgetRef ref, List<MetaAhorro> lista) {
     if (lista.isEmpty) {
       return ListView(
         padding: const EdgeInsets.all(AppSpacing.lg),
@@ -70,6 +66,9 @@ class MetasScreen extends ConsumerWidget {
       );
     }
 
+    final List<Color> chartPalette = Theme.of(context)
+        .extension<SaveUpColors>()!
+        .chartPalette;
     return RefreshIndicator(
       onRefresh: () => ref.read(metasProvider.notifier).refrescar(),
       child: ListView(
@@ -86,7 +85,7 @@ class MetasScreen extends ConsumerWidget {
               padding: const EdgeInsets.only(bottom: AppSpacing.sm),
               child: _MetaCard(
                 meta: lista[i],
-                color: _coloresMeta[i % _coloresMeta.length],
+                color: chartPalette[i % chartPalette.length],
                 onAbonar: () => _abonar(context, ref, lista[i]),
                 onRetirar: () => _retirar(context, ref, lista[i]),
                 onEditar: () => _abrirFormulario(context, meta: lista[i]),
@@ -131,12 +130,8 @@ class MetasScreen extends ConsumerWidget {
     }
     _avisar(
       context,
-      failure == null
-          ? 'Abono registrado.'
-          : failureMessage(failure),
-      tone: failure == null
-          ? NeoSnackbarTone.success
-          : NeoSnackbarTone.danger,
+      failure == null ? 'Abono registrado.' : failureMessage(failure),
+      tone: failure == null ? NeoSnackbarTone.success : NeoSnackbarTone.danger,
     );
   }
 
@@ -161,12 +156,8 @@ class MetasScreen extends ConsumerWidget {
     }
     _avisar(
       context,
-      failure == null
-          ? 'Retiro registrado.'
-          : failureMessage(failure),
-      tone: failure == null
-          ? NeoSnackbarTone.success
-          : NeoSnackbarTone.danger,
+      failure == null ? 'Retiro registrado.' : failureMessage(failure),
+      tone: failure == null ? NeoSnackbarTone.success : NeoSnackbarTone.danger,
     );
   }
 
@@ -198,9 +189,7 @@ class MetasScreen extends ConsumerWidget {
     _avisar(
       context,
       failure == null ? 'Meta eliminada.' : failureMessage(failure),
-      tone: failure == null
-          ? NeoSnackbarTone.success
-          : NeoSnackbarTone.danger,
+      tone: failure == null ? NeoSnackbarTone.success : NeoSnackbarTone.danger,
     );
   }
 
@@ -235,9 +224,10 @@ class _MetaCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
+    final SaveUpColors colors = theme.extension<SaveUpColors>()!;
     final TextTheme textTheme = theme.textTheme.apply(
-      bodyColor: AppColors.ink,
-      displayColor: AppColors.ink,
+      bodyColor: colors.ink,
+      displayColor: colors.ink,
     );
     final Decimal? objetivo = meta.montoObjetivo;
 
@@ -255,16 +245,12 @@ class _MetaCard extends StatelessWidget {
         children: <Widget>[
           Row(
             children: <Widget>[
-              Expanded(
-                child: Text(
-                  meta.nombre,
-                  style: textTheme.titleMedium,
-                ),
-              ),
+              Expanded(child: Text(meta.nombre, style: textTheme.titleMedium)),
               if (meta.esPorDefecto)
                 NeoBadge(
                   label: 'Meta base',
-                  color: AppColors.paper,
+                  color: colors.surface,
+                  textColor: colors.ink,
                   compact: true,
                 ),
               PopupMenuButton<_AccionMeta>(
@@ -277,25 +263,26 @@ class _MetaCard extends StatelessWidget {
                       onEliminar?.call();
                   }
                 },
-                itemBuilder: (BuildContext context) => <PopupMenuEntry<_AccionMeta>>[
-                  const PopupMenuItem<_AccionMeta>(
-                    value: _AccionMeta.editar,
-                    child: Text('Editar'),
-                  ),
-                  if (onEliminar != null)
-                    const PopupMenuItem<_AccionMeta>(
-                      value: _AccionMeta.eliminar,
-                      child: Text('Eliminar'),
-                    ),
-                ],
+                itemBuilder: (BuildContext context) =>
+                    <PopupMenuEntry<_AccionMeta>>[
+                      const PopupMenuItem<_AccionMeta>(
+                        value: _AccionMeta.editar,
+                        child: Text('Editar'),
+                      ),
+                      if (onEliminar != null)
+                        const PopupMenuItem<_AccionMeta>(
+                          value: _AccionMeta.eliminar,
+                          child: Text('Eliminar'),
+                        ),
+                    ],
               ),
             ],
           ),
           if (objetivo != null) ...<Widget>[
             NeoProgress(
               value: _progreso(meta.montoActual, objetivo),
-              color: AppColors.ink,
-              trackColor: AppColors.paper,
+              color: colors.ink,
+              trackColor: colors.surface,
             ),
             const SizedBox(height: AppSpacing.xs),
             Text(
@@ -340,14 +327,6 @@ class _MetaCard extends StatelessWidget {
 }
 
 enum _AccionMeta { editar, eliminar }
-const List<Color> _coloresMeta = <Color>[
-  AppColors.yellow,
-  AppColors.cyan,
-  AppColors.lavender,
-  AppColors.green,
-  AppColors.magenta,
-  AppColors.orange,
-];
 
 /// Avance visual (0–1). El `double` solo existe en la barra.
 double _progreso(Decimal actual, Decimal objetivo) {

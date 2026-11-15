@@ -33,8 +33,7 @@ class DistribucionAhorroSection extends ConsumerWidget {
     );
     final List<int> ids = estado.valores.keys.toList()
       ..sort(
-        (int a, int b) =>
-            estado.nombreDe(a).compareTo(estado.nombreDe(b)),
+        (int a, int b) => estado.nombreDe(a).compareTo(estado.nombreDe(b)),
       );
 
     return NeoSurface(
@@ -53,7 +52,7 @@ class DistribucionAhorroSection extends ConsumerWidget {
             Text(
               'Sin distribución: el ahorro queda en la meta base.',
               style: theme.textTheme.bodySmall?.copyWith(
-                color: AppColors.ink.withValues(alpha: 0.7),
+                color: colors.onSuccess.withValues(alpha: 0.7),
               ),
             ),
             const SizedBox(height: AppSpacing.md),
@@ -61,7 +60,7 @@ class DistribucionAhorroSection extends ConsumerWidget {
               Text(
                 'No tienes metas de ahorro para asignar.',
                 style: theme.textTheme.bodySmall?.copyWith(
-                  color: AppColors.ink.withValues(alpha: 0.7),
+                  color: colors.onSuccess.withValues(alpha: 0.7),
                 ),
               )
             else
@@ -71,8 +70,7 @@ class DistribucionAhorroSection extends ConsumerWidget {
                   icon: Icons.add,
                   label: 'Agregar meta',
                   variant: NeoButtonVariant.secondary,
-                  onPressed: () =>
-                      _agregar(context, ref, estado.disponibles),
+                  onPressed: () => _agregar(context, ref, estado.disponibles),
                 ),
               ),
           ] else ...<Widget>[
@@ -95,14 +93,14 @@ class DistribucionAhorroSection extends ConsumerWidget {
                     style: AppTypography.text(
                       size: 13,
                       weight: FontWeight.w700,
-                      color: estado.valido ? AppColors.ink : AppColors.danger,
+                      color: estado.valido ? colors.onSuccess : colors.danger,
                     ),
                   ),
                 ),
                 Text(
                   '${ids.length} meta(s)',
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: AppColors.ink.withValues(alpha: 0.7),
+                    color: colors.onSuccess.withValues(alpha: 0.7),
                   ),
                 ),
               ],
@@ -117,8 +115,7 @@ class DistribucionAhorroSection extends ConsumerWidget {
                     icon: Icons.add,
                     label: 'Agregar meta',
                     variant: NeoButtonVariant.secondary,
-                    onPressed: () =>
-                        _agregar(context, ref, estado.disponibles),
+                    onPressed: () => _agregar(context, ref, estado.disponibles),
                   ),
                 NeoButton(
                   label: 'Limpiar distribución',
@@ -139,7 +136,7 @@ class DistribucionAhorroSection extends ConsumerWidget {
               'apagados: se ejecutará cuando actives «Automatizar ahorro en '
               'metas».',
               style: theme.textTheme.bodySmall?.copyWith(
-                color: AppColors.ink.withValues(alpha: 0.7),
+                color: colors.onSuccess.withValues(alpha: 0.7),
               ),
             ),
           ],
@@ -161,10 +158,9 @@ class DistribucionAhorroSection extends ConsumerWidget {
           NeoMoreOption(
             label: meta.nombre,
             icon: Icons.savings_outlined,
-            onTap: () =>
-                ref.read(asignacionesPresupuestoProvider.notifier).agregar(
-                  meta.id,
-                ),
+            onTap: () => ref
+                .read(asignacionesPresupuestoProvider.notifier)
+                .agregar(meta.id),
           ),
       ],
     );
@@ -189,6 +185,7 @@ class _FilaAsignacion extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
+    final SaveUpColors colors = theme.extension<SaveUpColors>()!;
     final bool unica = cantidad == 1;
     final double maximo = unica ? 100 : 100 - (cantidad - 1);
     final double actual = porcentaje.toDouble().clamp(1, maximo);
@@ -202,7 +199,7 @@ class _FilaAsignacion extends StatelessWidget {
               child: Text(
                 nombre,
                 style: theme.textTheme.titleSmall?.copyWith(
-                  color: AppColors.ink,
+                  color: colors.onSuccess,
                 ),
               ),
             ),
@@ -211,7 +208,7 @@ class _FilaAsignacion extends StatelessWidget {
               style: AppTypography.text(
                 size: 13,
                 weight: FontWeight.w700,
-                color: AppColors.ink,
+                color: colors.onSuccess,
               ),
             ),
             NeoIconButton(
@@ -225,9 +222,9 @@ class _FilaAsignacion extends StatelessWidget {
         if (!unica)
           SliderTheme(
             data: SliderTheme.of(context).copyWith(
-              activeTrackColor: AppColors.ink,
-              thumbColor: AppColors.ink,
-              inactiveTrackColor: AppColors.paper,
+              activeTrackColor: colors.onSuccess,
+              thumbColor: colors.onSuccess,
+              inactiveTrackColor: colors.surface,
             ),
             child: Slider(
               value: actual,

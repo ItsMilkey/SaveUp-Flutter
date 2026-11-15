@@ -113,8 +113,7 @@ class DeudaDetalleScreen extends ConsumerWidget {
                     child: Text('No se pudo cargar el cronograma.'),
                   ),
                   TextButton(
-                    onPressed: () =>
-                        ref.invalidate(amortizacionProvider(id)),
+                    onPressed: () => ref.invalidate(amortizacionProvider(id)),
                     child: const Text('Reintentar'),
                   ),
                 ],
@@ -130,11 +129,7 @@ class DeudaDetalleScreen extends ConsumerWidget {
     );
   }
 
-  Future<void> _pagar(
-    BuildContext context,
-    WidgetRef ref,
-    Deuda deuda,
-  ) async {
+  Future<void> _pagar(BuildContext context, WidgetRef ref, Deuda deuda) async {
     final bool? pagado = await PagoDeudaDialog.show(context, deuda);
     if (pagado ?? false) {
       _refrescar(ref, deuda.id);
@@ -198,9 +193,10 @@ class _Ficha extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final ThemeData theme = Theme.of(context);
+    final SaveUpColors colors = theme.extension<SaveUpColors>()!;
     final TextTheme textTheme = theme.textTheme.apply(
-      bodyColor: AppColors.ink,
-      displayColor: AppColors.ink,
+      bodyColor: colors.ink,
+      displayColor: colors.ink,
     );
     final Color fondo = switch (deuda.estado) {
       EstadoDeuda.pendiente => AppColors.yellow,
@@ -213,13 +209,8 @@ class _Ficha extends ConsumerWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          SizedBox(
-            width: 150,
-            child: Text(label, style: textTheme.bodySmall),
-          ),
-          Expanded(
-            child: Text(value, style: textTheme.bodyMedium),
-          ),
+          SizedBox(width: 150, child: Text(label, style: textTheme.bodySmall)),
+          Expanded(child: Text(value, style: textTheme.bodyMedium)),
         ],
       ),
     );
@@ -232,9 +223,7 @@ class _Ficha extends ConsumerWidget {
         children: <Widget>[
           Row(
             children: <Widget>[
-              Expanded(
-                child: Text(deuda.nombre, style: textTheme.titleLarge),
-              ),
+              Expanded(child: Text(deuda.nombre, style: textTheme.titleLarge)),
             ],
           ),
           const SizedBox(height: AppSpacing.xs),
@@ -245,7 +234,7 @@ class _Ficha extends ConsumerWidget {
             children: <Widget>[
               NeoBadge(
                 label: estadoDeudaLabel(deuda.estado),
-                color: AppColors.paper,
+                color: colors.surface,
                 compact: true,
               ),
               _AsociacionPartida(deuda: deuda),
@@ -268,58 +257,65 @@ class _Ficha extends ConsumerWidget {
             style: textTheme.bodySmall,
           ),
           const SizedBox(height: AppSpacing.md),
-          NeoProgress(value: deuda.progreso, color: AppColors.ink, trackColor: AppColors.paper),
+          NeoProgress(
+            value: deuda.progreso,
+            color: colors.ink,
+            trackColor: colors.surface,
+          ),
           const SizedBox(height: AppSpacing.xs),
-          Text('${deuda.cuotasPagadas} de ${deuda.cantidadCuotas} cuotas pagadas'),
+          Text(
+            '${deuda.cuotasPagadas} de ${deuda.cantidadCuotas} cuotas pagadas',
+          ),
           const SizedBox(height: AppSpacing.md),
-            fila('Capital', Money.formatClp(deuda.montoCapital)),
+          fila('Capital', Money.formatClp(deuda.montoCapital)),
+          fila(
+            'Cuota',
+            deuda.valorCuota == null ? '—' : Money.formatClp(deuda.valorCuota!),
+          ),
+          fila('Tasa mensual', '${deuda.tasaMensual} %'),
+          fila('Tasa anual efectiva', '${deuda.tasaAnualEfectiva} %'),
+          fila('CAE', '${deuda.cargaAnualEquivalente} %'),
+          fila('Gastos iniciales', Money.formatClp(deuda.gastosIniciales)),
+          fila(
+            'Costo adicional por cuota',
+            Money.formatClp(deuda.costoAdicionalPorCuota),
+          ),
+          fila(
+            'Costo total del crédito',
+            Money.formatClp(deuda.costoTotalCredito),
+          ),
+          fila('Monto total', Money.formatClp(deuda.montoTotal)),
+          fila('Pagado', Money.formatClp(deuda.montoPagado)),
+          fila('Pendiente', Money.formatClp(deuda.montoRestante)),
+          fila('Total por pagar', Money.formatClp(deuda.totalPorPagar)),
+          fila('Saldo capital', Money.formatClp(deuda.saldoCapital)),
+          fila('Intereses pagados', Money.formatClp(deuda.interesesPagados)),
+          if (deuda.proximaCuotaNumero != null)
             fila(
-              'Cuota',
-              deuda.valorCuota == null
-                  ? '—'
-                  : Money.formatClp(deuda.valorCuota!),
+              'Próxima cuota',
+              '${deuda.proximaCuotaNumero} · '
+                  '${Money.formatClp(deuda.proximaCuotaMontoPendiente ?? deuda.montoRestante)}'
+                  '${deuda.proximaFechaVencimiento == null ? '' : ' · vence ${deuda.proximaFechaVencimiento}'}',
             ),
-            fila('Tasa mensual', '${deuda.tasaMensual} %'),
-            fila('Tasa anual efectiva', '${deuda.tasaAnualEfectiva} %'),
-            fila('CAE', '${deuda.cargaAnualEquivalente} %'),
-            fila('Gastos iniciales', Money.formatClp(deuda.gastosIniciales)),
-            fila(
-              'Costo adicional por cuota',
-              Money.formatClp(deuda.costoAdicionalPorCuota),
-            ),
-            fila('Costo total del crédito', Money.formatClp(deuda.costoTotalCredito)),
-            fila('Monto total', Money.formatClp(deuda.montoTotal)),
-            fila('Pagado', Money.formatClp(deuda.montoPagado)),
-            fila('Pendiente', Money.formatClp(deuda.montoRestante)),
-            fila('Total por pagar', Money.formatClp(deuda.totalPorPagar)),
-            fila('Saldo capital', Money.formatClp(deuda.saldoCapital)),
-            fila('Intereses pagados', Money.formatClp(deuda.interesesPagados)),
-            if (deuda.proximaCuotaNumero != null)
-              fila(
-                'Próxima cuota',
-                '${deuda.proximaCuotaNumero} · '
-                    '${Money.formatClp(deuda.proximaCuotaMontoPendiente ?? deuda.montoRestante)}'
-                    '${deuda.proximaFechaVencimiento == null ? '' : ' · vence ${deuda.proximaFechaVencimiento}'}',
-              ),
-            if (deuda.fechaPrimeraCuota != null)
-              fila('Primera cuota', '${deuda.fechaPrimeraCuota}'),
-            if (deuda.fechaUltimaCuota != null)
-              fila('Última cuota', '${deuda.fechaUltimaCuota}'),
-            if (deuda.cuotasPagadasPrevias > 0)
-              fila('Cuotas previas', '${deuda.cuotasPagadasPrevias}'),
-            if (!deuda.editable && deuda.estado == EstadoDeuda.pendiente)
-              Padding(
-                padding: const EdgeInsets.only(top: 8),
-                child: Text(
-                  'Edición bloqueada: la deuda ya tiene pagos registrados.',
-                  style: textTheme.bodySmall?.copyWith(
-                    color: AppColors.ink.withValues(alpha: 0.7),
-                  ),
+          if (deuda.fechaPrimeraCuota != null)
+            fila('Primera cuota', '${deuda.fechaPrimeraCuota}'),
+          if (deuda.fechaUltimaCuota != null)
+            fila('Última cuota', '${deuda.fechaUltimaCuota}'),
+          if (deuda.cuotasPagadasPrevias > 0)
+            fila('Cuotas previas', '${deuda.cuotasPagadasPrevias}'),
+          if (!deuda.editable && deuda.estado == EstadoDeuda.pendiente)
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Text(
+                'Edición bloqueada: la deuda ya tiene pagos registrados.',
+                style: textTheme.bodySmall?.copyWith(
+                  color: colors.ink.withValues(alpha: 0.7),
                 ),
               ),
-          ],
-        ),
-      );
+            ),
+        ],
+      ),
+    );
   }
 }
 
@@ -331,6 +327,7 @@ class _AsociacionPartida extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final SaveUpColors colors = Theme.of(context).extension<SaveUpColors>()!;
     final AsyncValue<PartidaPlan?> asociacion = ref.watch(
       partidaDeDeudaProvider(deuda.id),
     );
@@ -349,10 +346,10 @@ class _AsociacionPartida extends ConsumerWidget {
           return Row(
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
-              const NeoBadge(
+              NeoBadge(
                 label: 'En el plan',
                 icon: Icons.check,
-                color: AppColors.green,
+                color: colors.success,
                 compact: true,
               ),
               const SizedBox(width: AppSpacing.xs),

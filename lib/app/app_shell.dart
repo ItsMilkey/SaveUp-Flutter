@@ -11,11 +11,7 @@ import 'routes.dart';
 /// Shell de navegación principal (Opción B):
 /// Inicio · Deudas · Plan · Presupuesto · Más.
 class AppShell extends ConsumerWidget {
-  const AppShell({
-    super.key,
-    required this.location,
-    required this.child,
-  });
+  const AppShell({super.key, required this.location, required this.child});
 
   final String location;
   final Widget child;
@@ -105,6 +101,11 @@ class AppShell extends ConsumerWidget {
           label: 'Reportes',
           icon: Icons.file_download_outlined,
           onTap: () => GoRouter.of(context).push(AppRoutes.reportes),
+        ),
+        NeoMoreOption(
+          label: 'Tema',
+          icon: Icons.palette_outlined,
+          onTap: () => GoRouter.of(context).push(AppRoutes.apariencia),
         ),
         NeoMoreOption(
           label: 'Cambiar contraseña',

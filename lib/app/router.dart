@@ -28,6 +28,7 @@ import '../features/metas/presentation/screens/metas_screen.dart';
 import '../features/metas/presentation/screens/meta_form_screen.dart';
 import '../features/reportes/presentation/screens/reportes_screen.dart';
 import '../features/analitica/presentation/screens/analitica_screen.dart';
+import '../features/appearance/presentation/appearance_screen.dart';
 import '../core/design_system/design_system.dart';
 import 'app_shell.dart';
 import '../features/movimientos/presentation/movimientos_screen.dart';
@@ -172,6 +173,11 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
         path: AppRoutes.analitica,
         name: 'analitica',
         builder: (_, _) => const AnaliticaScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.apariencia,
+        name: 'apariencia',
+        builder: (_, _) => const AppearanceScreen(),
       ),
       if (kDebugMode)
         GoRoute(

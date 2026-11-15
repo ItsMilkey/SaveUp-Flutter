@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 
 import '../design_system.dart';
 
+enum _ShowcaseVariant { claro, oscuro, bold }
+
 /// Galería interna (solo debug) para revisar tokens y átomos.
 class DesignSystemShowcaseScreen extends StatefulWidget {
   const DesignSystemShowcaseScreen({super.key});
@@ -14,7 +16,7 @@ class DesignSystemShowcaseScreen extends StatefulWidget {
 
 class _DesignSystemShowcaseScreenState
     extends State<DesignSystemShowcaseScreen> {
-  bool _dark = false;
+  _ShowcaseVariant _variant = _ShowcaseVariant.claro;
   String _segment = 'Semana';
   DateTime _periodo = DateTime(2026, 11);
   int _navIndex = 0;
@@ -22,21 +24,17 @@ class _DesignSystemShowcaseScreenState
   @override
   Widget build(BuildContext context) {
     return Theme(
-      data: _dark ? SaveUpTheme.dark() : SaveUpTheme.light(),
+      data: switch (_variant) {
+        _ShowcaseVariant.claro => SaveUpTheme.light(),
+        _ShowcaseVariant.oscuro => SaveUpTheme.dark(),
+        _ShowcaseVariant.bold => SaveUpTheme.bold(),
+      },
       child: Builder(
         builder: (BuildContext context) {
           final ThemeData theme = Theme.of(context);
+          final SaveUpColors colors = theme.extension<SaveUpColors>()!;
           return Scaffold(
-            appBar: AppBar(
-              title: const Text('Design System'),
-              actions: <Widget>[
-                Switch(
-                  value: _dark,
-                  onChanged: (bool value) => setState(() => _dark = value),
-                ),
-                const SizedBox(width: AppSpacing.sm),
-              ],
-            ),
+            appBar: AppBar(title: const Text('Design System')),
             body: ListView(
               padding: const EdgeInsets.all(AppSpacing.lg),
               children: <Widget>[
@@ -52,21 +50,44 @@ class _DesignSystemShowcaseScreenState
                 const SizedBox(height: AppSpacing.xl),
                 _section(
                   context,
+                  'Variantes de tema',
+                  SegmentedButton<_ShowcaseVariant>(
+                    segments: const <ButtonSegment<_ShowcaseVariant>>[
+                      ButtonSegment<_ShowcaseVariant>(
+                        value: _ShowcaseVariant.claro,
+                        label: Text('Claro'),
+                      ),
+                      ButtonSegment<_ShowcaseVariant>(
+                        value: _ShowcaseVariant.oscuro,
+                        label: Text('Oscuro'),
+                      ),
+                      ButtonSegment<_ShowcaseVariant>(
+                        value: _ShowcaseVariant.bold,
+                        label: Text('Bold'),
+                      ),
+                    ],
+                    selected: <_ShowcaseVariant>{_variant},
+                    onSelectionChanged: (Set<_ShowcaseVariant> selection) =>
+                        setState(() => _variant = selection.single),
+                  ),
+                ),
+                _section(
+                  context,
                   'Paleta',
                   Wrap(
                     spacing: AppSpacing.md,
                     runSpacing: AppSpacing.md,
-                    children: const <Widget>[
-                      _Swatch('Ink', AppColors.ink),
-                      _Swatch('Paper', AppColors.paper),
-                      _Swatch('Canvas', AppColors.canvas),
-                      _Swatch('Yellow', AppColors.yellow),
-                      _Swatch('Cyan', AppColors.cyan),
-                      _Swatch('Magenta', AppColors.magenta),
-                      _Swatch('Orange', AppColors.orange),
-                      _Swatch('Green', AppColors.green),
-                      _Swatch('Lavender', AppColors.lavender),
-                      _Swatch('Danger', AppColors.danger),
+                    children: <Widget>[
+                      _Swatch('Tinta', colors.ink),
+                      _Swatch('Papel', colors.surface),
+                      _Swatch('Fondo', colors.canvas),
+                      _Swatch('Primario', colors.primary),
+                      _Swatch('Secundario', colors.secondary),
+                      _Swatch('Terciario', colors.tertiary),
+                      _Swatch('Acento', colors.accent),
+                      _Swatch('Éxito', colors.success),
+                      _Swatch('Aviso', colors.warning),
+                      _Swatch('Error', colors.danger),
                     ],
                   ),
                 ),
@@ -123,10 +144,7 @@ class _DesignSystemShowcaseScreenState
                         variant: NeoButtonVariant.danger,
                         onPressed: () {},
                       ),
-                      const NeoButton(
-                        label: 'Deshabilitado',
-                        onPressed: null,
-                      ),
+                      const NeoButton(label: 'Deshabilitado', onPressed: null),
                       const NeoButton(
                         label: 'Cargando',
                         loading: true,
@@ -190,10 +208,7 @@ class _DesignSystemShowcaseScreenState
                         error: 'Ingresa un monto válido.',
                       ),
                       const SizedBox(height: AppSpacing.md),
-                      const NeoInput(
-                        label: 'Deshabilitado',
-                        enabled: false,
-                      ),
+                      const NeoInput(label: 'Deshabilitado', enabled: false),
                     ],
                   ),
                 ),
@@ -208,10 +223,7 @@ class _DesignSystemShowcaseScreenState
                         runSpacing: AppSpacing.sm,
                         children: const <Widget>[
                           NeoBadge(label: 'Necesidad'),
-                          NeoBadge(
-                            label: 'Deseo',
-                            color: AppColors.magenta,
-                          ),
+                          NeoBadge(label: 'Deseo', color: AppColors.magenta),
                           NeoBadge(
                             label: 'Cerca del plan',
                             color: AppColors.cyan,
@@ -225,10 +237,7 @@ class _DesignSystemShowcaseScreenState
                         ],
                       ),
                       const SizedBox(height: AppSpacing.lg),
-                      const NeoProgress(
-                        value: 0.72,
-                        label: 'Ahorro · 72 %',
-                      ),
+                      const NeoProgress(value: 0.72, label: 'Ahorro · 72 %'),
                       const SizedBox(height: AppSpacing.md),
                       const NeoProgress(
                         value: 1,
@@ -280,9 +289,7 @@ class _DesignSystemShowcaseScreenState
                       const SizedBox(height: AppSpacing.md),
                       NeoCard(
                         density: AppDensity.list,
-                        child: const Text(
-                          'List / movimiento o deuda.',
-                        ),
+                        child: const Text('List / movimiento o deuda.'),
                       ),
                       const SizedBox(height: AppSpacing.md),
                       NeoCard(
@@ -434,13 +441,14 @@ class _DesignSystemShowcaseScreenState
                                         color: i.isEven
                                             ? AppColors.orange
                                             : AppColors.green,
-                                        borderRadius: const BorderRadius.vertical(
-                                          top: Radius.circular(AppRadii.sm),
-                                        ),
+                                        borderRadius:
+                                            const BorderRadius.vertical(
+                                              top: Radius.circular(AppRadii.sm),
+                                            ),
                                         border: Border.all(
-                                          color: Theme.of(
-                                            context,
-                                          ).extension<SaveUpColors>()!.border,
+                                          color: Theme.of(context)
+                                              .extension<SaveUpColors>()!
+                                              .border,
                                           width: AppBorders.regular,
                                         ),
                                       ),
@@ -637,9 +645,9 @@ class _Swatch extends StatelessWidget {
               color: theme.extension<SaveUpColors>()!.border,
               width: AppBorders.regular,
             ),
-            boxShadow: theme
-                .extension<SaveUpShadows>()!
-                .forLevel(AppShadowLevel.sm),
+            boxShadow: theme.extension<SaveUpShadows>()!.forLevel(
+              AppShadowLevel.sm,
+            ),
           ),
         ),
         const SizedBox(height: AppSpacing.xs),

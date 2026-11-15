@@ -61,12 +61,12 @@ class PartidaMontoSlider extends ConsumerWidget {
             partida.real >= partida.montoPlanificado);
 
     // Pagado: la tarjeta pasa a verde (el texto sigue en tinta).
-    final Color? fondo = pagada ? AppColors.green : color;
+    final Color? fondo = pagada ? colors.success : color;
     final TextTheme textTheme = fondo == null
         ? theme.textTheme
         : theme.textTheme.apply(
-            bodyColor: AppColors.ink,
-            displayColor: AppColors.ink,
+            bodyColor: colors.ink,
+            displayColor: colors.ink,
           );
 
     final Widget usado = Text(
@@ -86,8 +86,9 @@ class PartidaMontoSlider extends ConsumerWidget {
               NeoBadge(
                 label: pagada ? 'Pagado' : estadoPlanLabel(partida.estado),
                 color: pagada
-                    ? AppColors.paper
-                    : (fondo == null ? AppColors.yellow : AppColors.paper),
+                    ? colors.surface
+                    : (fondo == null ? colors.primary : colors.surface),
+                textColor: colors.ink,
                 compact: true,
               ),
             ],
@@ -162,9 +163,7 @@ class PartidaMontoSlider extends ConsumerWidget {
                 padding: const EdgeInsets.only(top: AppSpacing.xs),
                 child: Text(
                   'El vínculo ya no calcula; se muestra el último monto.',
-                  style: textTheme.bodySmall?.copyWith(
-                    color: AppColors.danger,
-                  ),
+                  style: textTheme.bodySmall?.copyWith(color: AppColors.danger),
                 ),
               ),
           ],
@@ -194,11 +193,9 @@ class PartidaMontoSlider extends ConsumerWidget {
           usado,
           SliderTheme(
             data: SliderTheme.of(context).copyWith(
-              activeTrackColor: fondo == null
-                  ? AppColors.yellow
-                  : AppColors.ink,
-              thumbColor: fondo == null ? AppColors.yellow : AppColors.ink,
-              inactiveTrackColor: fondo == null ? null : AppColors.paper,
+              activeTrackColor: fondo == null ? colors.primary : colors.ink,
+              thumbColor: fondo == null ? colors.primary : colors.ink,
+              inactiveTrackColor: fondo == null ? null : colors.surface,
             ),
             child: Slider(
               value: actual.clamp(0, maximo),
@@ -287,27 +284,20 @@ class _CartelPagado extends StatelessWidget {
         horizontal: AppSpacing.md,
       ),
       decoration: BoxDecoration(
-        color: AppColors.paper,
+        color: colors.surface,
         borderRadius: AppRadii.pillAll,
-        border: Border.all(
-          color: colors.border,
-          width: AppBorders.regular,
-        ),
+        border: Border.all(color: colors.border, width: AppBorders.regular),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
-          const Icon(
-            Icons.check_circle_outline,
-            size: 18,
-            color: AppColors.ink,
-          ),
+          Icon(Icons.check_circle_outline, size: 18, color: colors.ink),
           const SizedBox(width: AppSpacing.xs),
           Text(
             'Pagado',
             style: textTheme.titleSmall?.copyWith(
               fontWeight: FontWeight.w700,
-              color: AppColors.ink,
+              color: colors.ink,
             ),
           ),
         ],

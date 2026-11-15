@@ -149,9 +149,10 @@ class _DeudaCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
+    final SaveUpColors colors = theme.extension<SaveUpColors>()!;
     final TextTheme textTheme = theme.textTheme.apply(
-      bodyColor: AppColors.ink,
-      displayColor: AppColors.ink,
+      bodyColor: colors.ink,
+      displayColor: colors.ink,
     );
     final Color fondo = switch (deuda.estado) {
       EstadoDeuda.pendiente => AppColors.yellow,
@@ -173,16 +174,11 @@ class _DeudaCard extends StatelessWidget {
         children: <Widget>[
           Row(
             children: <Widget>[
-              Expanded(
-                child: Text(
-                  deuda.nombre,
-                  style: textTheme.titleMedium,
-                ),
-              ),
+              Expanded(child: Text(deuda.nombre, style: textTheme.titleMedium)),
               const SizedBox(width: AppSpacing.sm),
               NeoBadge(
                 label: estadoDeudaLabel(deuda.estado),
-                color: AppColors.paper,
+                color: colors.surface,
                 compact: true,
               ),
             ],
@@ -193,7 +189,11 @@ class _DeudaCard extends StatelessWidget {
             style: textTheme.bodySmall,
           ),
           const SizedBox(height: AppSpacing.md),
-          NeoProgress(value: deuda.progreso, color: AppColors.ink, trackColor: AppColors.paper),
+          NeoProgress(
+            value: deuda.progreso,
+            color: colors.ink,
+            trackColor: colors.surface,
+          ),
           const SizedBox(height: AppSpacing.sm),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -222,11 +222,11 @@ class _EmptyDeudas extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
-    final TextTheme textTheme = theme.textTheme.apply(
-      bodyColor: AppColors.ink,
-      displayColor: AppColors.ink,
-    );
     final SaveUpColors colors = theme.extension<SaveUpColors>()!;
+    final TextTheme textTheme = theme.textTheme.apply(
+      bodyColor: colors.ink,
+      displayColor: colors.ink,
+    );
     return NeoSurface(
       density: AppDensity.section,
       child: Column(
@@ -239,23 +239,21 @@ class _EmptyDeudas extends StatelessWidget {
                 width: 36,
                 height: 36,
                 decoration: BoxDecoration(
-                  color: AppColors.cyan,
+                  color: colors.secondary,
                   borderRadius: AppRadii.smAll,
                   border: Border.all(
                     color: colors.border,
                     width: AppBorders.regular,
                   ),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.account_balance_wallet_outlined,
                   size: 20,
-                  color: AppColors.ink,
+                  color: colors.ink,
                 ),
               ),
               const SizedBox(width: AppSpacing.sm),
-              Expanded(
-                child: Text(message, style: textTheme.titleSmall),
-              ),
+              Expanded(child: Text(message, style: textTheme.titleSmall)),
             ],
           ),
           if (onRegistrar != null) ...<Widget>[

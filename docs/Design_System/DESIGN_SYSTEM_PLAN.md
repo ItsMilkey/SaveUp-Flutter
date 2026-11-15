@@ -4,7 +4,7 @@
 > system: tokens, componentes y fases ejecutadas. Las fases 0–8 están cerradas y el
 > pulido posterior se registra en «Migración incremental».
 >
-> Base actual: F1–F8, F10 y F11 cerradas; el rediseño se hizo solo en
+> Base actual: F1–F8, F10–F13 cerradas (F9 push sigue pendiente); el rediseño se hizo solo en
 > `presentation/`, sin tocar dominio, data, controladores ni contratos.
 
 ## 1. Qué conservar del borrador y qué falta
@@ -154,7 +154,7 @@ lib/core/design_system/
 │   ├── app_shadows.dart
 │   └── app_motion.dart
 ├── theme/
-│   ├── saveup_theme.dart       # light/dark + ThemeData
+│   ├── saveup_theme.dart       # light/dark/Bold + ThemeData
 │   ├── saveup_colors.dart      # ThemeExtension
 │   └── saveup_shadows.dart     # ThemeExtension
 ├── components/
@@ -207,7 +207,8 @@ Reglas:
 - Componentes específicos de negocio (tarjeta de deuda, tile de movimiento, torta
   de analítica) viven en `features/<feature>/presentation/widgets/` y se
   componen con primitivas; no se meten en el core.
-- `lib/app/theme.dart` solo hace `SaveUpTheme.light()` / `SaveUpTheme.dark()`.
+- `lib/app/theme.dart` compone `SaveUpTheme.light()` / `dark()` / `bold()` y la preferencia
+  local de apariencia.
 - `ThemeExtension<SaveUpColors>` y `ThemeExtension<SaveUpShadows>` para tokens
   que Material no cubre (sombras duras, borde, colores de categoría/charts).
 - Barrel con API pública explícita; nada de exponer tokens internos por accidente.

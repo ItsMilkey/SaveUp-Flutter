@@ -44,8 +44,8 @@ class _ConfiguracionReglaScreenState
     final ThemeData theme = Theme.of(context);
     final SaveUpColors colors = theme.extension<SaveUpColors>()!;
     final TextTheme onColorText = theme.textTheme.apply(
-      bodyColor: AppColors.ink,
-      displayColor: AppColors.ink,
+      bodyColor: colors.onSecondary,
+      displayColor: colors.onSecondary,
     );
 
     return NeoScaffold(
@@ -82,7 +82,10 @@ class _ConfiguracionReglaScreenState
                 AppSpacing.xxxl * 2,
               ),
               children: <Widget>[
-                _Sugerencia(estado: estado, onAplicar: controller.aplicarSugerencia),
+                _Sugerencia(
+                  estado: estado,
+                  onAplicar: controller.aplicarSugerencia,
+                ),
                 const SizedBox(height: AppSpacing.lg),
                 NeoSurface(
                   density: AppDensity.section,
@@ -158,9 +161,7 @@ class _ConfiguracionReglaScreenState
                           padding: const EdgeInsets.only(top: AppSpacing.xs),
                           child: Text(
                             estado.mensajeValidacion!,
-                            style: TextStyle(
-                              color: theme.colorScheme.error,
-                            ),
+                            style: TextStyle(color: colors.danger),
                           ),
                         ),
                     ],
@@ -169,7 +170,7 @@ class _ConfiguracionReglaScreenState
                 const SizedBox(height: AppSpacing.lg),
                 NeoSurface(
                   density: AppDensity.list,
-                  color: AppColors.cyan,
+                  color: colors.secondary,
                   child: Material(
                     type: MaterialType.transparency,
                     child: Column(
@@ -195,13 +196,9 @@ class _ConfiguracionReglaScreenState
                                       'configuración se conserva como '
                                       'referencia pero no se ejecuta.',
                                 ),
-                                tooltip:
-                                    'Información sobre Presupuesto activo',
-                                icon: const Icon(
-                                  Icons.info_outline,
-                                  size: 18,
-                                ),
-                                color: AppColors.ink,
+                                tooltip: 'Información sobre Presupuesto activo',
+                                icon: const Icon(Icons.info_outline, size: 18),
+                                color: colors.onSecondary,
                                 padding: EdgeInsets.zero,
                                 constraints: const BoxConstraints.tightFor(
                                   width: 40,
@@ -239,11 +236,8 @@ class _ConfiguracionReglaScreenState
                                 tooltip:
                                     'Información sobre Automatizar ahorro en '
                                     'metas',
-                                icon: const Icon(
-                                  Icons.info_outline,
-                                  size: 18,
-                                ),
-                                color: AppColors.ink,
+                                icon: const Icon(Icons.info_outline, size: 18),
+                                color: colors.onSecondary,
                                 padding: EdgeInsets.zero,
                                 constraints: const BoxConstraints.tightFor(
                                   width: 40,
@@ -256,7 +250,7 @@ class _ConfiguracionReglaScreenState
                           subtitle: Text(
                             'Reparte el ahorro automático entre tus metas.',
                             style: onColorText.bodySmall?.copyWith(
-                              color: AppColors.ink.withValues(alpha: 0.7),
+                              color: colors.onSecondary.withValues(alpha: 0.7),
                             ),
                           ),
                           value: estado.automatizarAhorroEnMetas,
@@ -269,9 +263,7 @@ class _ConfiguracionReglaScreenState
                 if (estado.error != null)
                   Padding(
                     padding: const EdgeInsets.only(top: AppSpacing.md),
-                    child: NeoErrorBand(
-                      message: failureMessage(estado.error!),
-                    ),
+                    child: NeoErrorBand(message: failureMessage(estado.error!)),
                   ),
                 const SizedBox(height: AppSpacing.lg),
                 DistribucionAhorroSection(
@@ -282,13 +274,13 @@ class _ConfiguracionReglaScreenState
                     padding: const EdgeInsets.only(top: AppSpacing.md),
                     child: NeoSurface(
                       density: AppDensity.table,
-                      color: theme.extension<SaveUpColors>()!.success,
+                      color: colors.success,
                       child: Row(
                         children: <Widget>[
-                          const Icon(
+                          Icon(
                             Icons.check_circle_outline,
                             size: 18,
-                            color: AppColors.ink,
+                            color: colors.onSuccess,
                           ),
                           const SizedBox(width: AppSpacing.sm),
                           Text(
@@ -296,7 +288,7 @@ class _ConfiguracionReglaScreenState
                             style: AppTypography.text(
                               size: 13,
                               weight: FontWeight.w600,
-                              color: AppColors.ink,
+                              color: colors.onSuccess,
                             ),
                           ),
                         ],
@@ -362,16 +354,17 @@ class _Sugerencia extends StatelessWidget {
   Widget build(BuildContext context) {
     final SugerenciaRegla? sugerencia = estado.sugerencia;
     final ThemeData theme = Theme.of(context);
+    final SaveUpColors colors = theme.extension<SaveUpColors>()!;
     final TextTheme textTheme = theme.textTheme.apply(
-      bodyColor: AppColors.ink,
-      displayColor: AppColors.ink,
+      bodyColor: colors.ink,
+      displayColor: colors.ink,
     );
     final PorcentajesRegla? propuesta = sugerencia?.sugerencia;
 
     if (propuesta == null) {
       return NeoSurface(
         density: AppDensity.section,
-        color: AppColors.lavender,
+        color: colors.surfaceAccent,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
@@ -399,7 +392,7 @@ class _Sugerencia extends StatelessWidget {
 
     return NeoSurface(
       density: AppDensity.section,
-      color: AppColors.lavender,
+      color: colors.surfaceAccent,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
@@ -417,7 +410,7 @@ class _Sugerencia extends StatelessWidget {
                 'Tu gasto de necesidades y deseos supera tus ingresos; la '
                 'sugerencia se escaló para sumar 100.',
                 style: textTheme.bodySmall?.copyWith(
-                  color: AppColors.ink,
+                  color: colors.ink,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -506,7 +499,7 @@ class _SliderRegla extends StatelessWidget {
                           style: AppTypography.text(
                             size: 16,
                             weight: FontWeight.w700,
-                            color: AppColors.ink,
+                            color: colors.ink,
                           ),
                         ),
                         const SizedBox(width: AppSpacing.xs),
@@ -526,15 +519,15 @@ class _SliderRegla extends StatelessWidget {
         SliderTheme(
           data: SliderTheme.of(context).copyWith(
             trackHeight: 6,
-            activeTrackColor: AppColors.ink,
-            inactiveTrackColor: AppColors.ink.withValues(alpha: 0.12),
-            thumbColor: AppColors.ink,
-            overlayColor: AppColors.ink.withValues(alpha: 0.12),
-            valueIndicatorColor: AppColors.ink,
+            activeTrackColor: colors.primary,
+            inactiveTrackColor: colors.muted.withValues(alpha: 0.24),
+            thumbColor: colors.primary,
+            overlayColor: colors.primary.withValues(alpha: 0.12),
+            valueIndicatorColor: colors.primary,
             valueIndicatorTextStyle: AppTypography.text(
               size: 12,
               weight: FontWeight.w600,
-              color: AppColors.canvas,
+              color: colors.onPrimary,
             ),
             activeTickMarkColor: Colors.transparent,
             inactiveTickMarkColor: Colors.transparent,
@@ -544,9 +537,8 @@ class _SliderRegla extends StatelessWidget {
             max: 100,
             divisions: 200,
             label: '$valor %',
-            onChanged: (double value) => onChanged(
-              Decimal.parse(value.toStringAsFixed(2)),
-            ),
+            onChanged: (double value) =>
+                onChanged(Decimal.parse(value.toStringAsFixed(2))),
           ),
         ),
       ],

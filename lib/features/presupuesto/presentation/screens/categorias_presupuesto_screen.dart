@@ -51,9 +51,7 @@ class _CategoriasPresupuestoScreenState
             ],
           ),
         ),
-        body: const TabBarView(
-          children: <Widget>[_LimitesTab(), _TiposTab()],
-        ),
+        body: const TabBarView(children: <Widget>[_LimitesTab(), _TiposTab()]),
       ),
     );
   }
@@ -64,13 +62,12 @@ class _LimitesTab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final LimitesCategoriasState estado = ref.watch(
-      limitesCategoriasProvider,
-    );
+    final LimitesCategoriasState estado = ref.watch(limitesCategoriasProvider);
     final LimitesCategoriasController controller = ref.read(
       limitesCategoriasProvider.notifier,
     );
     final ThemeData theme = Theme.of(context);
+    final SaveUpColors colors = theme.extension<SaveUpColors>()!;
 
     if (estado.cargando && estado.categorias.isEmpty) {
       return const NeoLoading(rows: 3);
@@ -83,15 +80,15 @@ class _LimitesTab extends ConsumerWidget {
     }
 
     final Map<int, Categoria> porId = <int, Categoria>{
-      for (final Categoria categoria in estado.categorias) categoria.id: categoria,
+      for (final Categoria categoria in estado.categorias)
+        categoria.id: categoria,
     };
-    final List<MapEntry<int, Decimal>> filas =
-        estado.valores.entries.toList()
-          ..sort((MapEntry<int, Decimal> a, MapEntry<int, Decimal> b) {
-            final String nombreA = porId[a.key]?.nombre ?? '${a.key}';
-            final String nombreB = porId[b.key]?.nombre ?? '${b.key}';
-            return nombreA.compareTo(nombreB);
-          });
+    final List<MapEntry<int, Decimal>> filas = estado.valores.entries.toList()
+      ..sort((MapEntry<int, Decimal> a, MapEntry<int, Decimal> b) {
+        final String nombreA = porId[a.key]?.nombre ?? '${a.key}';
+        final String nombreB = porId[b.key]?.nombre ?? '${b.key}';
+        return nombreA.compareTo(nombreB);
+      });
 
     return RefreshIndicator(
       onRefresh: controller.cargar,
@@ -118,17 +115,14 @@ class _LimitesTab extends ConsumerWidget {
                 in filas.asMap().entries) ...<Widget>[
               NeoListItem(
                 density: AppDensity.list,
-                color: _coloresCategorias[
-                    indexado.key % _coloresCategorias.length],
+                color: colors
+                    .chartPalette[indexado.key % colors.chartPalette.length],
                 title:
                     porId[indexado.value.key]?.nombre ??
                     'Categoría ${indexado.value.key}',
                 subtitle: Money.formatClp(indexado.value.value),
-                onTap: () => _editar(
-                  context,
-                  ref,
-                  categoriaId: indexado.value.key,
-                ),
+                onTap: () =>
+                    _editar(context, ref, categoriaId: indexado.value.key),
                 trailing: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: <Widget>[
@@ -183,22 +177,20 @@ class _LimitesTab extends ConsumerWidget {
           if (estado.error != null)
             Padding(
               padding: const EdgeInsets.only(top: AppSpacing.md),
-              child: NeoErrorBand(
-                message: failureMessage(estado.error!),
-              ),
+              child: NeoErrorBand(message: failureMessage(estado.error!)),
             ),
           if (estado.guardado)
             Padding(
               padding: const EdgeInsets.only(top: AppSpacing.md),
               child: NeoSurface(
                 density: AppDensity.table,
-                color: theme.extension<SaveUpColors>()!.success,
+                color: colors.success,
                 child: Row(
                   children: <Widget>[
-                    const Icon(
+                    Icon(
                       Icons.check_circle_outline,
                       size: 18,
-                      color: AppColors.ink,
+                      color: colors.onSuccess,
                     ),
                     const SizedBox(width: AppSpacing.sm),
                     Text(
@@ -206,7 +198,7 @@ class _LimitesTab extends ConsumerWidget {
                       style: AppTypography.text(
                         size: 13,
                         weight: FontWeight.w600,
-                        color: AppColors.ink,
+                        color: colors.onSuccess,
                       ),
                     ),
                   ],
@@ -249,9 +241,7 @@ class _LimitesTab extends ConsumerWidget {
       builder: (_) => _LimiteDialog(
         categorias: disponibles,
         categoriaInicial: categoriaId,
-        limiteActual: categoriaId == null
-            ? null
-            : estado.valores[categoriaId],
+        limiteActual: categoriaId == null ? null : estado.valores[categoriaId],
       ),
     );
     if (valor == null) {
@@ -297,8 +287,7 @@ class _EjecucionCategorias extends ConsumerWidget {
                   ),
                 ),
                 TextButton(
-                  onPressed: () =>
-                      ref.invalidate(ejecucionCategoriasProvider),
+                  onPressed: () => ref.invalidate(ejecucionCategoriasProvider),
                   child: const Text('Reintentar'),
                 ),
               ],
@@ -416,7 +405,9 @@ class _LimiteDialogState extends State<_LimiteDialog> {
   @override
   Widget build(BuildContext context) {
     return NeoDialog(
-      title: widget.categoriaInicial == null ? 'Agregar límite' : 'Editar límite',
+      title: widget.categoriaInicial == null
+          ? 'Agregar límite'
+          : 'Editar límite',
       actions: <Widget>[
         NeoButton(
           label: 'Cancelar',
@@ -469,6 +460,7 @@ class _TiposTab extends ConsumerWidget {
       preferenciasCategoriaProvider.notifier,
     );
     final ThemeData theme = Theme.of(context);
+    final SaveUpColors colors = theme.extension<SaveUpColors>()!;
 
     if (estado.cargando && estado.preferencias.isEmpty) {
       return const NeoLoading(rows: 3);
@@ -498,9 +490,7 @@ class _TiposTab extends ConsumerWidget {
               child: Row(
                 children: <Widget>[
                   Expanded(
-                    child: NeoErrorBand(
-                      message: failureMessage(estado.error!),
-                    ),
+                    child: NeoErrorBand(message: failureMessage(estado.error!)),
                   ),
                   const SizedBox(width: AppSpacing.sm),
                   TextButton(
@@ -516,8 +506,8 @@ class _TiposTab extends ConsumerWidget {
               padding: const EdgeInsets.only(bottom: AppSpacing.sm),
               child: _FilaPreferencia(
                 preferencia: indexado.value,
-                color: _coloresCategorias[
-                    indexado.key % _coloresCategorias.length],
+                color: colors
+                    .chartPalette[indexado.key % colors.chartPalette.length],
                 guardando: estado.guardando.contains(indexado.value.id),
                 onEstablecer: (TipoPresupuesto tipo) =>
                     controller.establecer(indexado.value.id, tipo),
@@ -529,15 +519,6 @@ class _TiposTab extends ConsumerWidget {
     );
   }
 }
-
-const List<Color> _coloresCategorias = <Color>[
-  AppColors.cyan,
-  AppColors.yellow,
-  AppColors.lavender,
-  AppColors.green,
-  AppColors.magenta,
-  AppColors.orange,
-];
 
 class _FilaPreferencia extends StatelessWidget {
   const _FilaPreferencia({
@@ -557,9 +538,10 @@ class _FilaPreferencia extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
+    final SaveUpColors colors = theme.extension<SaveUpColors>()!;
     final TextTheme textTheme = theme.textTheme.apply(
-      bodyColor: AppColors.ink,
-      displayColor: AppColors.ink,
+      bodyColor: colors.ink,
+      displayColor: colors.ink,
     );
     final String subtitulo =
         'Por defecto: ${tipoPresupuestoLabel(preferencia.tipoPorDefecto)} · '
@@ -573,10 +555,7 @@ class _FilaPreferencia extends StatelessWidget {
           Row(
             children: <Widget>[
               Expanded(
-                child: Text(
-                  preferencia.nombre,
-                  style: textTheme.titleSmall,
-                ),
+                child: Text(preferencia.nombre, style: textTheme.titleSmall),
               ),
               if (guardando)
                 const SizedBox(
@@ -602,16 +581,14 @@ class _FilaPreferencia extends StatelessWidget {
                 ChoiceChip(
                   label: const Text('Necesidad'),
                   selected:
-                      preferencia.tipoPreferido ==
-                      TipoPresupuesto.necesidad,
+                      preferencia.tipoPreferido == TipoPresupuesto.necesidad,
                   onSelected: guardando
                       ? null
                       : (_) => onEstablecer(TipoPresupuesto.necesidad),
                 ),
                 ChoiceChip(
                   label: const Text('Deseo'),
-                  selected:
-                      preferencia.tipoPreferido == TipoPresupuesto.deseo,
+                  selected: preferencia.tipoPreferido == TipoPresupuesto.deseo,
                   onSelected: guardando
                       ? null
                       : (_) => onEstablecer(TipoPresupuesto.deseo),

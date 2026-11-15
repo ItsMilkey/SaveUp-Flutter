@@ -31,14 +31,14 @@ Ante contradicción entre este documento y el contrato, manda el contrato.
   - `money/`: dinero con `Decimal`, su (de)serialización JSON y el formateador de
     entrada de montos.
   - `time/`: instantes UTC, fechas de calendario y zona de negocio.
-  - `design_system/`: tokens, tema claro/oscuro y componentes Neo (átomos, moléculas,
+  - `design_system/`: tokens, temas claro/oscuro/Bold y componentes Neo (átomos, moléculas,
     navegación y patrones). Las features importan solo el barrel; el sistema no
     conoce ninguna feature ni contiene lógica de negocio.
 - Arranque: `lib/main.dart` (`ProviderScope` + `MaterialApp.router`).
 - Configuración: `lib/app/config.dart` (solo `--dart-define`, sin defaults).
 - Navegación: `lib/app/router.dart` (`go_router`, con redirección según sesión).
 - Tema: `lib/app/theme.dart` (delega en `SaveUpTheme` del design system; Material 3
-  claro/oscuro con tokens Neo).
+  claro/oscuro/Bold con tokens Neo y preferencia local de apariencia).
 
 Regla de dependencias: `presentation` → `domain` ← `data`. `domain` no conoce Flutter ni
 Dio. Nada de lógica de negocio en widgets. El backend es la única fuente de aritmética
@@ -294,6 +294,12 @@ Un `codigo` desconocido cae en una falla genérica conservando status y `detail`
   acción por toque, no un destino ni una parada del gesto. Semantics ofrece botón/etiqueta/estado
   seleccionado y el arrastre no es requisito de accesibilidad. Se respetan `AppMotion`, temas
   claro/oscuro y `MediaQuery.disableAnimations`; no cambia el `ShellRoute` ni el backend.
+- **D14 — Tema Bold y selección local de apariencia.** La app conserva `Sistema` como opción
+  inicial y añade `Claro`, `Oscuro` y `Bold`. Bold es una variante clara de papel/tinta con bloques
+  pastel y acentos vibrantes; se selecciona desde `Más → Tema`, en una pantalla que previsualiza
+  las cuatro opciones y marca la activa. La selección se aplica al instante y se persiste
+  localmente con `SharedPreferencesAsync`; no se sincroniza con el backend ni usa el storage de
+  credenciales. Los estados financieros/errores conservan su semántica, y claro/oscuro no cambian.
 
 ## Pendientes / fuera del alcance actual
 

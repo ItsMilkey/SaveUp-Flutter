@@ -77,4 +77,7 @@ abstract final class AppRoutes {
 
   /// Galería interna del design system (solo debug).
   static const String designSystem = '/design-system';
+
+  /// Preferencia local de tema de la aplicación.
+  static const String apariencia = '/apariencia';
 }

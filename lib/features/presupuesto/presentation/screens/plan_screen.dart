@@ -106,9 +106,8 @@ class _PlanScreenState extends ConsumerState<PlanScreen> {
     if (estado.errorCarga != null && estado.plan == null) {
       return NeoErrorState(
         message: failureMessage(estado.errorCarga!),
-        onRetry: () => ref
-            .read(planMensualProvider.notifier)
-            .cargar(_mes.toString()),
+        onRetry: () =>
+            ref.read(planMensualProvider.notifier).cargar(_mes.toString()),
       );
     }
     final PlanMensual? plan = estado.plan;
@@ -120,9 +119,8 @@ class _PlanScreenState extends ConsumerState<PlanScreen> {
     }
 
     return RefreshIndicator(
-      onRefresh: () => ref
-          .read(planMensualProvider.notifier)
-          .cargar(_mes.toString()),
+      onRefresh: () =>
+          ref.read(planMensualProvider.notifier).cargar(_mes.toString()),
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.fromLTRB(
@@ -272,12 +270,7 @@ class _PlanScreenState extends ConsumerState<PlanScreen> {
         );
       },
       transitionBuilder:
-          (
-            BuildContext context,
-            Animation<double> animation,
-            _,
-            Widget child,
-          ) {
+          (BuildContext context, Animation<double> animation, _, Widget child) {
             return FadeTransition(
               opacity: animation,
               child: ScaleTransition(
@@ -311,7 +304,10 @@ class _PlanScreenState extends ConsumerState<PlanScreen> {
     final PlanMensualState estado = ref.read(planMensualProvider);
     ref
         .read(planMensualProvider.notifier)
-        .cargar(_mes.toString(), incluirReferencias: !estado.incluirReferencias);
+        .cargar(
+          _mes.toString(),
+          incluirReferencias: !estado.incluirReferencias,
+        );
   }
 
   Future<void> _abrirGrupos() async {
@@ -392,7 +388,10 @@ class _PlanScreenState extends ConsumerState<PlanScreen> {
   }
 
   Future<void> _editarPartida(int id) async {
-    final PartidaPlan? partida = ref.read(planMensualProvider).plan?.partida(id);
+    final PartidaPlan? partida = ref
+        .read(planMensualProvider)
+        .plan
+        ?.partida(id);
     if (partida == null) {
       return;
     }
@@ -407,7 +406,10 @@ class _PlanScreenState extends ConsumerState<PlanScreen> {
   }
 
   Future<void> _eliminarPartida(int id) async {
-    final PartidaPlan? partida = ref.read(planMensualProvider).plan?.partida(id);
+    final PartidaPlan? partida = ref
+        .read(planMensualProvider)
+        .plan
+        ?.partida(id);
     if (partida == null) {
       return;
     }
@@ -455,13 +457,15 @@ class _BotonMenuPlan extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final SaveUpShadows shadows = Theme.of(context).extension<SaveUpShadows>()!;
+    final ThemeData theme = Theme.of(context);
+    final SaveUpShadows shadows = theme.extension<SaveUpShadows>()!;
+    final SaveUpColors colors = theme.extension<SaveUpColors>()!;
     return Tooltip(
       message: 'Agregar al plan',
       child: Builder(
         builder: (BuildContext buttonContext) {
           return NeoSurface(
-            color: AppColors.yellow,
+            color: colors.primary,
             radius: AppRadii.pillAll,
             borderWidth: AppBorders.regular,
             boxShadow: shadows.md,
@@ -471,10 +475,10 @@ class _BotonMenuPlan extends StatelessWidget {
                   buttonContext.findRenderObject()! as RenderBox;
               onPressed(box.localToGlobal(Offset.zero) & box.size);
             },
-            child: const SizedBox(
+            child: SizedBox(
               width: 56,
               height: 56,
-              child: Icon(Icons.add, size: 30, color: AppColors.ink),
+              child: Icon(Icons.add, size: 30, color: colors.onPrimary),
             ),
           );
         },
@@ -492,7 +496,9 @@ class _MenuPlan extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final SaveUpShadows shadows = Theme.of(context).extension<SaveUpShadows>()!;
+    final ThemeData theme = Theme.of(context);
+    final SaveUpShadows shadows = theme.extension<SaveUpShadows>()!;
+    final SaveUpColors colors = theme.extension<SaveUpColors>()!;
     return NeoSurface(
       density: AppDensity.section,
       boxShadow: shadows.lg,
@@ -503,7 +509,7 @@ class _MenuPlan extends StatelessWidget {
           _MenuOpcion(
             label: 'Crear grupo',
             icon: Icons.folder_outlined,
-            color: AppColors.cyan,
+            color: colors.secondary,
             onTap: onGrupo,
           ),
           const SizedBox(height: AppSpacing.sm),
@@ -524,17 +530,18 @@ class _MenuOpcion extends StatelessWidget {
     required this.label,
     required this.icon,
     required this.onTap,
-    this.color = AppColors.yellow,
+    this.color,
   });
 
   final String label;
   final IconData icon;
   final VoidCallback onTap;
-  final Color color;
+  final Color? color;
 
   @override
   Widget build(BuildContext context) {
     final SaveUpColors colors = Theme.of(context).extension<SaveUpColors>()!;
+    final Color color = this.color ?? colors.primary;
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -548,14 +555,11 @@ class _MenuOpcion extends StatelessWidget {
           decoration: BoxDecoration(
             color: color,
             borderRadius: AppRadii.pillAll,
-            border: Border.all(
-              color: colors.border,
-              width: AppBorders.regular,
-            ),
+            border: Border.all(color: colors.border, width: AppBorders.regular),
           ),
           child: Row(
             children: <Widget>[
-              Icon(icon, size: 18, color: AppColors.ink),
+              Icon(icon, size: 18, color: colors.ink),
               const SizedBox(width: AppSpacing.sm),
               Flexible(
                 child: Text(
@@ -563,7 +567,7 @@ class _MenuOpcion extends StatelessWidget {
                   style: AppTypography.text(
                     size: 15,
                     weight: FontWeight.w700,
-                    color: AppColors.ink,
+                    color: colors.ink,
                   ),
                 ),
               ),
@@ -581,10 +585,7 @@ class _SeparadorGrupos extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Divider(
-      height: AppSpacing.xxl,
-      thickness: AppBorders.thin,
-    );
+    return const Divider(height: AppSpacing.xxl, thickness: AppBorders.thin);
   }
 }
 
@@ -599,8 +600,8 @@ class _Resumen extends StatelessWidget {
     final ThemeData theme = Theme.of(context);
     final SaveUpColors colors = theme.extension<SaveUpColors>()!;
     final TextTheme textTheme = theme.textTheme.apply(
-      bodyColor: AppColors.ink,
-      displayColor: AppColors.ink,
+      bodyColor: colors.ink,
+      displayColor: colors.ink,
     );
     final ResumenCalculado resumen = plan.calculo.resumen;
     final Decimal? ingreso = plan.ingresoReferencia;
@@ -612,12 +613,12 @@ class _Resumen extends StatelessWidget {
       size: 11,
       weight: FontWeight.w700,
       letterSpacing: 0.5,
-      color: AppColors.ink.withValues(alpha: 0.7),
+      color: colors.muted,
     );
 
     return NeoSurface(
       density: AppDensity.section,
-      color: AppColors.lavender,
+      color: colors.surfaceAccent,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
@@ -627,7 +628,8 @@ class _Resumen extends StatelessWidget {
               if (resumen.excedeIngreso)
                 NeoBadge(
                   label: 'Excede el ingreso',
-                  color: theme.colorScheme.error,
+                  color: colors.danger,
+                  textColor: colors.onDanger,
                   compact: true,
                 ),
             ],
@@ -643,20 +645,17 @@ class _Resumen extends StatelessWidget {
                     Text('INGRESO DE REFERENCIA', style: etiqueta),
                     const SizedBox(height: 2),
                     Text(
-                      ingreso == null ? 'Sin definir' : Money.formatClp(ingreso),
+                      ingreso == null
+                          ? 'Sin definir'
+                          : Money.formatClp(ingreso),
                       style: ingreso == null
                           ? textTheme.titleMedium?.copyWith(color: colors.muted)
-                          : AppTypography.display(
-                              size: 28,
-                              color: AppColors.ink,
-                            ),
+                          : AppTypography.display(size: 28, color: colors.ink),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       'El monto que planeas recibir este mes.',
-                      style: textTheme.bodySmall?.copyWith(
-                        color: AppColors.ink.withValues(alpha: 0.68),
-                      ),
+                      style: textTheme.bodySmall?.copyWith(color: colors.muted),
                     ),
                   ],
                 ),
@@ -675,7 +674,7 @@ class _Resumen extends StatelessWidget {
               'El plan supera tu ingreso por '
               '${Money.formatClp(resumen.planificadoTotal - ingreso)}.',
               style: textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.error,
+                color: colors.danger,
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -741,9 +740,7 @@ class _Resumen extends StatelessWidget {
           if (guia == null)
             Text(
               'Todavía no tienes una guía configurada.',
-              style: textTheme.bodySmall?.copyWith(
-                color: AppColors.ink.withValues(alpha: 0.68),
-              ),
+              style: textTheme.bodySmall?.copyWith(color: colors.muted),
             )
           else
             Wrap(
@@ -752,17 +749,20 @@ class _Resumen extends StatelessWidget {
               children: <Widget>[
                 NeoBadge(
                   label: 'Necesidades ${guia.necesidades} %',
-                  color: AppColors.paper,
+                  color: colors.surface,
+                  textColor: colors.ink,
                   compact: true,
                 ),
                 NeoBadge(
                   label: 'Deseos ${guia.deseos} %',
-                  color: AppColors.paper,
+                  color: colors.surface,
+                  textColor: colors.ink,
                   compact: true,
                 ),
                 NeoBadge(
                   label: 'Ahorro ${guia.ahorro} %',
-                  color: AppColors.paper,
+                  color: colors.surface,
+                  textColor: colors.ink,
                   compact: true,
                 ),
               ],
@@ -797,6 +797,7 @@ class _Metrica extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
+    final SaveUpColors colors = theme.extension<SaveUpColors>()!;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
@@ -805,7 +806,7 @@ class _Metrica extends StatelessWidget {
           style: AppTypography.text(
             size: 11,
             weight: FontWeight.w600,
-            color: AppColors.ink.withValues(alpha: 0.7),
+            color: colors.muted,
           ),
         ),
         const SizedBox(height: 2),
@@ -816,7 +817,7 @@ class _Metrica extends StatelessWidget {
           style: AppTypography.text(
             size: 16,
             weight: FontWeight.w700,
-            color: valueColor ?? AppColors.ink,
+            color: valueColor ?? colors.ink,
           ),
         ),
         const SizedBox(height: 2),
@@ -824,7 +825,7 @@ class _Metrica extends StatelessWidget {
           helper,
           style: theme.textTheme.bodySmall?.copyWith(
             fontSize: 10,
-            color: AppColors.ink.withValues(alpha: 0.65),
+            color: colors.muted,
           ),
         ),
       ],
@@ -837,11 +838,12 @@ class _SeparadorMetrica extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final SaveUpColors colors = Theme.of(context).extension<SaveUpColors>()!;
     return Container(
       width: 1,
       height: 54,
       margin: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
-      color: AppColors.ink.withValues(alpha: 0.15),
+      color: colors.border.withValues(alpha: 0.15),
     );
   }
 }
@@ -891,7 +893,7 @@ class _TipoFila extends StatelessWidget {
             decoration: BoxDecoration(
               color: color,
               borderRadius: BorderRadius.circular(2),
-              border: Border.all(color: AppColors.ink, width: 1),
+              border: Border.all(color: colors.border, width: 1),
             ),
           ),
           Expanded(
@@ -918,7 +920,10 @@ class _TipoFila extends StatelessWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: <Widget>[
-              Text(Money.formatClp(fila.planificado), style: textTheme.titleSmall),
+              Text(
+                Money.formatClp(fila.planificado),
+                style: textTheme.titleSmall,
+              ),
               Text(
                 diferencia,
                 style: textTheme.bodySmall?.copyWith(
@@ -927,8 +932,8 @@ class _TipoFila extends StatelessWidget {
                   color: fila.diferenciaPuntos == null
                       ? colors.muted
                       : (fila.diferenciaPuntos! > Decimal.zero
-                            ? AppColors.danger
-                            : AppColors.ink),
+                            ? colors.danger
+                            : colors.ink),
                 ),
               ),
             ],
@@ -1069,19 +1074,22 @@ class _Avisos extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
+    final SaveUpColors colors = theme.extension<SaveUpColors>()!;
     return NeoSurface(
       density: AppDensity.section,
-      color: theme.colorScheme.tertiaryContainer,
+      color: colors.info,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Row(
             children: <Widget>[
-              const Icon(Icons.info_outline, size: 18),
+              Icon(Icons.info_outline, size: 18, color: colors.onInfo),
               const SizedBox(width: AppSpacing.xs),
               Text(
                 'Avisos de la copia',
-                style: theme.textTheme.titleSmall,
+                style: theme.textTheme.titleSmall?.copyWith(
+                  color: colors.onInfo,
+                ),
               ),
             ],
           ),
@@ -1089,7 +1097,7 @@ class _Avisos extends StatelessWidget {
           for (final AvisoPlan aviso in avisos)
             Text(
               '• ${aviso.mensaje ?? aviso.motivo}',
-              style: theme.textTheme.bodySmall,
+              style: theme.textTheme.bodySmall?.copyWith(color: colors.onInfo),
             ),
         ],
       ),
