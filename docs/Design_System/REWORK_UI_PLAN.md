@@ -163,6 +163,17 @@ Estos hallazgos no se arreglan en F0: entran como criterio de F1 (dirección) y 
 componentes). H1, H2 y H7 son de contraste/layout y deben resolverse en el sistema, no pantalla
 por pantalla.
 
+**Resueltos antes de F1 (2026-11-17)** — con enmienda al contrato, no parche local:
+
+| # | Cómo se resolvió | Archivos |
+|---|---|---|
+| H1 | `NeoSurface` ya no fija `AppColors.ink`: deduce el foreground por contraste, así `surfaceAccent` oscuro usa texto claro | `neo_surface.dart` |
+| H2 | Token `SaveUpColors.onAccentSurface` (= tinta en los 3 temas) y uso en superficies de acento; `colors.ink` queda prohibido como foreground de un acento | `saveup_colors.dart`, `metas_screen.dart`, `ejecucion_presupuesto_screen.dart` |
+| H3 | El showcase ya no tiene selector propio: renderiza con el tema activo y remite a Más → Tema, único dueño de la preferencia | `design_system_showcase_screen.dart` |
+
+Ambas reglas quedaron escritas en `DESIGN_SYSTEM_PLAN.md` (§3.1 regla **R-1** y §4) para que no
+se reintroduzcan, y cubiertas por tests en `design_system_test.dart`.
+
 **Promesas del contrato que el código no cumple** (se resuelven en F1/F3, no aquí)
 
 1. Goldens de `NeoChartCard` (§9 del contrato) → no existen.
@@ -416,6 +427,9 @@ Un lote está hecho cuando:
 | 2026-11-17 | F0 | Capturas de login, inicio, presupuesto, metas y showcase en claro/oscuro/Bold. | §2.5, evidencia en `.f0-captures\` |
 | 2026-11-17 | F0 | 7 hallazgos visuales: contraste en oscuro (H1, H2), selector de tema del showcase engañoso (H3), saldo negativo sin explicación (H4), "13 movimiento(s)" (H5), porcentajes con punto (H6), FAB sobre contenido (H7). | §2.5; alimentan F1–F3 |
 | 2026-11-17 | F0 | **F0 cerrada.** Tema de la app restaurado a Sistema. | Siguiente: F1 (dirección), requiere aprobación |
+| 2026-11-17 | Pre-F1 | **H1 y H2 resueltos con enmienda al contrato** (§3.1 regla R-1): `NeoSurface` deduce foreground por contraste; `SaveUpColors.onAccentSurface` = tinta en los 3 temas; `colors.ink` prohibido sobre acentos. Verificado en emulador: "Sugerencia" legible en oscuro y metas con tinta sobre acento. | `neo_surface.dart`, `saveup_colors.dart`, `metas_screen.dart`, `ejecucion_presupuesto_screen.dart` |
+| 2026-11-17 | Pre-F1 | **H3 resuelto**: el showcase ya no tiene selector de tema propio; renderiza con el tema activo y remite a Más → Tema. | `design_system_showcase_screen.dart` |
+| 2026-11-17 | Pre-F1 | Gates: analyze 0 issues, **536/536** tests (2 nuevos de R-1), goldens sin regenerar. | D-P1 sigue válida |
 
 ---
 

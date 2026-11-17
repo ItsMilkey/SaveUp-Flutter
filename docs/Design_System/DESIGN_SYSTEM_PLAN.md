@@ -88,6 +88,14 @@ sobriedad en esta etapa.
   con opacidad controlada. Validar contraste; no invertir los acentos.
 - **Patrón de puntos:** `CustomPainter` solo en auth/home hero, nunca detrás de
   formularios o listas densas.
+- **Regla R-1 · foreground de superficies (2026-11-17).** Toda superficie con color propio
+  define su texto **por contraste**: tinta (`AppColors.ink`) sobre colores claros —los
+  acentos— y texto claro del tema (`AppColors.darkText`) sobre superficies oscuras.
+  `NeoSurface` lo aplica por defecto cuando recibe `color` sin `textColor`, y
+  `SaveUpColors.onAccentSurface` expone la tinta explícita para los casos que la necesitan.
+  **Prohibido usar `colors.ink` como foreground sobre un acento:** `ink` es el color de
+  texto del tema y se invierte en oscuro, así que deja texto claro sobre acento claro.
+  Correlato: `surfaceAccent` en oscuro es una superficie oscura, no un acento.
 
 ### 3.2 Tipografía
 
@@ -209,6 +217,10 @@ Reglas:
   componen con primitivas; no se meten en el core.
 - `lib/app/theme.dart` compone `SaveUpTheme.light()` / `dark()` / `bold()` y la preferencia
   local de apariencia.
+- **El showcase no controla la apariencia (2026-11-17).** `DesignSystemShowcaseScreen`
+  renderiza con el tema activo y no tiene selector propio: el único dueño de la preferencia
+  es `Más → Tema` (`features/appearance`). Así no existen dos interruptores de tema con
+  efectos distintos.
 - `ThemeExtension<SaveUpColors>` y `ThemeExtension<SaveUpShadows>` para tokens
   que Material no cubre (sombras duras, borde, colores de categoría/charts).
 - Barrel con API pública explícita; nada de exponer tokens internos por accidente.
