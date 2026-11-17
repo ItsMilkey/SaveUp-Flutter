@@ -387,7 +387,7 @@ Un lote está hecho cuando:
 |---|---|---|---|
 | F0 · Línea base e inventario | **cerrada** | G0 ✅ 0 issues · G1 ✅ 534/534 · deuda visual e inventario medidos (§2.4) · capturas de las 4 pantallas en los 3 temas (§2.5) · 7 hallazgos registrados | 2026-11-17 |
 | F1 · Dirección visual | **cerrada** | Dirección A «neo-brutalismo disciplinado» aprobada. Enmienda en `DESIGN_SYSTEM_PLAN.md` §13 (R-2…R-6) y `MASTER.md` escrito | 2026-11-17 |
-| F2 · Tokens y tema | pendiente | — | — |
+| F2 · Tokens y tema | **cerrada** | R-4 en tokens (`AppTypography.label`, cifras tabulares, tracking 0.5) · reduce-motion en `AppMotion.respect` · showcase con secciones R-2 y R-4 en los 3 temas · goldens regenerados con diff revisado · 538/538 | 2026-11-17 |
 | F3 · Componentes | pendiente | — | — |
 | F4 · Piloto (3 pantallas) | pendiente | — | — |
 | F5 · Olas siguientes | pendiente | — | — |
@@ -435,6 +435,12 @@ Un lote está hecho cuando:
 | 2026-11-17 | F1 | **Dirección A aprobada** («neo-brutalismo disciplinado»): elevación por jerarquía, color semántico, labels en mayúsculas, listas densas, superficie papel. B (editorial) queda como alternativa posterior acotada. | `MASTER.md` |
 | 2026-11-17 | F1 | **Desvío consciente:** `MASTER.md` se escribió a mano en vez de generarlo con `--design-system --persist`, porque el generador contradice la identidad aprobada. | Registrado en `MASTER.md` |
 | 2026-11-17 | F1 | **F1 cerrada.** Siguiente: F2 (tokens y tema). | — |
+| 2026-11-17 | F2 | Tokens: `AppTypography.label()` (mayúsculas, tracking 0.5, w600), `tabularFigures` en display y flag `numeric` en `text()`; `labelMedium` pasa de 0.4 a 0.5. `AppMotion.respect()` anula la animación con `disableAnimations` y añade `pressedScale`. | `app_typography.dart`, `app_motion.dart` |
+| 2026-11-17 | F2 | Showcase: secciones nuevas «Etiquetas y cifras (R-4)» y «Escala de elevación (R-2)». Verificado en claro, oscuro y **Bold** (`f2_showcase_*.png`). | G3 |
+| 2026-11-17 | F2 | Goldens de átomos y tema Bold regenerados: el diff era 0,32 % y **solo la etiqueta "Saldo disponible"** (tracking nuevo), sin cambios de layout. Revisado antes de aceptar. | G2 |
+| 2026-11-17 | F2 | Gates: analyze 0 issues · **538/538** (2 tests nuevos: R-4 y reduce-motion). | G0/G1 |
+| 2026-11-17 | F2 | Nota de entorno: el debug APK lanzado standalone se queda en el splash en este emulador; con `flutter run` arranca normal. La verificación se hizo por `flutter run`. | Sin impacto en código |
+| 2026-11-17 | F2 | **F2 cerrada.** Lo que R-2/R-3/R-5 todavía no tocan (componentes y features) es F3 y F4. | Siguiente: F3 (componentes) |
 
 ---
 
