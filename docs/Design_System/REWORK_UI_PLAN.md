@@ -388,6 +388,8 @@ Un lote está hecho cuando:
 | 2026-11-17 | F0 | G1 **rojo heredado**: 532 ✓ / 2 ✗. Fallan los goldens de átomos y moléculas; diff 3,9 % **solo de glifos**. Causa: se regeneraron con Flutter 3.47.9 (`819ee09`) y aquí corre 3.47.8. No lo causó el rework. | Decisión pendiente en §13 |
 | 2026-11-17 | F0 | Inventario completo: 8 tokens, 27 componentes con veredicto, deuda visual medida (§2.4). | `NeoSegmented` sin usos ni tests; `NeoMonthPicker` lo exige el contrato y no se usa; `NeoChartCard` sin golden |
 | 2026-11-17 | F0 | Detectado: `flutter` no está en PATH; se usa `C:\Users\hanom\Downloads\flutter\bin\flutter.bat`. Emulador `emulator-5554` (API 37) disponible. | Reflejado en §4 |
+| 2026-11-17 | F0 | D-P1: se intentó **B** (SDK 3.47.9) en un worktree aparte, sin tocar el SDK global. Resultado: **mismo diff exacto** que con 3.47.8. B queda descartada con evidencia. | §13, hecho 1 |
+| 2026-11-17 | F0 | Prueba: regenerar los goldens en esta máquina deja el DS en 40/40 verde. Artefactos **restaurados** (`git checkout`) para no commitear cambios sin aprobación. | §13, hecho 4 |
 
 ---
 
@@ -421,16 +423,33 @@ Un lote está hecho cuando:
 ### D-P1 · Estrategia de goldens (bloquea cerrar F0 y condiciona G2)
 
 Los goldens de átomos y moléculas están rojos **antes** de que el rework toque nada.
-El diff (3,9 %) es exclusivamente de rasterizado de glifos: mismo layout, mismos colores,
-mismo tamaño. El commit `819ee09` los regeneró con Flutter 3.47.9; esta máquina tiene 3.47.8.
-Un comparador con tolerancia no sirve: para cubrir 3,9 % habría que aflojar tanto que dejaría
-de detectar cambios reales.
+
+**Hechos medidos (2026-11-17):**
+
+1. Con Flutter **3.47.8** y con **3.47.9** el resultado es **idéntico**: 3,93 % y 5970 px de
+   diferencia en claro, 3,92 % y 5962 px en oscuro. Los mismos píxeles. **El patch del SDK no
+   es la variable.**
+2. Las fuentes bundleadas no cambiaron desde `9806456` (2026-11-07), el mismo commit que creó
+   tokens, tema y goldens.
+3. El diff es **exclusivamente de glifos**: ni una diferencia de geometría, color o tamaño.
+4. Regenerando en esta máquina, el directorio del design system queda **40/40 en verde**
+   (experimento revertido a propósito: los artefactos siguen intactos).
+
+**Conclusión:** los goldens están atados al **entorno de renderizado** (SO / motor tipográfico),
+no al código ni a la versión del SDK. Generados en otra máquina, no van a cuadrar aquí nunca.
+Eso hace que G2 sea frágil por diseño: cualquier compañero en otro SO verá el mismo rojo.
 
 | Opción | Qué implica | Coste |
 |---|---|---|
-| **A · Regenerar en el SDK actual** (recomendada) | `--update-goldens` sobre átomos y moléculas en 3.47.8, tras revisar que el diff sea solo glifos (ya verificado), y **documentar la versión de Flutter dueña de los goldens** en el repo | 4 PNG actualizados + nota de versión |
-| B · Alinear el SDK a 3.47.9 | Los goldens actuales pasan a ser válidos; hay que instalar/cambiar el SDK y garantizar que todos trabajen en esa versión | Cambio de entorno, no del repo |
-| C · Comparador con tolerancia | No resuelve el caso (§ arriba) y debilita el gate | Descartada salvo que A y B fallen |
+| **A · Regenerar aquí** (recomendada para desbloquear) | `--update-goldens` sobre los 4 PNG, dejando constancia de SO + SDK dueños en este documento | 4 PNG + nota; otro SO volverá a ver rojo |
+| **E · Goldens en contenedor** (durable, para F6) | Generar y comparar goldens dentro de una imagen Linux fija; Docker ya está disponible | Script + imagen; no bloquea el rework |
+| B · Alinear SDK a 3.47.9 | **Descartada con evidencia** (hecho 1) | — |
+| C · Comparador con tolerancia | Cubrir 3,9 % obliga a aflojar tanto que el gate deja de detectar cambios reales | Descartada |
 
-Hasta que se resuelva, F0 no se cierra y G2 no es fiable: no se puede usar un gate que ya
-estaba rojo como prueba de que el rework no rompió nada.
+**Recomendación:** A ahora (para que G2 sea fiable en esta máquina y F0 pueda cerrar) y E como
+deuda técnica anotada para el cierre. Mientras no se resuelva, G2 **no** puede usarse como prueba
+de que el rework no rompió nada.
+
+**Pendiente de limpieza:** el worktree `C:\Users\hanom\Downloads\flutter-3.47.9` (0,9 GB) quedó
+instalado durante la comprobación de B. Si no se adopta, se elimina con
+`git -C C:\Users\hanom\Downloads\flutter worktree remove C:\Users\hanom\Downloads\flutter-3.47.9`.
