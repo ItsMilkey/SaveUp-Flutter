@@ -386,7 +386,7 @@ Un lote está hecho cuando:
 | Fase | Estado | Baseline / resultado | Fecha |
 |---|---|---|---|
 | F0 · Línea base e inventario | **cerrada** | G0 ✅ 0 issues · G1 ✅ 534/534 · deuda visual e inventario medidos (§2.4) · capturas de las 4 pantallas en los 3 temas (§2.5) · 7 hallazgos registrados | 2026-11-17 |
-| F1 · Dirección visual | pendiente | — | — |
+| F1 · Dirección visual | **cerrada** | Dirección A «neo-brutalismo disciplinado» aprobada. Enmienda en `DESIGN_SYSTEM_PLAN.md` §13 (R-2…R-6) y `MASTER.md` escrito | 2026-11-17 |
 | F2 · Tokens y tema | pendiente | — | — |
 | F3 · Componentes | pendiente | — | — |
 | F4 · Piloto (3 pantallas) | pendiente | — | — |
@@ -430,6 +430,11 @@ Un lote está hecho cuando:
 | 2026-11-17 | Pre-F1 | **H1 y H2 resueltos con enmienda al contrato** (§3.1 regla R-1): `NeoSurface` deduce foreground por contraste; `SaveUpColors.onAccentSurface` = tinta en los 3 temas; `colors.ink` prohibido sobre acentos. Verificado en emulador: "Sugerencia" legible en oscuro y metas con tinta sobre acento. | `neo_surface.dart`, `saveup_colors.dart`, `metas_screen.dart`, `ejecucion_presupuesto_screen.dart` |
 | 2026-11-17 | Pre-F1 | **H3 resuelto**: el showcase ya no tiene selector de tema propio; renderiza con el tema activo y remite a Más → Tema. | `design_system_showcase_screen.dart` |
 | 2026-11-17 | Pre-F1 | Gates: analyze 0 issues, **536/536** tests (2 nuevos de R-1), goldens sin regenerar. | D-P1 sigue válida |
+| 2026-11-17 | F1 | Investigación: las 11 referencias propias se separan en tres familias — Diseño10/11 (lenguaje implementado), Diseño4 (veta editorial no adoptada), Diseño1 (otra familia, solo layout). | §13 del contrato |
+| 2026-11-17 | F1 | Catálogo libre de UIZZE sin pantallas iOS fintech útiles; se declara en vez de rellenar. `ui-ux-pro-max --design-system` recomienda Glassmorphism + azul corporativo + Caveat/Quicksand: **descartado como veredicto** por contradecir la identidad. | Menú, no veredicto |
+| 2026-11-17 | F1 | **Dirección A aprobada** («neo-brutalismo disciplinado»): elevación por jerarquía, color semántico, labels en mayúsculas, listas densas, superficie papel. B (editorial) queda como alternativa posterior acotada. | `MASTER.md` |
+| 2026-11-17 | F1 | **Desvío consciente:** `MASTER.md` se escribió a mano en vez de generarlo con `--design-system --persist`, porque el generador contradice la identidad aprobada. | Registrado en `MASTER.md` |
+| 2026-11-17 | F1 | **F1 cerrada.** Siguiente: F2 (tokens y tema). | — |
 
 ---
 
