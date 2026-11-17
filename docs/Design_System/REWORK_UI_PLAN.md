@@ -1,6 +1,6 @@
 # SaveUp — Plan de rework de UI
 
-> **Estado:** aprobado, sin fases iniciadas.
+> **Estado:** en ejecución — F0 (línea base e inventario) en curso; capturas pendientes.
 > **Fecha de apertura:** 2026-11-17.
 > **Rama de trabajo:** `rework/ui` (nada de commits del rework en `main`).
 > **Documento vivo.** Se actualiza al cerrar cada fase (§9 estado, §10 bitácora), no al final.
@@ -87,6 +87,71 @@ Tabla obligatoria de F0. Ningún token ni componente se toca antes de que las tr
 «Alcance completo» incluye **destruir el contrato mismo** si una regla no sirve: en ese caso la
 enmienda se escribe en `DESIGN_SYSTEM_PLAN.md` (§3 o §12) en el mismo commit, con la decisión
 nueva fechada. El contrato nunca queda desactualizado respecto al código.
+
+### 2.4 Inventario de línea base (medido 2026-11-17)
+
+**Tokens** — los 8 archivos de `lib/core/design_system/tokens/`
+
+| Token | Evidencia leída | Veredicto |
+|---|---|---|
+| `app_colors` | 11 colores claros + 5 oscuros, idénticos a la paleta aprobada (§3.1 del contrato) | Conservar |
+| `app_typography` | Archivo Black + Space Grotesk con `FontVariation('wght')`; `textTheme()` de 15 estilos | Conservar |
+| `app_radii` | `none/sm/md/lg/xl/pill` + aliases `*All` | Conservar |
+| `app_spacing` | Escala 4–48 en múltiplos de 4 | Conservar |
+| `app_borders` | 1.5 / 2 / 3 | Conservar |
+| `app_density` | 4 niveles con padding + borde + sombra (§3.4) | Conservar |
+| `app_shadows` | Solo `enum AppShadowLevel`; offsets y color viven en `SaveUpShadows` | **Evolucionar**: la intención y el valor están partidos en dos archivos |
+| `app_motion` | 120/200/300 ms + `easeOutCubic` | **Evolucionar**: no hay helper que respete `MediaQuery.disableAnimations` |
+
+**Componentes** — usos = menciones en `lib/features`; tests = menciones en `test/`
+
+| Componente | Usos | Tests | Veredicto |
+|---|---|---|---|
+| `NeoButton` | 62 | 19 | Conservar |
+| `NeoInput` | 52 | 4 | Conservar |
+| `NeoSurface` | 49 | 2 | Conservar |
+| `NeoErrorBand` | 31 | 2 | Conservar |
+| `NeoIconButton` | 25 | **0** | Evolucionar: sin un solo test |
+| `NeoScaffold` | 24 | 2 | Conservar |
+| `NeoSectionHeader` | 22 | 3 | Conservar |
+| `NeoAppBar` | 20 | 3 | Conservar |
+| `NeoSnackbar` | 19 | 2 | Conservar |
+| `NeoBadge` | 14 | 13 | Conservar |
+| `NeoErrorState` | 13 | 1 | Conservar |
+| `NeoDialog` | 13 | 6 | Conservar |
+| `NeoMoreOption` | 12 | 3 | Conservar |
+| `NeoLoading` | 12 | 2 | Conservar |
+| `NeoMoneyText` | 9 | 5 | Conservar |
+| `NeoBottomDestination` | 7 | 15 | Conservar |
+| `NeoProgress` | 7 | 5 | Evolucionar: revisar densidad y semántica del valor |
+| `NeoChartCard` | 4 | 3 | Evolucionar: **sin golden**, y el contrato (§9) lo promete |
+| `NeoStat` | 4 | 5 | Conservar |
+| `NeoEmptyState` | 3 | 1 | Conservar |
+| `NeoListItem` | 3 | 5 | Conservar |
+| `NeoCard` | 1 | 8 | Evolucionar: solapa con `NeoSurface`; decidir su rol o absorberlo |
+| `NeoSliverAppBar` | 1 | **0** | Evolucionar: un solo uso y ningún test |
+| `NeoMonthPicker` | **0** | 2 | **Evolucionar o destruir**: el contrato §7 lo exige para plan/presupuesto/analítica y ninguna feature lo usa |
+| `NeoSegmented` | **0** | **0** | **Destruir**: ni usos ni tests; si el rework lo necesita, se reconstruye con contrato |
+
+**Deuda visual medida**
+
+| Métrica | Valor | Lectura |
+|---|---|---|
+| `Color(0x` en `features/**/presentation` | 2 | Ambos son `0xFF000000 \| value` de mapeo de color de charts (excepción documentada) → **0 violaciones reales** |
+| `TextStyle(` en features | 5 | 4 fijan peso o tamaño sin pasar por `AppTypography` |
+| `fontSize:` en features | 4 (2 archivos) | Tamaño 12 literal en diálogos |
+| `EdgeInsets.` en features | 120 (32 archivos) | 84 con token, 15 literales, el resto en líneas partidas |
+| `BorderRadius` en features | 27 (14 archivos) | 23 con `AppRadii` |
+| `BoxShadow(` en features | **0** | Correcto: toda sombra viene del tema |
+
+**Promesas del contrato que el código no cumple** (se resuelven en F1/F3, no aquí)
+
+1. Goldens de `NeoChartCard` (§9 del contrato) → no existen.
+2. `NeoMonthPicker` (§7) → obligatorio según el contrato, cero usos reales.
+3. `NeoIconButton` y `NeoSliverAppBar` → sin tests pese a estar en producción.
+4. G1 **rojo**: los goldens de átomos y moléculas se regeneraron con Flutter **3.47.9**
+   (commit `819ee09`) y aquí corre **3.47.8**; el diff (3,9 %) es **solo de glifos**, sin
+   diferencias de geometría ni color.
 
 ---
 
@@ -289,7 +354,7 @@ Un lote está hecho cuando:
 
 | Fase | Estado | Baseline / resultado | Fecha |
 |---|---|---|---|
-| F0 · Línea base e inventario | pendiente | — | — |
+| F0 · Línea base e inventario | **en curso** | G0 ✅ 0 issues · G1 ⚠️ 532 ✓ / 2 ✗ (goldens por drift de SDK) · deuda visual e inventario medidos (§2.4). Falta: capturas | 2026-11-17 |
 | F1 · Dirección visual | pendiente | — | — |
 | F2 · Tokens y tema | pendiente | — | — |
 | F3 · Componentes | pendiente | — | — |
@@ -297,16 +362,18 @@ Un lote está hecho cuando:
 | F5 · Olas siguientes | pendiente | — | — |
 | F6 · Cierre | pendiente | — | — |
 
-**Baseline de deuda visual** (se llena en F0):
+**Baseline de deuda visual** (medido en F0):
 
 | Métrica | Valor | Fecha |
 |---|---|---|
-| `Color(0x` en `features/**/presentation` | — | — |
-| `TextStyle(` en `lib/features` | — | — |
-| `EdgeInsets.` en `lib/features` | — | — |
-| `BoxShadow(` en `lib/features` | — | — |
-| `flutter analyze` (issues) | — | — |
-| `flutter test` (passed) | — | — |
+| `Color(0x` en `features/**/presentation` | 2 (excepción de charts) | 2026-11-17 |
+| `TextStyle(` en `lib/features` | 5 | 2026-11-17 |
+| `fontSize:` en `lib/features` | 4 | 2026-11-17 |
+| `EdgeInsets.` en `lib/features` | 120 (84 con token, 15 literales) | 2026-11-17 |
+| `BorderRadius` en `lib/features` | 27 (23 con token) | 2026-11-17 |
+| `BoxShadow(` en `lib/features` | 0 | 2026-11-17 |
+| `flutter analyze` (issues) | 0 | 2026-11-17 |
+| `flutter test` (passed / failed) | 532 / 2 | 2026-11-17 |
 
 ---
 
@@ -316,6 +383,11 @@ Un lote está hecho cuando:
 |---|---|---|---|
 | 2026-11-17 | — | Plan abierto y aprobado. Fases sin iniciar. | D-R1–D-R4 firmadas en §1 |
 | 2026-11-17 | — | Rama de trabajo definida: `rework/ui` desde `main`; prohibido commitear el rework en `main`. | §0.1 y invariante §3.11 |
+| 2026-11-17 | F0 | Rama `rework/ui` creada; plan commiteado (`f574abd`). | — |
+| 2026-11-17 | F0 | G0 verde: `flutter analyze` sin issues (11,5 s). | — |
+| 2026-11-17 | F0 | G1 **rojo heredado**: 532 ✓ / 2 ✗. Fallan los goldens de átomos y moléculas; diff 3,9 % **solo de glifos**. Causa: se regeneraron con Flutter 3.47.9 (`819ee09`) y aquí corre 3.47.8. No lo causó el rework. | Decisión pendiente en §13 |
+| 2026-11-17 | F0 | Inventario completo: 8 tokens, 27 componentes con veredicto, deuda visual medida (§2.4). | `NeoSegmented` sin usos ni tests; `NeoMonthPicker` lo exige el contrato y no se usa; `NeoChartCard` sin golden |
+| 2026-11-17 | F0 | Detectado: `flutter` no está en PATH; se usa `C:\Users\hanom\Downloads\flutter\bin\flutter.bat`. Emulador `emulator-5554` (API 37) disponible. | Reflejado en §4 |
 
 ---
 
@@ -341,3 +413,24 @@ Un lote está hecho cuando:
 - No introduce dependencias nuevas de UI sin decisión anotada (p. ej. otro paquete de charts).
 - No promete que la app se vea igual en iOS: iOS se verifica cuando haya target disponible;
   el criterio primario es Android (emulador) + los 3 temas.
+
+---
+
+## 13. Decisiones pendientes
+
+### D-P1 · Estrategia de goldens (bloquea cerrar F0 y condiciona G2)
+
+Los goldens de átomos y moléculas están rojos **antes** de que el rework toque nada.
+El diff (3,9 %) es exclusivamente de rasterizado de glifos: mismo layout, mismos colores,
+mismo tamaño. El commit `819ee09` los regeneró con Flutter 3.47.9; esta máquina tiene 3.47.8.
+Un comparador con tolerancia no sirve: para cubrir 3,9 % habría que aflojar tanto que dejaría
+de detectar cambios reales.
+
+| Opción | Qué implica | Coste |
+|---|---|---|
+| **A · Regenerar en el SDK actual** (recomendada) | `--update-goldens` sobre átomos y moléculas en 3.47.8, tras revisar que el diff sea solo glifos (ya verificado), y **documentar la versión de Flutter dueña de los goldens** en el repo | 4 PNG actualizados + nota de versión |
+| B · Alinear el SDK a 3.47.9 | Los goldens actuales pasan a ser válidos; hay que instalar/cambiar el SDK y garantizar que todos trabajen en esa versión | Cambio de entorno, no del repo |
+| C · Comparador con tolerancia | No resuelve el caso (§ arriba) y debilita el gate | Descartada salvo que A y B fallen |
+
+Hasta que se resuelva, F0 no se cierra y G2 no es fiable: no se puede usar un gate que ya
+estaba rojo como prueba de que el rework no rompió nada.
