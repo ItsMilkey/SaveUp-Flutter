@@ -207,6 +207,10 @@ $flutter = 'C:\Users\hanom\Downloads\flutter\bin\flutter.bat'
 Windows desktop y Chrome pueden usarse para iterar rápido, pero el criterio visual de la app
 es el emulador Android (y, cuando aplique, iOS).
 
+**Goldens:** los generados el 2026-11-17 pertenecen a **Windows 10 + Flutter 3.47.8**. Son
+dependientes del entorno de renderizado, no solo del SDK: no se regeneran sin revisar el diff y
+ver §13 (deuda E: llevarlos a contenedor en el cierre).
+
 ---
 
 ## 5. Gates
@@ -354,7 +358,7 @@ Un lote está hecho cuando:
 
 | Fase | Estado | Baseline / resultado | Fecha |
 |---|---|---|---|
-| F0 · Línea base e inventario | **en curso** | G0 ✅ 0 issues · G1 ⚠️ 532 ✓ / 2 ✗ (goldens por drift de SDK) · deuda visual e inventario medidos (§2.4). Falta: capturas | 2026-11-17 |
+| F0 · Línea base e inventario | **en curso** | G0 ✅ 0 issues · G1 ✅ **534/534** (goldens regenerados en este entorno) · deuda visual e inventario medidos (§2.4). Falta: capturas | 2026-11-17 |
 | F1 · Dirección visual | pendiente | — | — |
 | F2 · Tokens y tema | pendiente | — | — |
 | F3 · Componentes | pendiente | — | — |
@@ -373,7 +377,7 @@ Un lote está hecho cuando:
 | `BorderRadius` en `lib/features` | 27 (23 con token) | 2026-11-17 |
 | `BoxShadow(` en `lib/features` | 0 | 2026-11-17 |
 | `flutter analyze` (issues) | 0 | 2026-11-17 |
-| `flutter test` (passed / failed) | 532 / 2 | 2026-11-17 |
+| `flutter test` (passed / failed) | 534 / 0 (tras regenerar goldens) | 2026-11-17 |
 
 ---
 
@@ -390,6 +394,8 @@ Un lote está hecho cuando:
 | 2026-11-17 | F0 | Detectado: `flutter` no está en PATH; se usa `C:\Users\hanom\Downloads\flutter\bin\flutter.bat`. Emulador `emulator-5554` (API 37) disponible. | Reflejado en §4 |
 | 2026-11-17 | F0 | D-P1: se intentó **B** (SDK 3.47.9) en un worktree aparte, sin tocar el SDK global. Resultado: **mismo diff exacto** que con 3.47.8. B queda descartada con evidencia. | §13, hecho 1 |
 | 2026-11-17 | F0 | Prueba: regenerar los goldens en esta máquina deja el DS en 40/40 verde. Artefactos **restaurados** (`git checkout`) para no commitear cambios sin aprobación. | §13, hecho 4 |
+| 2026-11-17 | F0 | Decisión **A** aplicada: 4 goldens regenerados con 3.47.8, revisados visualmente (solo cambia el rasterizado). DS 40/40 y suite **534/534**. | D-P1 resuelta |
+| 2026-11-17 | F0 | SDK global quedó sin `engine-dart-sdk.stamp` por el intento de B; se recreó con el contenido de `engine.stamp` y volvió a funcionar. Worktree 3.47.9 eliminado (0,9 GB). | §13, limpieza |
 
 ---
 
@@ -418,9 +424,9 @@ Un lote está hecho cuando:
 
 ---
 
-## 13. Decisiones pendientes
+## 13. Decisiones resueltas
 
-### D-P1 · Estrategia de goldens (bloquea cerrar F0 y condiciona G2)
+### D-P1 · Estrategia de goldens — **resuelta con A** (2026-11-17)
 
 Los goldens de átomos y moléculas están rojos **antes** de que el rework toque nada.
 
@@ -446,10 +452,16 @@ Eso hace que G2 sea frágil por diseño: cualquier compañero en otro SO verá e
 | B · Alinear SDK a 3.47.9 | **Descartada con evidencia** (hecho 1) | — |
 | C · Comparador con tolerancia | Cubrir 3,9 % obliga a aflojar tanto que el gate deja de detectar cambios reales | Descartada |
 
-**Recomendación:** A ahora (para que G2 sea fiable en esta máquina y F0 pueda cerrar) y E como
-deuda técnica anotada para el cierre. Mientras no se resuelva, G2 **no** puede usarse como prueba
-de que el rework no rompió nada.
+**Resolución (A, aplicada el 2026-11-17):** se regeneraron los 4 PNG y se revisó la imagen
+resultante: borde 2, sombra dura sin blur, radio pill y tipografía Archivo Black / Space Grotesk
+intactos; sin desplazamientos ni corrupción, solo difiere el rasterizado. Suite completa en
+**534/534**. Dueños del golden: **Windows 10 + Flutter 3.47.8 (Dart 3.13.7)**.
 
-**Pendiente de limpieza:** el worktree `C:\Users\hanom\Downloads\flutter-3.47.9` (0,9 GB) quedó
-instalado durante la comprobación de B. Si no se adopta, se elimina con
-`git -C C:\Users\hanom\Downloads\flutter worktree remove C:\Users\hanom\Downloads\flutter-3.47.9`.
+**Deuda derivada para F6 (opción E):** si alguien trabaja en otro SO, los goldens volverán a
+discrepar. En el cierre, el gate de goldens debería correr en contenedor para no depender de la
+máquina de turno.
+
+**Limpieza hecha:** el worktree `flutter-3.47.9` (0,9 GB) se eliminó; el SDK global quedó en
+3.47.8. Durante la comprobación de B su caché se quedó sin `engine-dart-sdk.stamp`; se recreó con
+el contenido de `engine.stamp` (lo mismo que escribe `update_dart_sdk.ps1` al instalar) y el SDK
+volvió a funcionar.
