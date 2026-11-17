@@ -144,14 +144,30 @@ nueva fechada. El contrato nunca queda desactualizado respecto al código.
 | `BorderRadius` en features | 27 (14 archivos) | 23 con `AppRadii` |
 | `BoxShadow(` en features | **0** | Correcto: toda sombra viene del tema |
 
+### 2.5 Hallazgos visuales de F0 (capturas del 2026-11-17)
+
+Capturas en `C:\Users\hanom\Documents\saveup\.f0-captures\` (local, fuera de los repos):
+login, inicio, presupuesto, metas y showcase en **claro, oscuro y Bold**, más la pantalla Tema.
+
+| # | Hallazgo | Evidencia | Tipo |
+|---|---|---|---|
+| H1 | **Oscuro: título de tarjeta casi invisible.** "Sugerencia" queda en tinta oscura sobre superficie oscura | `dark_presupuesto.png` | Contraste / bug |
+| H2 | **Oscuro: texto blanco sobre acentos claros.** En metas, "Notebook nueva" (lavanda) y "Viaje a Japón" (cian) usan texto claro; el contrato §3.1 dice que sobre acentos va **tinta, nunca blanco** | `dark_metas.png` vs `light_metas.png` | Contraste / viola contrato |
+| H3 | **El selector del showcase es preview local.** Arranca en "Claro" aunque la app esté en Bold y no cambia la preferencia; el cambio real vive en Más → Tema | `bold_showcase.png`, `dark_showcase.png`, `tema.png` | UX / confusión |
+| H4 | **Saldo negativo con datos normales.** Tras abonar a metas el inicio muestra −$1.731.970 y un badge rojo "Saldo negativo": los abonos entran como movimientos negativos y la pantalla no lo explica | `f0_after_login.png` | Contenido / comprensión |
+| H5 | **Pluralización cruda**: "13 movimiento(s)" | `f0_after_login.png` | Copy |
+| H6 | **Formato de porcentaje inconsistente**: "43.75 %" y "93.33 %" con punto, cuando el resto de la app usa coma decimal | `light_metas.png` | Formato es-CL |
+| H7 | **Los FAB flotan sobre el contenido**: en Inicio tapan una fila de la lista | `f0_after_login.png` | Layout |
+
+Estos hallazgos no se arreglan en F0: entran como criterio de F1 (dirección) y F2/F3 (tokens y
+componentes). H1, H2 y H7 son de contraste/layout y deben resolverse en el sistema, no pantalla
+por pantalla.
+
 **Promesas del contrato que el código no cumple** (se resuelven en F1/F3, no aquí)
 
 1. Goldens de `NeoChartCard` (§9 del contrato) → no existen.
 2. `NeoMonthPicker` (§7) → obligatorio según el contrato, cero usos reales.
 3. `NeoIconButton` y `NeoSliverAppBar` → sin tests pese a estar en producción.
-4. G1 **rojo**: los goldens de átomos y moléculas se regeneraron con Flutter **3.47.9**
-   (commit `819ee09`) y aquí corre **3.47.8**; el diff (3,9 %) es **solo de glifos**, sin
-   diferencias de geometría ni color.
 
 ---
 
@@ -358,7 +374,7 @@ Un lote está hecho cuando:
 
 | Fase | Estado | Baseline / resultado | Fecha |
 |---|---|---|---|
-| F0 · Línea base e inventario | **en curso** | G0 ✅ 0 issues · G1 ✅ **534/534** (goldens regenerados en este entorno) · deuda visual e inventario medidos (§2.4). Falta: capturas | 2026-11-17 |
+| F0 · Línea base e inventario | **cerrada** | G0 ✅ 0 issues · G1 ✅ 534/534 · deuda visual e inventario medidos (§2.4) · capturas de las 4 pantallas en los 3 temas (§2.5) · 7 hallazgos registrados | 2026-11-17 |
 | F1 · Dirección visual | pendiente | — | — |
 | F2 · Tokens y tema | pendiente | — | — |
 | F3 · Componentes | pendiente | — | — |
@@ -396,6 +412,10 @@ Un lote está hecho cuando:
 | 2026-11-17 | F0 | Prueba: regenerar los goldens en esta máquina deja el DS en 40/40 verde. Artefactos **restaurados** (`git checkout`) para no commitear cambios sin aprobación. | §13, hecho 4 |
 | 2026-11-17 | F0 | Decisión **A** aplicada: 4 goldens regenerados con 3.47.8, revisados visualmente (solo cambia el rasterizado). DS 40/40 y suite **534/534**. | D-P1 resuelta |
 | 2026-11-17 | F0 | SDK global quedó sin `engine-dart-sdk.stamp` por el intento de B; se recreó con el contenido de `engine.stamp` y volvió a funcionar. Worktree 3.47.9 eliminado (0,9 GB). | §13, limpieza |
+| 2026-11-17 | F0 | Backend local arriba (Postgres en 5433, `saveup-pg`) y app en `emulator-5554`. Seed con datos reales: 11 movimientos, 3 límites, 3 metas con progreso distinto. | `scripts\seed-ui-demo.ps1` (workspace) |
+| 2026-11-17 | F0 | Capturas de login, inicio, presupuesto, metas y showcase en claro/oscuro/Bold. | §2.5, evidencia en `.f0-captures\` |
+| 2026-11-17 | F0 | 7 hallazgos visuales: contraste en oscuro (H1, H2), selector de tema del showcase engañoso (H3), saldo negativo sin explicación (H4), "13 movimiento(s)" (H5), porcentajes con punto (H6), FAB sobre contenido (H7). | §2.5; alimentan F1–F3 |
+| 2026-11-17 | F0 | **F0 cerrada.** Tema de la app restaurado a Sistema. | Siguiente: F1 (dirección), requiere aprobación |
 
 ---
 
