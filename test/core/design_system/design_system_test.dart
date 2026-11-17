@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:saveup_app/core/design_system/design_system.dart';
 
@@ -79,28 +80,28 @@ void main() {
         const NeoInput(
           label: 'Monto',
           hint: '0',
-          helper: 'Máximo 2 decimales.',
-          error: 'Monto inválido.',
+          helper: 'MÃ¡ximo 2 decimales.',
+          error: 'Monto invÃ¡lido.',
         ),
       ),
     );
 
     expect(find.text('Monto'), findsOneWidget);
     expect(find.text('0'), findsOneWidget);
-    expect(find.text('Monto inválido.'), findsOneWidget);
+    expect(find.text('Monto invÃ¡lido.'), findsOneWidget);
   });
 
-  testWidgets('NeoInput admite icono sufijo y error multilínea', (
+  testWidgets('NeoInput admite icono sufijo y error multilÃ­nea', (
     WidgetTester tester,
   ) async {
     bool suffixTapped = false;
     await tester.pumpWidget(
       _wrap(
         NeoInput(
-          label: 'Contraseña',
+          label: 'ContraseÃ±a',
           obscureText: true,
           errorMaxLines: 3,
-          error: 'La contraseña no cumple la política.',
+          error: 'La contraseÃ±a no cumple la polÃ­tica.',
           suffixIcon: IconButton(
             icon: const Icon(Icons.visibility),
             onPressed: () => suffixTapped = true,
@@ -109,7 +110,7 @@ void main() {
       ),
     );
 
-    expect(find.text('La contraseña no cumple la política.'), findsOneWidget);
+    expect(find.text('La contraseÃ±a no cumple la polÃ­tica.'), findsOneWidget);
     await tester.tap(find.byIcon(Icons.visibility));
     expect(suffixTapped, isTrue);
   });
@@ -118,10 +119,10 @@ void main() {
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(
-      _wrap(const NeoErrorBand(message: 'Datos inválidos.')),
+      _wrap(const NeoErrorBand(message: 'Datos invÃ¡lidos.')),
     );
 
-    expect(find.text('Datos inválidos.'), findsOneWidget);
+    expect(find.text('Datos invÃ¡lidos.'), findsOneWidget);
     expect(find.byIcon(Icons.error_outline), findsOneWidget);
   });
 
@@ -226,7 +227,7 @@ void main() {
     expect(find.text('Saldo disponible'), findsOneWidget);
   });
 
-  testWidgets('los átomos se renderizan en modo oscuro', (
+  testWidgets('los Ã¡tomos se renderizan en modo oscuro', (
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(
@@ -248,4 +249,46 @@ void main() {
     expect(find.text('Modo oscuro'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
+
+  test('R-1: onAccentSurface es tinta en los tres temas', () {
+    expect(SaveUpColors.light.onAccentSurface, AppColors.ink);
+    expect(SaveUpColors.dark.onAccentSurface, AppColors.ink);
+    expect(SaveUpColors.bold.onAccentSurface, AppColors.ink);
+    // `ink` sÃ­ cambia con el brillo: por eso no sirve sobre acentos fijos.
+    expect(SaveUpColors.dark.ink, AppColors.darkText);
+  });
+
+  testWidgets('R-1: el foreground de una superficie se deduce por contraste', (
+    WidgetTester tester,
+  ) async {
+    // El color efectivo llega por DefaultTextStyle, no por Text.style.
+    Color? colorDeTexto(String texto) {
+      final RenderParagraph paragraph = tester.renderObject<RenderParagraph>(
+        find.text(texto),
+      );
+      return paragraph.text.style?.color;
+    }
+
+    // Superficie de acento clara en tema oscuro -> tinta, no texto claro.
+    await tester.pumpWidget(
+      _wrap(
+        const NeoSurface(color: AppColors.cyan, child: Text('acento')),
+        theme: SaveUpTheme.dark(),
+      ),
+    );
+    expect(colorDeTexto('acento'), AppColors.ink);
+
+    // Superficie oscura en tema oscuro -> texto claro del tema.
+    await tester.pumpWidget(
+      _wrap(
+        const NeoSurface(
+          color: AppColors.darkSurfaceAlt,
+          child: Text('profunda'),
+        ),
+        theme: SaveUpTheme.dark(),
+      ),
+    );
+    expect(colorDeTexto('profunda'), AppColors.darkText);
+  });
 }
+

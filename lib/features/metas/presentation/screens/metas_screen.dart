@@ -253,8 +253,8 @@ class _MetaCard extends StatelessWidget {
     final ThemeData theme = Theme.of(context);
     final SaveUpColors colors = theme.extension<SaveUpColors>()!;
     final TextTheme textTheme = theme.textTheme.apply(
-      bodyColor: colors.ink,
-      displayColor: colors.ink,
+      bodyColor: colors.onAccentSurface,
+      displayColor: colors.onAccentSurface,
     );
     final Decimal? objetivo = meta.montoObjetivo;
 
@@ -309,8 +309,10 @@ class _MetaCard extends StatelessWidget {
           if (objetivo != null) ...<Widget>[
             NeoProgress(
               value: _progreso(meta.montoActual, objetivo),
-              color: colors.ink,
-              trackColor: colors.surface,
+              color: colors.onAccentSurface,
+              // La pista vive sobre un acento, no sobre el surface del tema:
+              // se deriva del foreground para leerse en los tres temas.
+              trackColor: colors.onAccentSurface.withValues(alpha: 0.18),
             ),
             const SizedBox(height: AppSpacing.xs),
             Text(

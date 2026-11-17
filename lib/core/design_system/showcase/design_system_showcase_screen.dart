@@ -3,9 +3,11 @@ import 'package:flutter/material.dart';
 
 import '../design_system.dart';
 
-enum _ShowcaseVariant { claro, oscuro, bold }
-
 /// Galería interna (solo debug) para revisar tokens y átomos.
+///
+/// No controla la apariencia de la app: renderiza con el tema activo. El único
+/// dueño de la preferencia es `Más → Tema` (`features/appearance`), para que no
+/// existan dos interruptores de tema que se comporten distinto.
 class DesignSystemShowcaseScreen extends StatefulWidget {
   const DesignSystemShowcaseScreen({super.key});
 
@@ -16,20 +18,13 @@ class DesignSystemShowcaseScreen extends StatefulWidget {
 
 class _DesignSystemShowcaseScreenState
     extends State<DesignSystemShowcaseScreen> {
-  _ShowcaseVariant _variant = _ShowcaseVariant.claro;
   String _segment = 'Semana';
   DateTime _periodo = DateTime(2026, 11);
   int _navIndex = 0;
 
   @override
   Widget build(BuildContext context) {
-    return Theme(
-      data: switch (_variant) {
-        _ShowcaseVariant.claro => SaveUpTheme.light(),
-        _ShowcaseVariant.oscuro => SaveUpTheme.dark(),
-        _ShowcaseVariant.bold => SaveUpTheme.bold(),
-      },
-      child: Builder(
+    return Builder(
         builder: (BuildContext context) {
           final ThemeData theme = Theme.of(context);
           final SaveUpColors colors = theme.extension<SaveUpColors>()!;
@@ -50,25 +45,11 @@ class _DesignSystemShowcaseScreenState
                 const SizedBox(height: AppSpacing.xl),
                 _section(
                   context,
-                  'Variantes de tema',
-                  SegmentedButton<_ShowcaseVariant>(
-                    segments: const <ButtonSegment<_ShowcaseVariant>>[
-                      ButtonSegment<_ShowcaseVariant>(
-                        value: _ShowcaseVariant.claro,
-                        label: Text('Claro'),
-                      ),
-                      ButtonSegment<_ShowcaseVariant>(
-                        value: _ShowcaseVariant.oscuro,
-                        label: Text('Oscuro'),
-                      ),
-                      ButtonSegment<_ShowcaseVariant>(
-                        value: _ShowcaseVariant.bold,
-                        label: Text('Bold'),
-                      ),
-                    ],
-                    selected: <_ShowcaseVariant>{_variant},
-                    onSelectionChanged: (Set<_ShowcaseVariant> selection) =>
-                        setState(() => _variant = selection.single),
+                  'Tema activo',
+                  Text(
+                    'Esta pantalla usa el tema de la app. Para cambiarlo, '
+                    'usa Más → Tema.',
+                    style: theme.textTheme.bodyMedium,
                   ),
                 ),
                 _section(
@@ -575,7 +556,6 @@ class _DesignSystemShowcaseScreenState
             ),
           );
         },
-      ),
     );
   }
 

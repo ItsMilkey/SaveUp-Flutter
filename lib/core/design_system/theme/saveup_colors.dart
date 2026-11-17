@@ -65,6 +65,14 @@ class SaveUpColors extends ThemeExtension<SaveUpColors> {
   final List<Color> chartPalette;
   final Color categoryFallback;
 
+  /// Foreground sobre una superficie de acento (regla R-1 del contrato §3.1):
+  /// siempre tinta, en los tres temas.
+  ///
+  /// No confundir con [ink], que es el color de texto **del tema** y cambia con
+  /// el brillo. Usar `ink` sobre un acento claro deja texto claro sobre claro en
+  /// el tema oscuro.
+  Color get onAccentSurface => AppColors.ink;
+
   static const SaveUpColors light = SaveUpColors(
     canvas: AppColors.canvas,
     surface: AppColors.paper,
