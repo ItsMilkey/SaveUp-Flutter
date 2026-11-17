@@ -100,6 +100,61 @@ class _DesignSystemShowcaseScreenState
                 ),
                 _section(
                   context,
+                  'Etiquetas y cifras (R-4)',
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Text(
+                        'SALDO DISPONIBLE · NECESIDADES · AHORRO',
+                        style: AppTypography.label(
+                          size: 12,
+                          color: colors.muted,
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.xs),
+                      Text(
+                        '1.234.567  ·  98.765  ·  4.321',
+                        style: AppTypography.text(
+                          size: 22,
+                          weight: FontWeight.w700,
+                          numeric: true,
+                          color: colors.ink,
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.xs),
+                      Text(
+                        'Cifras tabulares: el ancho no cambia al actualizar el monto.',
+                        style: theme.textTheme.bodySmall,
+                      ),
+                    ],
+                  ),
+                ),
+                _section(
+                  context,
+                  'Escala de elevación (R-2)',
+                  Wrap(
+                    spacing: AppSpacing.md,
+                    runSpacing: AppSpacing.md,
+                    children: <Widget>[
+                      for (final AppDensity density in AppDensity.values)
+                        SizedBox(
+                          width: 150,
+                          child: NeoSurface(
+                            density: density,
+                            child: Text(
+                              density.name.toUpperCase(),
+                              style: AppTypography.label(
+                                size: 11,
+                                color: colors.muted,
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                _section(
+                  context,
                   'Botones',
                   Wrap(
                     spacing: AppSpacing.md,

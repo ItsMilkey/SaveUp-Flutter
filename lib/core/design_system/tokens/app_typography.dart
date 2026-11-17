@@ -7,6 +7,11 @@ abstract final class AppTypography {
   static const String displayFamily = 'ArchivoBlack';
   static const String bodyFamily = 'SpaceGrotesk';
 
+  /// Cifras de ancho fijo: evita que un monto cambie de ancho al actualizarse.
+  static const List<ui.FontFeature> tabularFigures = <ui.FontFeature>[
+    ui.FontFeature.tabularFigures(),
+  ];
+
   static TextStyle display({
     double size = 40,
     Color? color,
@@ -18,6 +23,7 @@ abstract final class AppTypography {
       height: height,
       letterSpacing: -0.5,
       color: color,
+      fontFeatures: tabularFigures,
     );
   }
 
@@ -27,6 +33,7 @@ abstract final class AppTypography {
     double height = 1.4,
     Color? color,
     double? letterSpacing,
+    bool numeric = false,
   }) {
     return TextStyle(
       fontFamily: bodyFamily,
@@ -36,6 +43,24 @@ abstract final class AppTypography {
       fontVariations: <ui.FontVariation>[
         ui.FontVariation('wght', weight.value.toDouble()),
       ],
+      color: color,
+      letterSpacing: letterSpacing,
+      fontFeatures: numeric ? tabularFigures : null,
+    );
+  }
+
+  /// Etiqueta del sistema (R-4): mayúsculas con tracking, peso 600.
+  ///
+  /// El texto llega ya en mayúsculas por el llamador (`label.toUpperCase()`); aquí
+  /// viven el tracking, el peso y el tamaño para que no se improvisen.
+  static TextStyle label({
+    double size = 12,
+    Color? color,
+    double letterSpacing = 0.5,
+  }) {
+    return text(
+      size: size,
+      weight: FontWeight.w600,
       color: color,
       letterSpacing: letterSpacing,
     );
@@ -93,7 +118,7 @@ abstract final class AppTypography {
       labelMedium: text(
         size: 12,
         weight: FontWeight.w600,
-        letterSpacing: 0.4,
+        letterSpacing: 0.5,
         color: color,
       ),
       labelSmall: text(

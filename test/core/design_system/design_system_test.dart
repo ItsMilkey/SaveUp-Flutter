@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:saveup_app/core/design_system/design_system.dart';
@@ -260,8 +260,7 @@ void main() {
 
   testWidgets('R-1: el foreground de una superficie se deduce por contraste', (
     WidgetTester tester,
-  ) async {
-    // El color efectivo llega por DefaultTextStyle, no por Text.style.
+  ) async {    // El color efectivo llega por DefaultTextStyle, no por Text.style.
     Color? colorDeTexto(String texto) {
       final RenderParagraph paragraph = tester.renderObject<RenderParagraph>(
         find.text(texto),
@@ -289,6 +288,56 @@ void main() {
       ),
     );
     expect(colorDeTexto('profunda'), AppColors.darkText);
+  });
+
+  test('R-4: etiquetas con tracking y cifras tabulares', () {
+    final TextTheme theme = SaveUpTheme.light().textTheme;
+    expect(theme.labelMedium!.letterSpacing, 0.5);
+    expect(theme.labelSmall!.letterSpacing, 0.5);
+    expect(theme.labelMedium!.fontWeight, FontWeight.w600);
+
+    expect(
+      AppTypography.display().fontFeatures,
+      contains(AppTypography.tabularFigures.first),
+    );
+    expect(AppTypography.text(numeric: true).fontFeatures, isNotNull);
+    expect(AppTypography.text().fontFeatures, isNull);
+    expect(
+      AppTypography.label(color: AppColors.ink).letterSpacing,
+      0.5,
+    );
+  });
+
+  testWidgets('el movimiento se anula cuando el sistema pide reducir motion', (
+    WidgetTester tester,
+  ) async {
+    late BuildContext ctx;
+    await tester.pumpWidget(
+      MediaQuery(
+        data: const MediaQueryData(disableAnimations: true),
+        child: Builder(
+          builder: (BuildContext context) {
+            ctx = context;
+            return const SizedBox();
+          },
+        ),
+      ),
+    );
+
+    expect(AppMotion.respect(ctx, AppMotion.fast), Duration.zero);
+
+    await tester.pumpWidget(
+      MediaQuery(
+        data: const MediaQueryData(),
+        child: Builder(
+          builder: (BuildContext context) {
+            ctx = context;
+            return const SizedBox();
+          },
+        ),
+      ),
+    );
+    expect(AppMotion.respect(ctx, AppMotion.fast), AppMotion.fast);
   });
 }
 
