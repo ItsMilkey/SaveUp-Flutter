@@ -63,6 +63,9 @@ abstract final class AppRoutes {
   /// Metas de ahorro (F7).
   static const String metas = '/metas';
 
+  /// Metas compartidas, deudas directas, invitaciones y actividad.
+  static const String colaboraciones = '/colaboraciones';
+
   /// Alta de una meta de ahorro.
   static const String nuevaMeta = '/metas/nueva';
 

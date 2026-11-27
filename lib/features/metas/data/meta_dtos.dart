@@ -37,6 +37,8 @@ class MetaAhorroDto {
       id: _int(json, 'id'),
       nombre: _string(json, 'nombre'),
       montoActual: _money(json, 'montoActual'),
+      compartida: json['compartida'] as bool? ?? false,
+      estadoCompartida: json['estadoCompartida'] as String?,
       montoObjetivo: objetivo == null ? null : moneyFromJson(objetivo),
       fechaLimite: fecha == null ? null : CalendarDate.parse(fecha as String),
     );

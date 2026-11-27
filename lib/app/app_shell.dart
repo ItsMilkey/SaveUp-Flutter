@@ -93,6 +93,11 @@ class AppShell extends ConsumerWidget {
           onTap: () => GoRouter.of(context).push(AppRoutes.metas),
         ),
         NeoMoreOption(
+          label: 'Colaboraciones',
+          icon: Icons.people_alt_outlined,
+          onTap: () => GoRouter.of(context).push(AppRoutes.colaboraciones),
+        ),
+        NeoMoreOption(
           label: 'Analítica',
           icon: Icons.insights_outlined,
           onTap: () => GoRouter.of(context).push(AppRoutes.analitica),

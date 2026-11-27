@@ -213,6 +213,11 @@ Un `codigo` desconocido cae en una falla genérica conservando status y `detail`
   (los avisos van en `avisos[]`), `GET/POST /planes/grupos`, `PUT/DELETE /planes/grupos/{id}`.
   Las partidas traen `deudaNombre` cuando están vinculadas a una deuda.
 - **Metas:** `POST /metas`, `GET /metas/me`, `PUT/DELETE /metas/{id}`, `POST /metas/{id}/{abonar,retirar}`.
+- **Colaboraciones (T11, fase 1):** `POST/GET /colaboraciones/metas`, `POST/GET /deudas-directas`,
+  `GET /invitaciones/me`, aceptar/rechazar por id o código y revocar; aportar/gastar/retirar/cambiar/salir/cancelar
+  metas; pagar/condonar/cambiar saldo de deudas; decidir operaciones; consultar historial y bandeja
+  `GET /actividad/me` + `PATCH .../leida`. Invitaciones de 7 días ligadas al correo; el código se muestra una vez al
+  crear para copiarlo. La bandeja es in-app, sin correo ni push. Ver `docs/tareas/F14-colaboraciones.md`.
 - **Reportes:** `GET /reportes/movimientos/exportar` (bytes + `Content-Disposition`).
 - **Push:** `GET/POST/DELETE /notificaciones/dispositivos`. (`/notificaciones/recordatorios/ejecutar`
   es del cron del backend: la app no lo usa.)
@@ -294,12 +299,17 @@ Un `codigo` desconocido cae en una falla genérica conservando status y `detail`
   acción por toque, no un destino ni una parada del gesto. Semantics ofrece botón/etiqueta/estado
   seleccionado y el arrastre no es requisito de accesibilidad. Se respetan `AppMotion`, temas
   claro/oscuro y `MediaQuery.disableAnimations`; no cambia el `ShellRoute` ni el backend.
-- **D14 — Tema Bold y selección local de apariencia.** La app conserva `Sistema` como opción
+ - **D14 — Tema Bold y selección local de apariencia.** La app conserva `Sistema` como opción
   inicial y añade `Claro`, `Oscuro` y `Bold`. Bold es una variante clara de papel/tinta con bloques
   pastel y acentos vibrantes; se selecciona desde `Más → Tema`, en una pantalla que previsualiza
   las cuatro opciones y marca la activa. La selección se aplica al instante y se persiste
   localmente con `SharedPreferencesAsync`; no se sincroniza con el backend ni usa el storage de
-  credenciales. Los estados financieros/errores conservan su semántica, y claro/oscuro no cambian.
+   credenciales. Los estados financieros/errores conservan su semántica, y claro/oscuro no cambian.
+- **D15 — Colaboraciones fase 1.** La sección está en `Más → Colaboraciones`; metas compartidas no se operan desde
+  la ficha individual. El destinatario autenticado acepta/rechaza por id ligado a su correo, además de poder usar el
+  código opaco. Aportes/gastos/pagos pendientes no se muestran como efectivo confirmado. Tras un movimiento
+  confirmado se refrescan saldos, movimientos, metas y ejecución presupuestaria. La app muestra las atribuciones y
+  saldos devueltos por el backend; no calcula el prorrateo ni sus centavos.
 
 ## Pendientes / fuera del alcance actual
 

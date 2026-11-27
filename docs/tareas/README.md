@@ -45,5 +45,7 @@ Al terminar, marcar aquí con `[x]`.
   accesibilidad y movimiento reducido — `F12-navegacion.md`
 - [x] **F13** apariencia Bold, selector con previews desde «Más» y persistencia local —
   `F13-tema-bold.md`
+- [ ] **F14** metas y deudas directas compartidas, invitaciones y actividad —
+  `F14-colaboraciones.md`
 
 Las tareas F2 en adelante se redactan cuando se acerque su turno, con el contrato real a mano.
