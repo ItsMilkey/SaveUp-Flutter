@@ -93,6 +93,12 @@ class ColaboracionesAccionesController extends Notifier<AsyncValue<void>> {
     () => ref.read(colaboracionesRepositoryProvider).crearDeuda(datos),
   );
 
+  Future<ColaboracionActionResult<List<InvitacionColaborativa>>> crearDeudaGrupal(
+    DeudaGrupalDatos datos,
+  ) => ejecutar(
+    () => ref.read(colaboracionesRepositoryProvider).crearDeudaGrupal(datos),
+  );
+
   Future<ColaboracionActionResult<bool>> aceptarInvitacion(int id) =>
       ejecutar(() async {
         await ref.read(colaboracionesRepositoryProvider).aceptarInvitacion(id);
@@ -239,9 +245,57 @@ class ColaboracionesAccionesController extends Notifier<AsyncValue<void>> {
   Future<ColaboracionActionResult<OperacionColaborativa>> cancelarMeta(int id) =>
       ejecutar(() => ref.read(colaboracionesRepositoryProvider).cancelarMeta(id));
 
+  Future<ColaboracionActionResult<OperacionColaborativa>> registrarPagoGrupal(
+    int deudaId,
+    PagoGrupalDatos datos,
+  ) => ejecutar(
+    () => ref
+        .read(colaboracionesRepositoryProvider)
+        .registrarPagoGrupal(deudaId, datos),
+    afectaSaldos: true,
+  );
+
+  Future<ColaboracionActionResult<OperacionColaborativa>> proponerCambioReparto(
+    int deudaId,
+    RepartoDatos datos,
+  ) => ejecutar(
+    () => ref
+        .read(colaboracionesRepositoryProvider)
+        .proponerCambioReparto(deudaId, datos),
+  );
+
+  Future<ColaboracionActionResult<OperacionColaborativa>> salirDeudaGrupal(
+    int deudaId,
+    SalidaDeudaDatos datos,
+  ) => ejecutar(
+    () => ref
+        .read(colaboracionesRepositoryProvider)
+        .salirDeudaGrupal(deudaId, datos),
+  );
+
+  Future<ColaboracionActionResult<InvitacionColaborativa>> registrarAdelanto(
+    int deudaId,
+    int operacionId, {
+    required String email,
+    String? descripcion,
+  }) => ejecutar(
+    () => ref
+        .read(colaboracionesRepositoryProvider)
+        .registrarAdelanto(deudaId, operacionId, email: email, descripcion: descripcion),
+  );
+
+  Future<ColaboracionActionResult<bool>> cancelarDeudaGrupal(int deudaId) =>
+      ejecutar(() async {
+        await ref.read(colaboracionesRepositoryProvider).cancelarDeudaGrupal(deudaId);
+        return true;
+      });
+
   Future<List<OperacionColaborativa>> obtenerHistorialMeta(int id) =>
       ref.read(colaboracionesRepositoryProvider).historialMeta(id);
 
   Future<List<OperacionColaborativa>> obtenerHistorialDeuda(int id) =>
       ref.read(colaboracionesRepositoryProvider).historialDeuda(id);
+
+  Future<List<OperacionColaborativa>> obtenerHistorialDeudaGrupal(int id) =>
+      ref.read(colaboracionesRepositoryProvider).historialDeudaGrupal(id);
 }

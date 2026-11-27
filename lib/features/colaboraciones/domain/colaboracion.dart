@@ -53,6 +53,36 @@ enum EstadoColaborativo {
   );
 }
 
+enum EstadoDeudaGrupal {
+  pendiente('PENDIENTE'),
+  activa('ACTIVA'),
+  saldada('SALDADA'),
+  cancelada('CANCELADA');
+
+  const EstadoDeudaGrupal(this.codigo);
+  final String codigo;
+
+  static EstadoDeudaGrupal parse(String raw) => values.firstWhere(
+    (EstadoDeudaGrupal value) => value.codigo == raw,
+    orElse: () => throw FormatException('Estado de deuda grupal desconocido: $raw'),
+  );
+}
+
+enum EstadoParticipanteDeudaGrupal {
+  activo('ACTIVO'),
+  salio('SALIO');
+
+  const EstadoParticipanteDeudaGrupal(this.codigo);
+  final String codigo;
+
+  static EstadoParticipanteDeudaGrupal parse(String raw) => values.firstWhere(
+    (EstadoParticipanteDeudaGrupal value) => value.codigo == raw,
+    orElse: () => throw FormatException(
+      'Estado de participante de deuda grupal desconocido: $raw',
+    ),
+  );
+}
+
 class ParticipanteMeta {
   const ParticipanteMeta({
     required this.id,
@@ -147,6 +177,9 @@ class InvitacionColaborativa {
     this.montoObjetivo,
     this.fechaLimite,
     this.codigo,
+    this.acreedorExterno,
+    this.montoTotal,
+    this.responsabilidadInvitada,
   });
 
   final int id;
@@ -163,6 +196,11 @@ class InvitacionColaborativa {
   final String estado;
   final DateTime expiraEn;
   final String? codigo;
+  final String? acreedorExterno;
+  final Decimal? montoTotal;
+  final Decimal? responsabilidadInvitada;
+
+  bool get esDeudaGrupal => tipoRecurso == 'DEUDA_GRUPAL';
 }
 
 class AtribucionMeta {
@@ -170,6 +208,95 @@ class AtribucionMeta {
 
   final String participante;
   final Decimal monto;
+}
+
+class MontoParticipante {
+  const MontoParticipante({
+    required this.email,
+    required this.nombre,
+    required this.monto,
+  });
+
+  final String email;
+  final String nombre;
+  final Decimal monto;
+}
+
+class ParticipanteDeudaGrupal {
+  const ParticipanteDeudaGrupal({
+    required this.id,
+    required this.nombre,
+    required this.email,
+    required this.responsabilidadOriginal,
+    required this.responsabilidadPendiente,
+    required this.estado,
+    required this.actual,
+  });
+
+  final int id;
+  final String nombre;
+  final String email;
+  final Decimal responsabilidadOriginal;
+  final Decimal responsabilidadPendiente;
+  final EstadoParticipanteDeudaGrupal estado;
+  final bool actual;
+}
+
+class CuotaGrupal {
+  const CuotaGrupal({
+    required this.numero,
+    required this.monto,
+    required this.fechaVencimiento,
+  });
+
+  final int numero;
+  final Decimal monto;
+  final CalendarDate fechaVencimiento;
+}
+
+class DeudaGrupal {
+  const DeudaGrupal({
+    required this.id,
+    required this.nombre,
+    required this.acreedorExterno,
+    required this.montoTotal,
+    required this.saldoPendiente,
+    required this.estado,
+    required this.permisoEdicion,
+    required this.nombreCreador,
+    required this.creadorActual,
+    required this.participanteActual,
+    required this.miResponsabilidadPendiente,
+    required this.participantes,
+    required this.cuotas,
+    required this.invitacionesPendientes,
+    this.descripcion,
+    this.creadoEn,
+  });
+
+  final int id;
+  final String nombre;
+  final String? descripcion;
+  final String acreedorExterno;
+  final Decimal montoTotal;
+  final Decimal saldoPendiente;
+  final EstadoDeudaGrupal estado;
+  final PermisoEdicionCompartida permisoEdicion;
+  final String nombreCreador;
+  final bool creadorActual;
+  final bool participanteActual;
+  final Decimal miResponsabilidadPendiente;
+  final List<ParticipanteDeudaGrupal> participantes;
+  final List<CuotaGrupal> cuotas;
+  final DateTime? creadoEn;
+  final List<InvitacionColaborativa> invitacionesPendientes;
+
+  /// Participantes activos, útiles para repartos, salidas e imputaciones.
+  List<ParticipanteDeudaGrupal> get activos => participantes
+      .where(
+        (ParticipanteDeudaGrupal p) => p.estado == EstadoParticipanteDeudaGrupal.activo,
+      )
+      .toList(growable: false);
 }
 
 class OperacionColaborativa {
@@ -184,6 +311,8 @@ class OperacionColaborativa {
     required this.estado,
     required this.creadoEn,
     required this.atribuciones,
+    required this.imputacionesPago,
+    required this.cambiosResponsabilidad,
     this.atribuidoA,
     this.nuevoMontoObjetivo,
     this.nuevaFechaLimite,
@@ -206,6 +335,14 @@ class OperacionColaborativa {
   final Decimal? nuevoSaldoPendiente;
   final bool cancelarMeta;
   final List<AtribucionMeta> atribuciones;
+  final List<MontoParticipante> imputacionesPago;
+  final List<MontoParticipante> cambiosResponsabilidad;
+
+  bool get esPagoGrupal => tipo == 'PAGO_GRUPAL';
+
+  bool get esCambioReparto => tipo == 'CAMBIO_REPARTO';
+
+  bool get esSalidaDeuda => tipo == 'SALIDA_DEUDA';
 }
 
 class ActividadColaborativa {
@@ -273,16 +410,83 @@ class CambioMetaDatos {
   final CalendarDate? fechaLimite;
 }
 
+class ResponsabilidadParticipante {
+  const ResponsabilidadParticipante({required this.email, required this.monto});
+
+  final String email;
+  final Decimal monto;
+}
+
+class CuotaGrupalDatos {
+  const CuotaGrupalDatos({required this.monto, required this.fechaVencimiento});
+
+  final Decimal monto;
+  final CalendarDate fechaVencimiento;
+}
+
+class DeudaGrupalDatos {
+  const DeudaGrupalDatos({
+    required this.nombre,
+    required this.acreedorExterno,
+    required this.montoTotal,
+    required this.permisoEdicion,
+    required this.participantes,
+    required this.cuotas,
+    this.descripcion,
+  });
+
+  final String nombre;
+  final String? descripcion;
+  final String acreedorExterno;
+  final Decimal montoTotal;
+  final PermisoEdicionCompartida permisoEdicion;
+  final List<ResponsabilidadParticipante> participantes;
+  final List<CuotaGrupalDatos> cuotas;
+}
+
+class ImputacionPagoDatos {
+  const ImputacionPagoDatos({required this.email, required this.monto});
+
+  final String email;
+  final Decimal monto;
+}
+
+class PagoGrupalDatos {
+  const PagoGrupalDatos({
+    required this.monto,
+    required this.descripcion,
+    required this.imputaciones,
+  });
+
+  final Decimal monto;
+  final String descripcion;
+  final List<ImputacionPagoDatos> imputaciones;
+}
+
+class RepartoDatos {
+  const RepartoDatos({required this.responsabilidades});
+
+  final List<ResponsabilidadParticipante> responsabilidades;
+}
+
+class SalidaDeudaDatos {
+  const SalidaDeudaDatos({required this.reasignaciones});
+
+  final List<ResponsabilidadParticipante> reasignaciones;
+}
+
 class SnapshotColaboraciones {
   const SnapshotColaboraciones({
     required this.metas,
     required this.deudas,
+    required this.deudasGrupales,
     required this.invitaciones,
     required this.actividad,
   });
 
   final List<MetaCompartida> metas;
   final List<DeudaDirecta> deudas;
+  final List<DeudaGrupal> deudasGrupales;
   final List<InvitacionColaborativa> invitaciones;
   final List<ActividadColaborativa> actividad;
 }

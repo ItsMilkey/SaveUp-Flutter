@@ -218,6 +218,10 @@ Un `codigo` desconocido cae en una falla genérica conservando status y `detail`
   metas; pagar/condonar/cambiar saldo de deudas; decidir operaciones; consultar historial y bandeja
   `GET /actividad/me` + `PATCH .../leida`. Invitaciones de 7 días ligadas al correo; el código se muestra una vez al
   crear para copiarlo. La bandeja es in-app, sin correo ni push. Ver `docs/tareas/F14-colaboraciones.md`.
+- **Colaboraciones (T12, fase 2):** `POST/GET /colaboraciones/deudas-grupales`,
+  `PATCH .../cancelar`, `POST .../pagos` (con `imputaciones[]`), `PUT .../repartos`,
+  `POST .../salir` (con `reasignaciones[]`), `POST .../operaciones/{op}/adelantos` e
+  historial propio. Ver `docs/tareas/F15-colaboraciones-fase2.md`.
 - **Reportes:** `GET /reportes/movimientos/exportar` (bytes + `Content-Disposition`).
 - **Push:** `GET/POST/DELETE /notificaciones/dispositivos`. (`/notificaciones/recordatorios/ejecutar`
   es del cron del backend: la app no lo usa.)
@@ -310,6 +314,14 @@ Un `codigo` desconocido cae en una falla genérica conservando status y `detail`
   código opaco. Aportes/gastos/pagos pendientes no se muestran como efectivo confirmado. Tras un movimiento
   confirmado se refrescan saldos, movimientos, metas y ejecución presupuestaria. La app muestra las atribuciones y
   saldos devueltos por el backend; no calcula el prorrateo ni sus centavos.
+- **D16 — Colaboraciones fase 2 (deuda grupal).** La deuda compartida con un tercero vive en
+  `Colaboraciones → Deudas` (alta con reparto y cuotas; el FAB ofrece directa o compartida) y además se lista en la
+  pantalla `Deudas` con distintivo "Compartida" que redirige a Colaboraciones para operarla; no se gestiona desde la
+  ficha individual. El pago sugiere imputaciones (proporcional al pendiente o equitativa) pero la app no calcula el
+  reparto definitivo: solo prellena y valida sumas exactas antes de enviar, y muestra lo que devuelve el backend
+  (`imputacionesPago[]`, `cambiosResponsabilidad[]`). El botón de adelanto solo aparece en pagos confirmados de
+  quien desembolsó con partes a otras personas; el backend sigue siendo quien autoriza. La responsabilidad original
+  nunca se edita en la app: los repartos proponen montos sobre el pendiente y todos confirman.
 
 ## Pendientes / fuera del alcance actual
 

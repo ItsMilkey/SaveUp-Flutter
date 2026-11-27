@@ -24,6 +24,7 @@ class DioColaboracionesRepository implements ColaboracionesRepository {
     final List<dynamic> respuestas = await Future.wait<dynamic>(<Future<dynamic>>[
       readList(() => client.get<dynamic>('/colaboraciones/metas/me')),
       readList(() => client.get<dynamic>('/colaboraciones/deudas-directas/me')),
+      readList(() => client.get<dynamic>('/colaboraciones/deudas-grupales/me')),
       readList(() => client.get<dynamic>('/colaboraciones/invitaciones/me')),
       readList(() => client.get<dynamic>('/colaboraciones/actividad/me')),
     ]);
@@ -31,8 +32,9 @@ class DioColaboracionesRepository implements ColaboracionesRepository {
       () => SnapshotColaboraciones(
         metas: _mapList(respuestas[0], _meta),
         deudas: _mapList(respuestas[1], _deuda),
-        invitaciones: _mapList(respuestas[2], _invitacion),
-        actividad: _mapList(respuestas[3], _actividad),
+        deudasGrupales: _mapList(respuestas[2], _deudaGrupal),
+        invitaciones: _mapList(respuestas[3], _invitacion),
+        actividad: _mapList(respuestas[4], _actividad),
       ),
     );
   }
@@ -75,6 +77,44 @@ class DioColaboracionesRepository implements ColaboracionesRepository {
       ),
     );
     return parseJson(() => _invitacion(_asMap(body['invitacion'])));
+  }
+
+  @override
+  Future<List<InvitacionColaborativa>> crearDeudaGrupal(DeudaGrupalDatos datos) async {
+    final Map<String, dynamic> body = await readObject(
+      () => client.post<dynamic>(
+        '/colaboraciones/deudas-grupales',
+        data: <String, dynamic>{
+          'nombre': datos.nombre,
+          if (datos.descripcion != null && datos.descripcion!.trim().isNotEmpty)
+            'descripcion': datos.descripcion!.trim(),
+          'acreedorExterno': datos.acreedorExterno.trim(),
+          'montoTotal': moneyToJson(datos.montoTotal),
+          'permisoEdicion': datos.permisoEdicion.codigo,
+          'participantes': <Map<String, dynamic>>[
+            for (final ResponsabilidadParticipante participante in datos.participantes)
+              <String, dynamic>{
+                'email': participante.email.trim(),
+                'monto': moneyToJson(participante.monto),
+              },
+          ],
+          if (datos.cuotas.isNotEmpty)
+            'cuotas': <Map<String, dynamic>>[
+              for (final CuotaGrupalDatos cuota in datos.cuotas)
+                <String, dynamic>{
+                  'monto': moneyToJson(cuota.monto),
+                  'fechaVencimiento': cuota.fechaVencimiento.toJson(),
+                },
+            ],
+        },
+      ),
+    );
+    return parseJson(
+      () => _mapList(
+        body['invitaciones'] as List<dynamic>,
+        _invitacion,
+      ),
+    );
   }
 
   @override
@@ -244,6 +284,104 @@ class DioColaboracionesRepository implements ColaboracionesRepository {
   }
 
   @override
+  Future<OperacionColaborativa> registrarPagoGrupal(
+    int deudaId,
+    PagoGrupalDatos datos,
+  ) async {
+    final Map<String, dynamic> body = await readObject(
+      () => client.post<dynamic>(
+        '/colaboraciones/deudas-grupales/$deudaId/pagos',
+        data: <String, dynamic>{
+          'monto': moneyToJson(datos.monto),
+          'descripcion': datos.descripcion.trim(),
+          'imputaciones': <Map<String, dynamic>>[
+            for (final ImputacionPagoDatos imputacion in datos.imputaciones)
+              <String, dynamic>{
+                'email': imputacion.email.trim(),
+                'monto': moneyToJson(imputacion.monto),
+              },
+          ],
+        },
+      ),
+    );
+    return parseJson(() => _operacion(body));
+  }
+
+  @override
+  Future<OperacionColaborativa> proponerCambioReparto(
+    int deudaId,
+    RepartoDatos datos,
+  ) async {
+    final Map<String, dynamic> body = await readObject(
+      () => client.put<dynamic>(
+        '/colaboraciones/deudas-grupales/$deudaId/repartos',
+        data: <String, dynamic>{
+          'responsabilidades': <Map<String, dynamic>>[
+            for (final ResponsabilidadParticipante responsabilidad
+                in datos.responsabilidades)
+              <String, dynamic>{
+                'email': responsabilidad.email.trim(),
+                'monto': moneyToJson(responsabilidad.monto),
+              },
+          ],
+        },
+      ),
+    );
+    return parseJson(() => _operacion(body));
+  }
+
+  @override
+  Future<OperacionColaborativa> salirDeudaGrupal(
+    int deudaId,
+    SalidaDeudaDatos datos,
+  ) async {
+    final Map<String, dynamic> body = await readObject(
+      () => client.post<dynamic>(
+        '/colaboraciones/deudas-grupales/$deudaId/salir',
+        data: <String, dynamic>{
+          if (datos.reasignaciones.isNotEmpty)
+            'reasignaciones': <Map<String, dynamic>>[
+              for (final ResponsabilidadParticipante reasignacion
+                  in datos.reasignaciones)
+                <String, dynamic>{
+                  'email': reasignacion.email.trim(),
+                  'monto': moneyToJson(reasignacion.monto),
+                },
+            ],
+        },
+      ),
+    );
+    return parseJson(() => _operacion(body));
+  }
+
+  @override
+  Future<InvitacionColaborativa> registrarAdelanto(
+    int deudaId,
+    int operacionId, {
+    required String email,
+    String? descripcion,
+  }) async {
+    final Map<String, dynamic> body = await readObject(
+      () => client.post<dynamic>(
+        '/colaboraciones/deudas-grupales/$deudaId/operaciones/$operacionId/adelantos',
+        data: <String, dynamic>{
+          'email': email.trim(),
+          if (descripcion != null && descripcion.trim().isNotEmpty)
+            'descripcion': descripcion.trim(),
+        },
+      ),
+    );
+    return parseJson(() => _invitacion(_asMap(body['invitacion'])));
+  }
+
+  @override
+  Future<void> cancelarDeudaGrupal(int deudaId) async {
+    await client.patch<dynamic>(
+      '/colaboraciones/deudas-grupales/$deudaId/cancelar',
+    );
+  }
+
+  @override
   Future<List<OperacionColaborativa>> historialMeta(int metaId) async {
     final List<dynamic> body = await readList(
       () => client.get<dynamic>('/colaboraciones/metas/$metaId/historial'),
@@ -256,6 +394,16 @@ class DioColaboracionesRepository implements ColaboracionesRepository {
     final List<dynamic> body = await readList(
       () => client.get<dynamic>(
         '/colaboraciones/deudas-directas/$deudaId/historial',
+      ),
+    );
+    return parseJson(() => _mapList(body, _operacion));
+  }
+
+  @override
+  Future<List<OperacionColaborativa>> historialDeudaGrupal(int deudaId) async {
+    final List<dynamic> body = await readList(
+      () => client.get<dynamic>(
+        '/colaboraciones/deudas-grupales/$deudaId/historial',
       ),
     );
     return parseJson(() => _mapList(body, _operacion));
@@ -337,6 +485,9 @@ InvitacionColaborativa _invitacion(Map<String, dynamic> json) =>
       estado: _string(json['estado']),
       expiraEn: parseInstant(_string(json['expiraEn'])),
       codigo: json['codigo'] as String?,
+      acreedorExterno: json['acreedorExterno'] as String?,
+      montoTotal: _moneyOrNull(json['montoTotal']),
+      responsabilidadInvitada: _moneyOrNull(json['responsabilidadInvitada']),
     );
 
 OperacionColaborativa _operacion(Map<String, dynamic> json) =>
@@ -362,7 +513,64 @@ OperacionColaborativa _operacion(Map<String, dynamic> json) =>
           monto: _money(item['monto']),
         ),
       ),
+      imputacionesPago: _mapList(
+        json['imputacionesPago'] as List<dynamic>? ?? const <dynamic>[],
+        _montoParticipante,
+      ),
+      cambiosResponsabilidad: _mapList(
+        json['cambiosResponsabilidad'] as List<dynamic>? ?? const <dynamic>[],
+        _montoParticipante,
+      ),
     );
+
+MontoParticipante _montoParticipante(Map<String, dynamic> json) =>
+    MontoParticipante(
+      email: _string(json['email']),
+      nombre: _string(json['nombre']),
+      monto: _money(json['monto']),
+    );
+
+DeudaGrupal _deudaGrupal(Map<String, dynamic> json) => DeudaGrupal(
+  id: _int(json['id']),
+  nombre: _string(json['nombre']),
+  descripcion: json['descripcion'] as String?,
+  acreedorExterno: _string(json['acreedorExterno']),
+  montoTotal: _money(json['montoTotal']),
+  saldoPendiente: _money(json['saldoPendiente']),
+  estado: EstadoDeudaGrupal.parse(_string(json['estado'])),
+  permisoEdicion: _permiso(_string(json['permisoEdicion'])),
+  nombreCreador: _string(json['nombreCreador']),
+  creadorActual: json['creadorActual'] as bool? ?? false,
+  participanteActual: json['participanteActual'] as bool? ?? false,
+  miResponsabilidadPendiente: _money(json['miResponsabilidadPendiente']),
+  participantes: _mapList(
+    json['participantes'] as List<dynamic>,
+    (Map<String, dynamic> item) => ParticipanteDeudaGrupal(
+      id: _int(item['id']),
+      nombre: _string(item['nombre']),
+      email: _string(item['email']),
+      responsabilidadOriginal: _money(item['responsabilidadOriginal']),
+      responsabilidadPendiente: _money(item['responsabilidadPendiente']),
+      estado: EstadoParticipanteDeudaGrupal.parse(_string(item['estado'])),
+      actual: item['actual'] as bool? ?? false,
+    ),
+  ),
+  cuotas: _mapList(
+    json['cuotas'] as List<dynamic>? ?? const <dynamic>[],
+    (Map<String, dynamic> item) => CuotaGrupal(
+      numero: _int(item['numero']),
+      monto: _money(item['monto']),
+      fechaVencimiento: _date(item['fechaVencimiento']),
+    ),
+  ),
+  creadoEn: json['creadoEn'] == null
+      ? null
+      : parseInstant(_string(json['creadoEn'])),
+  invitacionesPendientes: _mapList(
+    json['invitacionesPendientes'] as List<dynamic>? ?? const <dynamic>[],
+    _invitacion,
+  ),
+);
 
 ActividadColaborativa _actividad(Map<String, dynamic> json) =>
     ActividadColaborativa(
@@ -396,6 +604,8 @@ Decimal _money(Object? raw) => moneyFromJson(raw);
 
 CalendarDate? _dateOrNull(Object? raw) =>
     raw == null ? null : CalendarDate.parse(_string(raw));
+
+CalendarDate _date(Object? raw) => CalendarDate.parse(_string(raw));
 
 int _int(Object? raw) {
   if (raw is int) return raw;

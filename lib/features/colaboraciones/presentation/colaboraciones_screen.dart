@@ -8,6 +8,8 @@ import '../../../core/errors/app_failure.dart';
 import '../../../core/errors/failure_messages.dart';
 import '../../../core/money/money.dart';
 import '../../../core/money/money_input_formatter.dart';
+import '../../../features/auth/domain/auth_session.dart';
+import '../../../features/auth/presentation/auth_controllers.dart';
 import '../domain/colaboracion.dart';
 import 'colaboraciones_controller.dart';
 import 'colaboraciones_forms.dart';
@@ -104,12 +106,21 @@ class _ColaboracionesScreenState extends ConsumerState<ColaboracionesScreen> {
     }
     if (_seccion == _SeccionColaboraciones.deudas) {
       return NeoButton(
-        label: 'Nueva deuda directa',
+        label: 'Nueva deuda',
         icon: Icons.add,
-        onPressed: enviando ? null : _crearDeuda,
+        onPressed: enviando ? null : _elegirTipoDeuda,
       );
     }
     return null;
+  }
+
+  /// Correo y nombre de la cuenta autenticada; los formularios grupales
+  /// los necesitan para marcar la responsabilidad propia.
+  ({String email, String nombre})? get _perfilActual {
+    final AuthSession sesion = ref.read(authSessionProvider);
+    return sesion is SessionAuthenticated
+        ? (email: sesion.user.email, nombre: sesion.user.fullName)
+        : null;
   }
 
   Widget _contenido(
@@ -118,7 +129,11 @@ class _ColaboracionesScreenState extends ConsumerState<ColaboracionesScreen> {
   }) {
     final List<Widget> children = switch (_seccion) {
       _SeccionColaboraciones.metas => _metas(snapshot.metas, enviando),
-      _SeccionColaboraciones.deudas => _deudas(snapshot.deudas, enviando),
+      _SeccionColaboraciones.deudas => _deudas(
+        snapshot.deudas,
+        snapshot.deudasGrupales,
+        enviando,
+      ),
       _SeccionColaboraciones.invitaciones =>
         _invitaciones(snapshot.invitaciones, enviando),
       _SeccionColaboraciones.actividad =>
@@ -205,20 +220,54 @@ class _ColaboracionesScreenState extends ConsumerState<ColaboracionesScreen> {
     ];
   }
 
-  List<Widget> _deudas(List<DeudaDirecta> deudas, bool enviando) {
-    if (deudas.isEmpty) {
+  List<Widget> _deudas(
+    List<DeudaDirecta> deudas,
+    List<DeudaGrupal> grupales,
+    bool enviando,
+  ) {
+    if (deudas.isEmpty && grupales.isEmpty) {
       return <Widget>[
         const NeoEmptyState(
           icon: Icons.handshake_outlined,
-          title: 'Aún no tienes deudas directas',
+          title: 'Aún no tienes deudas colaborativas',
           message:
-              'Registra quién debe a quién. La deuda se activa cuando la '
-              'otra persona acepta los términos.',
+              'Registra quién debe a quién o comparte una deuda con un '
+              'acreedor externo entre varias personas.',
           accent: AppColors.lavender,
         ),
       ];
     }
     return <Widget>[
+      for (final DeudaGrupal grupal in grupales)
+        Padding(
+          padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+          child: _DeudaGrupalCard(
+            deuda: grupal,
+            enviando: enviando,
+            onPagar: grupal.estado == EstadoDeudaGrupal.activa &&
+                    grupal.participanteActual
+                ? () => _pagarGrupal(grupal)
+                : null,
+            onRepartir: grupal.estado == EstadoDeudaGrupal.activa &&
+                    (grupal.permisoEdicion == PermisoEdicionCompartida.todos ||
+                        grupal.creadorActual)
+                ? () => _repartirGrupal(grupal)
+                : null,
+            onSalir: grupal.estado == EstadoDeudaGrupal.activa &&
+                    grupal.participanteActual &&
+                    !grupal.creadorActual
+                ? () => _salirGrupal(grupal)
+                : null,
+            onHistorial: () => _verHistorialGrupal(grupal),
+            onCancelar: grupal.creadorActual &&
+                    grupal.estado == EstadoDeudaGrupal.pendiente
+                ? () => _cancelarDeudaGrupal(grupal)
+                : null,
+            onRevocarInvitacion: grupal.creadorActual
+                ? _revocarInvitacion
+                : null,
+          ),
+        ),
       for (final DeudaDirecta deuda in deudas)
         Padding(
           padding: const EdgeInsets.only(bottom: AppSpacing.sm),
@@ -356,6 +405,202 @@ class _ColaboracionesScreenState extends ConsumerState<ColaboracionesScreen> {
     }
     _avisar(
       'Invitación creada. La deuda se activará cuando la acepten.',
+      tone: NeoSnackbarTone.success,
+    );
+    final InvitacionColaborativa? invitacion = result.value;
+    if (invitacion != null) {
+      await _mostrarCodigos(<InvitacionColaborativa>[invitacion]);
+    }
+  }
+
+  Future<void> _elegirTipoDeuda() async {
+    final String? eleccion = await showModalBottomSheet<String>(
+      context: context,
+      showDragHandle: true,
+      builder: (BuildContext sheetContext) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+              child: Text(
+                '¿Qué deuda quieres registrar?',
+                style: Theme.of(sheetContext).textTheme.titleLarge,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+              child: _OpcionTipoDeuda(
+                icono: Icons.handshake_outlined,
+                titulo: 'Deuda directa',
+                detalle: 'Una persona le debe a otra. Se activa al aceptar.',
+                valor: 'directa',
+              ),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+              child: _OpcionTipoDeuda(
+                icono: Icons.groups_2_outlined,
+                titulo: 'Deuda compartida con un tercero',
+                detalle: 'Varias personas reparten lo debido a un acreedor externo.',
+                valor: 'grupal',
+              ),
+            ),
+            const SizedBox(height: AppSpacing.lg),
+          ],
+        ),
+      ),
+    );
+    if (!mounted || eleccion == null) return;
+    if (eleccion == 'grupal') {
+      await _crearDeudaGrupal();
+    } else {
+      await _crearDeuda();
+    }
+  }
+
+  Future<void> _crearDeudaGrupal() async {
+    final ({String email, String nombre})? perfil = _perfilActual;
+    if (perfil == null) {
+      _avisar('Tu sesión no está disponible.');
+      return;
+    }
+    final DeudaGrupalDatos? datos = await ColaboracionesForms.crearDeudaGrupal(
+      context,
+      emailPropio: perfil.email,
+      nombrePropio: perfil.nombre,
+    );
+    if (datos == null || !mounted) return;
+    final ColaboracionActionResult<List<InvitacionColaborativa>> result =
+        await ref
+            .read(colaboracionesAccionesProvider.notifier)
+            .crearDeudaGrupal(datos);
+    if (!mounted) return;
+    if (result.failure != null) {
+      _avisar(failureMessage(result.failure!));
+      return;
+    }
+    _avisar(
+      'Deuda compartida creada. Comparte los códigos con quienes participan.',
+      tone: NeoSnackbarTone.success,
+    );
+    await _mostrarCodigos(result.value ?? const <InvitacionColaborativa>[]);
+  }
+
+  Future<void> _pagarGrupal(DeudaGrupal deuda) async {
+    final ({String email, String nombre})? perfil = _perfilActual;
+    if (perfil == null) {
+      _avisar('Tu sesión no está disponible.');
+      return;
+    }
+    final PagoGrupalDatos? datos = await ColaboracionesForms.registrarPagoGrupal(
+      context,
+      deuda: deuda,
+      emailPropio: perfil.email,
+    );
+    if (datos == null || !mounted) return;
+    final ColaboracionActionResult<OperacionColaborativa> result = await ref
+        .read(colaboracionesAccionesProvider.notifier)
+        .registrarPagoGrupal(deuda.id, datos);
+    if (!mounted) return;
+    _avisarOperacion(result, 'Pago registrado.');
+  }
+
+  Future<void> _repartirGrupal(DeudaGrupal deuda) async {
+    final RepartoDatos? datos = await ColaboracionesForms.proponerCambioReparto(
+      context,
+      deuda: deuda,
+    );
+    if (datos == null || !mounted) return;
+    final ColaboracionActionResult<OperacionColaborativa> result = await ref
+        .read(colaboracionesAccionesProvider.notifier)
+        .proponerCambioReparto(deuda.id, datos);
+    if (!mounted) return;
+    _avisarOperacion(result, 'Reparto propuesto.');
+  }
+
+  Future<void> _salirGrupal(DeudaGrupal deuda) async {
+    final ({String email, String nombre})? perfil = _perfilActual;
+    if (perfil == null) {
+      _avisar('Tu sesión no está disponible.');
+      return;
+    }
+    final SalidaDeudaDatos? datos = await ColaboracionesForms.salirDeudaGrupal(
+      context,
+      deuda: deuda,
+      emailPropio: perfil.email,
+    );
+    if (datos == null || !mounted) return;
+    final ColaboracionActionResult<OperacionColaborativa> result = await ref
+        .read(colaboracionesAccionesProvider.notifier)
+        .salirDeudaGrupal(deuda.id, datos);
+    if (!mounted) return;
+    if (result.failure != null) {
+      _avisar(failureMessage(result.failure!));
+      return;
+    }
+    _avisarOperacion(result, 'Saliste de la deuda compartida.');
+  }
+
+  Future<void> _cancelarDeudaGrupal(DeudaGrupal deuda) async {
+    final bool? confirmado = await NeoConfirmDialog.show(
+      context,
+      title: 'Cancelar deuda compartida',
+      message:
+          'Nadie ha aceptado todavía. Se revocarán las invitaciones y la '
+          'deuda quedará cancelada.',
+      confirmLabel: 'Cancelar deuda',
+      destructive: true,
+    );
+    if (confirmado != true || !mounted) return;
+    final ColaboracionActionResult<bool> result = await ref
+        .read(colaboracionesAccionesProvider.notifier)
+        .cancelarDeudaGrupal(deuda.id);
+    if (!mounted) return;
+    if (result.failure != null) {
+      _avisar(failureMessage(result.failure!));
+    } else {
+      _avisar('Deuda compartida cancelada.', tone: NeoSnackbarTone.success);
+    }
+  }
+
+  Future<void> _registrarAdelanto(
+    DeudaGrupal deuda,
+    OperacionColaborativa operacion,
+  ) async {
+    final ({String email, String nombre})? perfil = _perfilActual;
+    if (perfil == null) {
+      _avisar('Tu sesión no está disponible.');
+      return;
+    }
+    final AdelantoFormValue? elegido = await ColaboracionesForms.registrarAdelanto(
+      context,
+      operacion: operacion,
+      emailPropio: perfil.email,
+    );
+    if (elegido == null || !mounted) return;
+    final bool? confirmado = await NeoConfirmDialog.show(
+      context,
+      title: 'Registrar adelanto',
+      message:
+          'Se creará una deuda directa de ${Money.formatClp(elegido.monto)} '
+          'a tu favor por lo que adelantaste. La otra persona deberá aceptarla.',
+      confirmLabel: 'Proponer',
+    );
+    if (confirmado != true || !mounted) return;
+    final ColaboracionActionResult<InvitacionColaborativa> result = await ref
+        .read(colaboracionesAccionesProvider.notifier)
+        .registrarAdelanto(deuda.id, operacion.id, email: elegido.email);
+    if (!mounted) return;
+    if (result.failure != null) {
+      _avisar(failureMessage(result.failure!));
+      return;
+    }
+    _avisar(
+      'Adelanto propuesto. La otra persona debe aceptarlo.',
       tone: NeoSnackbarTone.success,
     );
     final InvitacionColaborativa? invitacion = result.value;
@@ -562,7 +807,13 @@ class _ColaboracionesScreenState extends ConsumerState<ColaboracionesScreen> {
       final bool? confirmado = await NeoConfirmDialog.show(
         context,
         title: 'Aceptar invitación',
-        message: invitacion.tipoRecurso == 'DEUDA_DIRECTA'
+        message: invitacion.esDeudaGrupal
+            ? '${invitacion.nombreCreador} comparte con el acreedor '
+                  '${invitacion.acreedorExterno ?? ''} una deuda de '
+                  '${Money.formatClp(invitacion.montoTotal ?? Decimal.zero)} '
+                  'y te asigna ${Money.formatClp(invitacion.responsabilidadInvitada ?? Decimal.zero)}. '
+                  'Al aceptar, confirmas el total y tu parte.'
+            : invitacion.tipoRecurso == 'DEUDA_DIRECTA'
             ? '${invitacion.nombreCreador} propone una deuda de '
                   '${Money.formatClp(invitacion.monto ?? Decimal.zero)}. '
                   '${invitacion.deudorNombre} debe a ${invitacion.acreedorNombre}. '
@@ -715,10 +966,39 @@ class _ColaboracionesScreenState extends ConsumerState<ColaboracionesScreen> {
     }
   }
 
+  Future<void> _verHistorialGrupal(DeudaGrupal deuda) async {
+    try {
+      final ({String email, String nombre})? perfil = _perfilActual;
+      final List<OperacionColaborativa> history = await ref
+          .read(colaboracionesAccionesProvider.notifier)
+          .obtenerHistorialDeudaGrupal(deuda.id);
+      if (!mounted) return;
+      await _mostrarHistorial(
+        'Historial · ${deuda.nombre}',
+        history,
+        elegibleAdelanto: perfil == null
+            ? null
+            : (OperacionColaborativa operacion) =>
+                operacion.esPagoGrupal &&
+                operacion.estado == EstadoColaborativo.confirmado &&
+                operacion.registradoPor == perfil.nombre &&
+                operacion.imputacionesPago.any(
+                  (MontoParticipante m) => m.email != perfil.email,
+                ),
+        onAdelanto: (OperacionColaborativa operacion) =>
+            _registrarAdelanto(deuda, operacion),
+      );
+    } on AppFailure catch (failure) {
+      if (mounted) _avisar(failureMessage(failure));
+    }
+  }
+
   Future<void> _mostrarHistorial(
     String title,
-    List<OperacionColaborativa> history,
-  ) async {
+    List<OperacionColaborativa> history, {
+    bool Function(OperacionColaborativa)? elegibleAdelanto,
+    void Function(OperacionColaborativa)? onAdelanto,
+  }) async {
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -746,7 +1026,11 @@ class _ColaboracionesScreenState extends ConsumerState<ColaboracionesScreen> {
                           separatorBuilder: (_, _) =>
                               const SizedBox(height: AppSpacing.sm),
                           itemBuilder: (_, int index) =>
-                              _OperacionHistoryRow(operation: history[index]),
+                              _OperacionHistoryRow(
+                                operation: history[index],
+                                elegibleAdelanto: elegibleAdelanto,
+                                onAdelanto: onAdelanto,
+                              ),
                         ),
                 ),
               ],
@@ -1058,6 +1342,228 @@ class _DeudaDirectaCard extends StatelessWidget {
   }
 }
 
+class _OpcionTipoDeuda extends StatelessWidget {
+  const _OpcionTipoDeuda({
+    required this.icono,
+    required this.titulo,
+    required this.detalle,
+    required this.valor,
+  });
+
+  final IconData icono;
+  final String titulo;
+  final String detalle;
+  final String valor;
+
+  @override
+  Widget build(BuildContext context) {
+    return NeoSurface(
+      density: AppDensity.section,
+      onTap: () => Navigator.of(context).pop(valor),
+      child: Row(
+        children: <Widget>[
+          Icon(icono, size: 28),
+          const SizedBox(width: AppSpacing.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(titulo, style: Theme.of(context).textTheme.titleMedium),
+                const SizedBox(height: AppSpacing.xs),
+                Text(
+                  detalle,
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ],
+            ),
+          ),
+          const Icon(Icons.chevron_right),
+        ],
+      ),
+    );
+  }
+}
+
+class _DeudaGrupalCard extends StatelessWidget {
+  const _DeudaGrupalCard({
+    required this.deuda,
+    required this.enviando,
+    required this.onPagar,
+    required this.onRepartir,
+    required this.onSalir,
+    required this.onHistorial,
+    required this.onCancelar,
+    required this.onRevocarInvitacion,
+  });
+
+  final DeudaGrupal deuda;
+  final bool enviando;
+  final VoidCallback? onPagar;
+  final VoidCallback? onRepartir;
+  final VoidCallback? onSalir;
+  final VoidCallback onHistorial;
+  final VoidCallback? onCancelar;
+  final ValueChanged<InvitacionColaborativa>? onRevocarInvitacion;
+
+  @override
+  Widget build(BuildContext context) {
+    return NeoSurface(
+      density: AppDensity.section,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              Expanded(
+                child: Text(
+                  deuda.nombre,
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+              ),
+              NeoBadge(
+                label: _estadoDeudaGrupal(deuda.estado),
+                color: switch (deuda.estado) {
+                  EstadoDeudaGrupal.activa => AppColors.green,
+                  EstadoDeudaGrupal.pendiente => AppColors.yellow,
+                  EstadoDeudaGrupal.saldada => AppColors.cyan,
+                  EstadoDeudaGrupal.cancelada => AppColors.lavender,
+                },
+                compact: true,
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Text('Acreedor externo: ${deuda.acreedorExterno}'),
+          Text(
+            'Pendiente con el acreedor: '
+            '${Money.formatClp(deuda.saldoPendiente)} de '
+            '${Money.formatClp(deuda.montoTotal)}',
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+          if (deuda.participanteActual) ...<Widget>[
+            const SizedBox(height: AppSpacing.xs),
+            Text(
+              'Tu responsabilidad pendiente: '
+              '${Money.formatClp(deuda.miResponsabilidadPendiente)}',
+              style: Theme.of(context).textTheme.titleSmall,
+            ),
+          ],
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            deuda.participantes
+                .where(
+                  (ParticipanteDeudaGrupal p) =>
+                      p.estado == EstadoParticipanteDeudaGrupal.activo,
+                )
+                .map(
+                  (ParticipanteDeudaGrupal p) =>
+                      '${p.nombre}: ${Money.formatClp(p.responsabilidadPendiente)}',
+                )
+                .join(' · '),
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+          if (deuda.cuotas.isNotEmpty) ...<Widget>[
+            const SizedBox(height: AppSpacing.xs),
+            Text(
+              '${deuda.cuotas.length} cuota(s) acordadas · próxima '
+              '${_proximoVencimiento(deuda)}',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ],
+          if (deuda.creadorActual &&
+              deuda.invitacionesPendientes.isNotEmpty) ...<Widget>[
+            const SizedBox(height: AppSpacing.xs),
+            for (final InvitacionColaborativa invitacion
+                in deuda.invitacionesPendientes)
+              Row(
+                children: <Widget>[
+                  Expanded(
+                    child: Text(
+                      'Invitación pendiente: ${invitacion.emailInvitado}',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ),
+                  NeoIconButton(
+                    icon: Icons.link_off_outlined,
+                    tooltip: 'Revocar invitación',
+                    variant: NeoIconButtonVariant.ghost,
+                    onPressed: enviando || onRevocarInvitacion == null
+                        ? null
+                        : () => onRevocarInvitacion!(invitacion),
+                  ),
+                ],
+              ),
+          ],
+          const SizedBox(height: AppSpacing.sm),
+          Wrap(
+            spacing: AppSpacing.xs,
+            runSpacing: AppSpacing.xs,
+            children: <Widget>[
+              if (onPagar != null)
+                NeoButton(
+                  label: 'Registrar pago',
+                  icon: Icons.payments_outlined,
+                  onPressed: enviando ? null : onPagar,
+                ),
+              if (onRepartir != null)
+                NeoButton(
+                  label: 'Proponer reparto',
+                  icon: Icons.pie_chart_outline,
+                  variant: NeoButtonVariant.secondary,
+                  onPressed: enviando ? null : onRepartir,
+                ),
+              NeoButton(
+                label: 'Historial',
+                icon: Icons.history,
+                variant: NeoButtonVariant.secondary,
+                onPressed: enviando ? null : onHistorial,
+              ),
+              if (onSalir != null)
+                NeoButton(
+                  label: 'Salir',
+                  icon: Icons.logout,
+                  variant: NeoButtonVariant.ghost,
+                  onPressed: enviando ? null : onSalir,
+                ),
+              if (onCancelar != null)
+                NeoButton(
+                  label: 'Cancelar deuda',
+                  variant: NeoButtonVariant.danger,
+                  onPressed: enviando ? null : onCancelar,
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  static String _estadoDeudaGrupal(EstadoDeudaGrupal estado) =>
+      switch (estado) {
+        EstadoDeudaGrupal.pendiente => 'Pendiente de aceptación',
+        EstadoDeudaGrupal.activa => 'Activa',
+        EstadoDeudaGrupal.saldada => 'Saldada',
+        EstadoDeudaGrupal.cancelada => 'Cancelada',
+      };
+
+  static String _proximoVencimiento(DeudaGrupal deuda) {
+    final DateTime hoy = DateTime.now();
+    final CuotaGrupal? proxima = deuda.cuotas
+        .where(
+          (CuotaGrupal cuota) =>
+              DateTime(cuota.fechaVencimiento.year, cuota.fechaVencimiento.month,
+                  cuota.fechaVencimiento.day)
+              .isAfter(hoy),
+        )
+        .firstOrNull;
+    if (proxima == null) return 'sin fecha futura';
+    final fecha = proxima.fechaVencimiento;
+    return 'vence ${fecha.day.toString().padLeft(2, '0')}/'
+        '${fecha.month.toString().padLeft(2, '0')}/${fecha.year} '
+        '(${Money.formatClp(proxima.monto)})';
+  }
+}
+
 class _InvitacionCard extends StatelessWidget {
   const _InvitacionCard({
     required this.invitacion,
@@ -1074,6 +1580,7 @@ class _InvitacionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bool deuda = invitacion.tipoRecurso == 'DEUDA_DIRECTA';
+    final bool grupal = invitacion.esDeudaGrupal;
     return NeoSurface(
       density: AppDensity.section,
       child: Column(
@@ -1081,7 +1588,10 @@ class _InvitacionCard extends StatelessWidget {
         children: <Widget>[
           Text(invitacion.nombreRecurso, style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: AppSpacing.xs),
-          Text('Invita ${invitacion.nombreCreador} · ${invitacion.tipoRecurso == 'META' ? 'Meta compartida' : 'Deuda directa'}'),
+          Text(
+            'Invita ${invitacion.nombreCreador} · '
+            '${grupal ? 'Deuda compartida' : invitacion.tipoRecurso == 'META' ? 'Meta compartida' : 'Deuda directa'}',
+          ),
           if (deuda) ...<Widget>[
             const SizedBox(height: AppSpacing.sm),
             Text(
@@ -1091,6 +1601,22 @@ class _InvitacionCard extends StatelessWidget {
             Text(
               'Monto: ${Money.formatClp(invitacion.monto ?? Decimal.zero)}',
               style: Theme.of(context).textTheme.titleSmall,
+            ),
+          ] else if (grupal) ...<Widget>[
+            const SizedBox(height: AppSpacing.sm),
+            Text(
+              'Acreedor externo: ${invitacion.acreedorExterno ?? ''}',
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+            Text('Total de la deuda: ${Money.formatClp(invitacion.montoTotal ?? Decimal.zero)}'),
+            Text(
+              'Tu responsabilidad: ${Money.formatClp(invitacion.responsabilidadInvitada ?? Decimal.zero)}',
+              style: Theme.of(context).textTheme.titleSmall,
+            ),
+            const SizedBox(height: AppSpacing.xs),
+            Text(
+              'Al aceptar confirmas el total y tu parte del reparto.',
+              style: Theme.of(context).textTheme.bodySmall,
             ),
           ] else if (invitacion.montoObjetivo != null) ...<Widget>[
             const SizedBox(height: AppSpacing.xs),
@@ -1201,8 +1727,15 @@ class _ActividadCard extends StatelessWidget {
 }
 
 class _OperacionHistoryRow extends StatelessWidget {
-  const _OperacionHistoryRow({required this.operation});
+  const _OperacionHistoryRow({
+    required this.operation,
+    this.elegibleAdelanto,
+    this.onAdelanto,
+  });
+
   final OperacionColaborativa operation;
+  final bool Function(OperacionColaborativa)? elegibleAdelanto;
+  final void Function(OperacionColaborativa)? onAdelanto;
 
   @override
   Widget build(BuildContext context) => NeoSurface(
@@ -1233,6 +1766,30 @@ class _OperacionHistoryRow extends StatelessWidget {
           Text('Atribuido a ${operation.atribuidoA}'),
         for (final AtribucionMeta atribucion in operation.atribuciones)
           Text('${atribucion.participante}: ${Money.formatClp(atribucion.monto)}'),
+        if (operation.imputacionesPago.isNotEmpty)
+          Text(
+            'Imputado: '
+            '${operation.imputacionesPago.map((MontoParticipante m) => '${m.nombre} ${Money.formatClp(m.monto)}').join(' · ')}',
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+        if (operation.cambiosResponsabilidad.isNotEmpty)
+          Text(
+            'Responsabilidades: '
+            '${operation.cambiosResponsabilidad.map((MontoParticipante m) => '${m.nombre} ${Money.formatClp(m.monto)}').join(' · ')}',
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+        if (onAdelanto != null &&
+            elegibleAdelanto != null &&
+            elegibleAdelanto!(operation))
+          Padding(
+            padding: const EdgeInsets.only(top: AppSpacing.xs),
+            child: NeoButton(
+              label: 'Registrar adelanto',
+              icon: Icons.request_quote_outlined,
+              variant: NeoButtonVariant.ghost,
+              onPressed: () => onAdelanto!(operation),
+            ),
+          ),
       ],
     ),
   );

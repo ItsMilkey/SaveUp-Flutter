@@ -1462,6 +1462,107 @@
         } ]
       }
     },
+    "/api/v1/colaboraciones/deudas-grupales/{deudaId}/repartos" : {
+      "put" : {
+        "tags" : [ "Colaboraciones" ],
+        "summary" : "Propone un nuevo reparto de responsabilidades pendientes",
+        "operationId" : "proponerCambioReparto",
+        "parameters" : [ {
+          "name" : "deudaId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ProponerCambioRepartoDTO"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/OperacionColaborativaDTO"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Solicitud inválida. Revisa el cuerpo y los parámetros.",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "No autenticado o token inválido/expirado.",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          },
+          "403" : {
+            "description" : "No tienes permisos para acceder al recurso.",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          },
+          "404" : {
+            "description" : "Recurso no encontrado.",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          },
+          "409" : {
+            "description" : "Conflicto con una regla de negocio.",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          },
+          "500" : {
+            "description" : "Error interno. Usa idError para reportarlo.",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ]
+      }
+    },
     "/api/v1/colaboraciones/deudas-directas/{deudaId}/cambios" : {
       "put" : {
         "tags" : [ "Colaboraciones" ],
@@ -2761,8 +2862,8 @@
           "required" : true
         },
         "responses" : {
-          "201" : {
-            "description" : "Dispositivo registrado",
+          "200" : {
+            "description" : "El dispositivo ya existía y se refrescó",
             "content" : {
               "application/json" : {
                 "schema" : {
@@ -2771,8 +2872,8 @@
               }
             }
           },
-          "200" : {
-            "description" : "El dispositivo ya existía y se refrescó",
+          "201" : {
+            "description" : "Dispositivo registrado",
             "content" : {
               "application/json" : {
                 "schema" : {
@@ -4443,6 +4544,412 @@
         } ]
       }
     },
+    "/api/v1/colaboraciones/deudas-grupales" : {
+      "post" : {
+        "tags" : [ "Colaboraciones" ],
+        "summary" : "Registra una deuda compartida con un acreedor externo e invita participantes",
+        "description" : "La suma de responsabilidades debe coincidir con el total; cada invitación muestra el total y la responsabilidad ofrecida. Registrar la deuda no modifica el efectivo de nadie.",
+        "operationId" : "crearDeudaGrupal",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CrearDeudaGrupalDTO"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/DeudaGrupalCreadaDTO"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Solicitud inválida. Revisa el cuerpo y los parámetros.",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "No autenticado o token inválido/expirado.",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          },
+          "403" : {
+            "description" : "No tienes permisos para acceder al recurso.",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          },
+          "404" : {
+            "description" : "Recurso no encontrado.",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          },
+          "409" : {
+            "description" : "Conflicto con una regla de negocio.",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          },
+          "500" : {
+            "description" : "Error interno. Usa idError para reportarlo.",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ]
+      }
+    },
+    "/api/v1/colaboraciones/deudas-grupales/{deudaId}/salir" : {
+      "post" : {
+        "tags" : [ "Colaboraciones" ],
+        "summary" : "Sale de una deuda compartida reasignando la responsabilidad pendiente",
+        "operationId" : "salirDeudaGrupal",
+        "parameters" : [ {
+          "name" : "deudaId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/SalirDeudaGrupalDTO"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/OperacionColaborativaDTO"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Solicitud inválida. Revisa el cuerpo y los parámetros.",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "No autenticado o token inválido/expirado.",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          },
+          "403" : {
+            "description" : "No tienes permisos para acceder al recurso.",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          },
+          "404" : {
+            "description" : "Recurso no encontrado.",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          },
+          "409" : {
+            "description" : "Conflicto con una regla de negocio.",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          },
+          "500" : {
+            "description" : "Error interno. Usa idError para reportarlo.",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ]
+      }
+    },
+    "/api/v1/colaboraciones/deudas-grupales/{deudaId}/pagos" : {
+      "post" : {
+        "tags" : [ "Colaboraciones" ],
+        "summary" : "Registra un pago real al acreedor externo con imputación",
+        "description" : "Lo imputado a quien paga se aplica de inmediato; lo imputado a otras personas queda pendiente hasta su confirmación.",
+        "operationId" : "registrarPagoDeudaGrupal",
+        "parameters" : [ {
+          "name" : "deudaId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/RegistrarPagoGrupalDTO"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/OperacionColaborativaDTO"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Solicitud inválida. Revisa el cuerpo y los parámetros.",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "No autenticado o token inválido/expirado.",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          },
+          "403" : {
+            "description" : "No tienes permisos para acceder al recurso.",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          },
+          "404" : {
+            "description" : "Recurso no encontrado.",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          },
+          "409" : {
+            "description" : "Conflicto con una regla de negocio.",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          },
+          "500" : {
+            "description" : "Error interno. Usa idError para reportarlo.",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ]
+      }
+    },
+    "/api/v1/colaboraciones/deudas-grupales/{deudaId}/operaciones/{operacionId}/adelantos" : {
+      "post" : {
+        "tags" : [ "Colaboraciones" ],
+        "summary" : "Propone una deuda directa por el adelanto de un pago",
+        "description" : "Disponible para quien desembolsó más de lo que se le imputó en un pago confirmado; la otra persona acepta los términos como en cualquier deuda directa.",
+        "operationId" : "registrarAdelantoDeudaGrupal",
+        "parameters" : [ {
+          "name" : "deudaId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }, {
+          "name" : "operacionId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/RegistrarAdelantoDTO"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/DeudaDirectaResponseDTO"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Solicitud inválida. Revisa el cuerpo y los parámetros.",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "No autenticado o token inválido/expirado.",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          },
+          "403" : {
+            "description" : "No tienes permisos para acceder al recurso.",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          },
+          "404" : {
+            "description" : "Recurso no encontrado.",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          },
+          "409" : {
+            "description" : "Conflicto con una regla de negocio.",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          },
+          "500" : {
+            "description" : "Error interno. Usa idError para reportarlo.",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ]
+      }
+    },
     "/api/v1/colaboraciones/deudas-directas" : {
       "post" : {
         "tags" : [ "Colaboraciones" ],
@@ -5415,6 +5922,90 @@
                 }
               }
             }
+          },
+          "400" : {
+            "description" : "Solicitud inválida. Revisa el cuerpo y los parámetros.",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "No autenticado o token inválido/expirado.",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          },
+          "403" : {
+            "description" : "No tienes permisos para acceder al recurso.",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          },
+          "404" : {
+            "description" : "Recurso no encontrado.",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          },
+          "409" : {
+            "description" : "Conflicto con una regla de negocio.",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          },
+          "500" : {
+            "description" : "Error interno. Usa idError para reportarlo.",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ]
+      }
+    },
+    "/api/v1/colaboraciones/deudas-grupales/{deudaId}/cancelar" : {
+      "patch" : {
+        "tags" : [ "Colaboraciones" ],
+        "summary" : "Cancela una deuda compartida que todavía no activó nadie",
+        "operationId" : "cancelarDeudaGrupal",
+        "parameters" : [ {
+          "name" : "deudaId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
           },
           "400" : {
             "description" : "Solicitud inválida. Revisa el cuerpo y los parámetros.",
@@ -7418,6 +8009,185 @@
         } ]
       }
     },
+    "/api/v1/colaboraciones/deudas-grupales/{deudaId}/historial" : {
+      "get" : {
+        "tags" : [ "Colaboraciones" ],
+        "summary" : "Lista el historial de una deuda compartida",
+        "operationId" : "historialDeudaGrupal",
+        "parameters" : [ {
+          "name" : "deudaId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/OperacionColaborativaDTO"
+                  }
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Solicitud inválida. Revisa el cuerpo y los parámetros.",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "No autenticado o token inválido/expirado.",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          },
+          "403" : {
+            "description" : "No tienes permisos para acceder al recurso.",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          },
+          "404" : {
+            "description" : "Recurso no encontrado.",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          },
+          "409" : {
+            "description" : "Conflicto con una regla de negocio.",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          },
+          "500" : {
+            "description" : "Error interno. Usa idError para reportarlo.",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ]
+      }
+    },
+    "/api/v1/colaboraciones/deudas-grupales/me" : {
+      "get" : {
+        "tags" : [ "Colaboraciones" ],
+        "summary" : "Lista las deudas compartidas del usuario",
+        "operationId" : "listarDeudasGrupales",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/DeudaGrupalResponseDTO"
+                  }
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Solicitud inválida. Revisa el cuerpo y los parámetros.",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "No autenticado o token inválido/expirado.",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          },
+          "403" : {
+            "description" : "No tienes permisos para acceder al recurso.",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          },
+          "404" : {
+            "description" : "Recurso no encontrado.",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          },
+          "409" : {
+            "description" : "Conflicto con una regla de negocio.",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          },
+          "500" : {
+            "description" : "Error interno. Usa idError para reportarlo.",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ]
+      }
+    },
     "/api/v1/colaboraciones/deudas-directas/{deudaId}/historial" : {
       "get" : {
         "tags" : [ "Colaboraciones" ],
@@ -9157,6 +9927,20 @@
           }
         }
       },
+      "MontoParticipanteDTO" : {
+        "type" : "object",
+        "properties" : {
+          "email" : {
+            "type" : "string"
+          },
+          "nombre" : {
+            "type" : "string"
+          },
+          "monto" : {
+            "type" : "number"
+          }
+        }
+      },
       "OperacionColaborativaDTO" : {
         "type" : "object",
         "properties" : {
@@ -9166,7 +9950,7 @@
           },
           "tipoRecurso" : {
             "type" : "string",
-            "enum" : [ "META", "DEUDA_DIRECTA" ]
+            "enum" : [ "META", "DEUDA_DIRECTA", "DEUDA_GRUPAL" ]
           },
           "recursoId" : {
             "type" : "integer",
@@ -9174,7 +9958,7 @@
           },
           "tipo" : {
             "type" : "string",
-            "enum" : [ "APORTE_META", "GASTO_META", "RETIRO_META", "PAGO_DEUDA", "CONDONACION", "CAMBIO_FINANCIERO" ]
+            "enum" : [ "APORTE_META", "GASTO_META", "RETIRO_META", "PAGO_DEUDA", "CONDONACION", "CAMBIO_FINANCIERO", "PAGO_GRUPAL", "CAMBIO_REPARTO", "SALIDA_DEUDA" ]
           },
           "monto" : {
             "type" : "number"
@@ -9214,6 +9998,46 @@
             "items" : {
               "$ref" : "#/components/schemas/AtribucionMetaDTO"
             }
+          },
+          "imputacionesPago" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/MontoParticipanteDTO"
+            }
+          },
+          "cambiosResponsabilidad" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/MontoParticipanteDTO"
+            }
+          }
+        }
+      },
+      "ProponerCambioRepartoDTO" : {
+        "required" : [ "responsabilidades" ],
+        "type" : "object",
+        "properties" : {
+          "responsabilidades" : {
+            "maxItems" : 10,
+            "minItems" : 0,
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ResponsabilidadDTO"
+            }
+          }
+        }
+      },
+      "ResponsabilidadDTO" : {
+        "required" : [ "email", "monto" ],
+        "type" : "object",
+        "properties" : {
+          "email" : {
+            "type" : "string"
+          },
+          "monto" : {
+            "minimum" : 0,
+            "exclusiveMinimum" : false,
+            "type" : "number"
           }
         }
       },
@@ -9975,7 +10799,7 @@
           },
           "tipoRecurso" : {
             "type" : "string",
-            "enum" : [ "META", "DEUDA_DIRECTA" ]
+            "enum" : [ "META", "DEUDA_DIRECTA", "DEUDA_GRUPAL" ]
           },
           "recursoId" : {
             "type" : "integer",
@@ -10016,6 +10840,15 @@
           },
           "codigo" : {
             "type" : "string"
+          },
+          "acreedorExterno" : {
+            "type" : "string"
+          },
+          "montoTotal" : {
+            "type" : "number"
+          },
+          "responsabilidadInvitada" : {
+            "type" : "number"
           }
         }
       },
@@ -10057,7 +10890,7 @@
         "properties" : {
           "tipoRecurso" : {
             "type" : "string",
-            "enum" : [ "META", "DEUDA_DIRECTA" ]
+            "enum" : [ "META", "DEUDA_DIRECTA", "DEUDA_GRUPAL" ]
           },
           "recursoId" : {
             "type" : "integer",
@@ -10077,8 +10910,8 @@
           }
         }
       },
-      "CrearDeudaDirectaDTO" : {
-        "required" : [ "direccion", "emailContraparte", "monto", "nombre", "permisoEdicion" ],
+      "CrearDeudaGrupalDTO" : {
+        "required" : [ "acreedorExterno", "montoTotal", "nombre", "participantes", "permisoEdicion" ],
         "type" : "object",
         "properties" : {
           "nombre" : {
@@ -10091,21 +10924,267 @@
             "minLength" : 0,
             "type" : "string"
           },
+          "acreedorExterno" : {
+            "maxLength" : 100,
+            "minLength" : 0,
+            "type" : "string"
+          },
+          "montoTotal" : {
+            "minimum" : 0.01,
+            "exclusiveMinimum" : false,
+            "type" : "number"
+          },
+          "permisoEdicion" : {
+            "type" : "string",
+            "enum" : [ "SOLO_CREADOR", "TODOS" ]
+          },
+          "participantes" : {
+            "maxItems" : 10,
+            "minItems" : 0,
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ResponsabilidadParticipanteDTO"
+            }
+          },
+          "cuotas" : {
+            "maxItems" : 36,
+            "minItems" : 0,
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/CuotaGrupalDTO"
+            }
+          }
+        }
+      },
+      "CuotaGrupalDTO" : {
+        "required" : [ "fechaVencimiento", "monto" ],
+        "type" : "object",
+        "properties" : {
           "monto" : {
             "minimum" : 0.01,
             "exclusiveMinimum" : false,
             "type" : "number"
           },
-          "direccion" : {
+          "fechaVencimiento" : {
             "type" : "string",
-            "enum" : [ "YO_DEBO", "ME_DEBEN" ]
-          },
-          "emailContraparte" : {
+            "format" : "date"
+          }
+        }
+      },
+      "ResponsabilidadParticipanteDTO" : {
+        "required" : [ "email", "monto" ],
+        "type" : "object",
+        "properties" : {
+          "email" : {
             "type" : "string"
+          },
+          "monto" : {
+            "minimum" : 0.01,
+            "exclusiveMinimum" : false,
+            "type" : "number"
+          }
+        }
+      },
+      "CuotaGrupalResponseDTO" : {
+        "type" : "object",
+        "properties" : {
+          "numero" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "monto" : {
+            "type" : "number"
+          },
+          "fechaVencimiento" : {
+            "type" : "string",
+            "format" : "date"
+          }
+        }
+      },
+      "DeudaGrupalCreadaDTO" : {
+        "type" : "object",
+        "properties" : {
+          "deuda" : {
+            "$ref" : "#/components/schemas/DeudaGrupalResponseDTO"
+          },
+          "invitaciones" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/InvitacionColaborativaDTO"
+            }
+          }
+        }
+      },
+      "DeudaGrupalResponseDTO" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "nombre" : {
+            "type" : "string"
+          },
+          "descripcion" : {
+            "type" : "string"
+          },
+          "acreedorExterno" : {
+            "type" : "string"
+          },
+          "montoTotal" : {
+            "type" : "number"
+          },
+          "saldoPendiente" : {
+            "type" : "number"
+          },
+          "estado" : {
+            "type" : "string",
+            "enum" : [ "PENDIENTE", "ACTIVA", "SALDADA", "CANCELADA" ]
           },
           "permisoEdicion" : {
             "type" : "string",
             "enum" : [ "SOLO_CREADOR", "TODOS" ]
+          },
+          "nombreCreador" : {
+            "type" : "string"
+          },
+          "creadorActual" : {
+            "type" : "boolean"
+          },
+          "participanteActual" : {
+            "type" : "boolean"
+          },
+          "miResponsabilidadPendiente" : {
+            "type" : "number"
+          },
+          "participantes" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ParticipanteDeudaGrupalDTO"
+            }
+          },
+          "cuotas" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/CuotaGrupalResponseDTO"
+            }
+          },
+          "creadoEn" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "invitacionesPendientes" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/InvitacionColaborativaDTO"
+            }
+          }
+        }
+      },
+      "ParticipanteDeudaGrupalDTO" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "nombre" : {
+            "type" : "string"
+          },
+          "email" : {
+            "type" : "string"
+          },
+          "responsabilidadOriginal" : {
+            "type" : "number"
+          },
+          "responsabilidadPendiente" : {
+            "type" : "number"
+          },
+          "estado" : {
+            "type" : "string",
+            "enum" : [ "ACTIVO", "SALIO" ]
+          },
+          "actual" : {
+            "type" : "boolean"
+          }
+        }
+      },
+      "ReasignacionDTO" : {
+        "required" : [ "email", "monto" ],
+        "type" : "object",
+        "properties" : {
+          "email" : {
+            "type" : "string"
+          },
+          "monto" : {
+            "minimum" : 0.01,
+            "exclusiveMinimum" : false,
+            "type" : "number"
+          }
+        }
+      },
+      "SalirDeudaGrupalDTO" : {
+        "type" : "object",
+        "properties" : {
+          "reasignaciones" : {
+            "maxItems" : 9,
+            "minItems" : 0,
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ReasignacionDTO"
+            }
+          }
+        }
+      },
+      "ImputacionDTO" : {
+        "required" : [ "email", "monto" ],
+        "type" : "object",
+        "properties" : {
+          "email" : {
+            "type" : "string"
+          },
+          "monto" : {
+            "minimum" : 0.01,
+            "exclusiveMinimum" : false,
+            "type" : "number"
+          }
+        }
+      },
+      "RegistrarPagoGrupalDTO" : {
+        "required" : [ "descripcion", "imputaciones", "monto" ],
+        "type" : "object",
+        "properties" : {
+          "monto" : {
+            "minimum" : 0.01,
+            "exclusiveMinimum" : false,
+            "type" : "number"
+          },
+          "descripcion" : {
+            "maxLength" : 255,
+            "minLength" : 0,
+            "type" : "string"
+          },
+          "imputaciones" : {
+            "maxItems" : 10,
+            "minItems" : 0,
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ImputacionDTO"
+            }
+          }
+        }
+      },
+      "RegistrarAdelantoDTO" : {
+        "required" : [ "email" ],
+        "type" : "object",
+        "properties" : {
+          "email" : {
+            "type" : "string"
+          },
+          "descripcion" : {
+            "maxLength" : 255,
+            "minLength" : 0,
+            "type" : "string"
           }
         }
       },
@@ -10169,6 +11248,38 @@
             "items" : {
               "$ref" : "#/components/schemas/InvitacionColaborativaDTO"
             }
+          }
+        }
+      },
+      "CrearDeudaDirectaDTO" : {
+        "required" : [ "direccion", "emailContraparte", "monto", "nombre", "permisoEdicion" ],
+        "type" : "object",
+        "properties" : {
+          "nombre" : {
+            "maxLength" : 100,
+            "minLength" : 0,
+            "type" : "string"
+          },
+          "descripcion" : {
+            "maxLength" : 255,
+            "minLength" : 0,
+            "type" : "string"
+          },
+          "monto" : {
+            "minimum" : 0.01,
+            "exclusiveMinimum" : false,
+            "type" : "number"
+          },
+          "direccion" : {
+            "type" : "string",
+            "enum" : [ "YO_DEBO", "ME_DEBEN" ]
+          },
+          "emailContraparte" : {
+            "type" : "string"
+          },
+          "permisoEdicion" : {
+            "type" : "string",
+            "enum" : [ "SOLO_CREADOR", "TODOS" ]
           }
         }
       },
@@ -10686,7 +11797,7 @@
           },
           "tipoRecurso" : {
             "type" : "string",
-            "enum" : [ "META", "DEUDA_DIRECTA" ]
+            "enum" : [ "META", "DEUDA_DIRECTA", "DEUDA_GRUPAL" ]
           },
           "recursoId" : {
             "type" : "integer",

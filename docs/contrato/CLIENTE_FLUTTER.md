@@ -479,6 +479,57 @@ se modelan como `Decimal`.
 - La app no calcula saldos ni prorrateos; reemplaza el estado con la respuesta del backend y refresca saldos,
   movimientos y ejecución presupuestaria tras movimientos confirmados.
 
+### 3.2 Deuda compartida con un tercero (T12, fase 2)
+
+Una deuda grupal registra el total pendiente con un **acreedor externo** (texto libre) repartido entre
+2 a 10 participantes. Igual que la fase 1: JWT, montos JSON con escala 2 (`Decimal`), bandeja in-app.
+
+#### Crear, invitar y aceptar
+
+| Método | Ruta | Entrada | Salida |
+|---|---|---|---|
+| `POST` | `/colaboraciones/deudas-grupales` | `{nombre, descripcion?, acreedorExterno, montoTotal, permisoEdicion, participantes[{email, monto}], cuotas?[{monto, fechaVencimiento}]}` | `201 {deuda, invitaciones[]}` |
+| `GET` | `/colaboraciones/deudas-grupales/me` | — | `200 [DeudaGrupalResponseDTO]` |
+| `PATCH` | `/colaboraciones/deudas-grupales/{id}/cancelar` | — | `204` (solo creador, solo `PENDIENTE`) |
+
+- `participantes` **incluye el correo de quien crea** con su responsabilidad; la suma de montos debe coincidir
+  exactamente con `montoTotal` (si no → `400 DATOS_INVALIDOS`).
+- `cuotas` es opcional y descriptivo (pagos acordados, no realizados): cada cuota lleva `monto` y
+  `fechaVencimiento`, el orden de la lista define el número y la suma debe coincidir con el total.
+- Cada invitación lleva `acreedorExterno`, `montoTotal` y `responsabilidadInvitada`; aceptarla fija esa
+  responsabilidad y activa la deuda con el primer aceptante. Registrar la deuda no toca el efectivo de nadie.
+- `DeudaGrupalResponseDTO` trae `saldoPendiente` (lo que falta al acreedor), `miResponsabilidadPendiente`,
+  `participantes[]` (con original y pendiente), `cuotas[]` y `invitacionesPendientes[]`.
+
+#### Pagos, reparto, salida y adelantos
+
+| Método | Ruta | Entrada | Salida |
+|---|---|---|---|
+| `POST` | `/colaboraciones/deudas-grupales/{id}/pagos` | `{monto, descripcion, imputaciones[{email, monto}]}` | `OperacionColaborativaDTO` |
+| `PUT` | `/colaboraciones/deudas-grupales/{id}/repartos` | `{responsabilidades[{email, monto}]}` | `OperacionColaborativaDTO` (pendiente) |
+| `POST` | `/colaboraciones/deudas-grupales/{id}/salir` | `{reasignaciones[{email, monto}]}` (vacío si sin pendiente) | `OperacionColaborativaDTO` |
+| `POST` | `/colaboraciones/deudas-grupales/{id}/operaciones/{opId}/adelantos` | `{email, descripcion?}` | `201 DeudaDirectaResponseDTO` |
+| `POST` | `/colaboraciones/operaciones/{id}/decision` | `{aceptar: true|false}` | `OperacionColaborativaDTO` |
+| `GET` | `/colaboraciones/deudas-grupales/{id}/historial` | — | `200 [OperacionColaborativaDTO]` |
+
+- Un **pago** es un hecho de quien desembolsa: su movimiento `PAGO_DEUDA`, la baja del saldo con el acreedor y
+  la parte imputada a sí misma se aplican al registrarlo. Las partes imputadas a otros quedan `PENDIENTE`
+  hasta que cada uno confirme; un rechazo no revierte los hechos (quien rechazó conserva su responsabilidad).
+  Las imputaciones suman el monto exacto y no superan la responsabilidad pendiente de cada persona.
+  `imputacionesPago[]` en la operación conserva el reparte. La deuda pasa a `SALDADA` cuando el saldo con el
+  acreedor llega a cero.
+- Un **reparto** propone el nuevo pendiente de cada participante activo (suma exacta al total pendiente) y
+  todos los demás confirman. La `responsabilidadOriginal` nunca cambia: el historial conserva los acuerdos.
+- La **salida** reasigna el pendiente propio a otros activos y los afectados confirman; sin pendiente es
+  inmediata. Quien sale queda `SALIO` y conserva acceso al historial. La persona creadora no puede salir.
+- Un **adelanto** se propone solo desde un pago `CONFIRMADO` y solo por quien desembolsó: genera una deuda
+  directa (visible también en `/deudas-directas/me`) por lo imputado a esa persona, y la contraparte la
+  acepta con su invitación. No se repite el adelanto de la misma persona en el mismo pago (→ `409`).
+- Mientras exista una operación `PENDIENTE` sobre la deuda, no se registra otra (→ `409`). El total de la
+  deuda es fijo; intereses o cargos del acreedor se registran como otra deuda.
+- El flujo de decisiones reutiliza `/operaciones/{id}/decision`; las nuevas operaciones traen
+  `imputacionesPago[]` (pagos) y `cambiosResponsabilidad[]` (repartos y salidas).
+
 ## 4. Errores: mapear por `codigo`
 
 Todo error usa `Content-Type: application/problem+json`:
