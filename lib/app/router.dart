@@ -26,6 +26,7 @@ import '../features/presupuesto/presentation/screens/categorias_presupuesto_scre
 import '../features/metas/domain/meta_ahorro.dart';
 import '../features/metas/presentation/screens/metas_screen.dart';
 import '../features/metas/presentation/screens/meta_form_screen.dart';
+import '../features/colaboraciones/presentation/colaboraciones_screen.dart';
 import '../features/reportes/presentation/screens/reportes_screen.dart';
 import '../features/analitica/presentation/screens/analitica_screen.dart';
 import '../features/appearance/presentation/appearance_screen.dart';
@@ -148,6 +149,11 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
         path: AppRoutes.metas,
         name: 'metas',
         builder: (_, _) => const MetasScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.colaboraciones,
+        name: 'colaboraciones',
+        builder: (_, _) => const ColaboracionesScreen(),
       ),
       GoRoute(
         path: AppRoutes.nuevaMeta,

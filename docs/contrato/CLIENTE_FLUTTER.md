@@ -408,6 +408,128 @@ filtro añaden `partidaId`:
 - `ABONO_META` y `RETIRO_META` no admiten partida. La imputación por categoría de los movimientos sin `partidaId`
   se calcula al leer el plan y **no** se guarda en el movimiento.
 
+### 3.1 Metas compartidas y deudas directas (T11, fase 1)
+
+La colaboración es una sección distinta de las metas y deudas individuales. Todos los endpoints siguientes
+requieren JWT y viven bajo `/api/v1/colaboraciones`. Los montos son números JSON con escala máxima 2; en Flutter
+se modelan como `Decimal`.
+
+#### Crear, invitar y aceptar
+
+| Método | Ruta | Entrada | Salida |
+|---|---|---|---|
+| `POST` | `/colaboraciones/metas` | `{nombre, montoObjetivo?, fechaLimite?, permisoEdicion, emailsInvitados[]}` | `201 {meta, invitaciones[]}` |
+| `GET` | `/colaboraciones/metas/me` | — | `200 [MetaCompartidaResponseDTO]` |
+| `POST` | `/colaboraciones/deudas-directas` | `{nombre, descripcion?, monto, direccion, emailContraparte, permisoEdicion}` | `201 DeudaDirectaResponseDTO` |
+| `GET` | `/colaboraciones/deudas-directas/me` | — | `200 [DeudaDirectaResponseDTO]` |
+| `GET` | `/colaboraciones/invitaciones/me` | — | `200 [InvitacionColaborativaDTO]` |
+| `POST` | `/colaboraciones/invitaciones/{id}/aceptar` | — | `200 AceptarInvitacionResponseDTO` |
+| `POST` | `/colaboraciones/invitaciones/{id}/rechazar` | — | `204` |
+| `POST` | `/colaboraciones/invitaciones/aceptar` | `{codigo}` | `200 AceptarInvitacionResponseDTO` |
+| `POST` | `/colaboraciones/invitaciones/rechazar` | `{codigo}` | `204` |
+| `DELETE` | `/colaboraciones/invitaciones/{id}` | — | `204` (solo creador, pendiente) |
+
+- `permisoEdicion`: `SOLO_CREADOR` o `TODOS`. Independientemente de quién pueda proponer, los cambios financieros
+  necesitan aprobación de todos los participantes requeridos.
+- Invitaciones ligadas al correo invitado (comparación sin distinguir mayúsculas/minúsculas), de un solo uso,
+  revocables por quien invita y válidas **7 días**. El alta devuelve el código opaco en texto claro una sola vez
+  para copiar/compartir; el backend conserva su hash SHA-256. No se envía correo ni push.
+- Una invitación a meta confirma **solo la participación**. Una invitación de deuda directa muestra dirección y monto;
+  aceptarla confirma esos términos. La dirección es `YO_DEBO` o `ME_DEBEN`.
+- El destinatario autenticado puede aceptar/rechazar por `id` solo si su correo coincide con el invitado. El código
+  sirve para la aceptación alternativa, por ejemplo después de crear la cuenta.
+- El estado de una deuda directa recién creada es `PENDIENTE`; no altera efectivo. Solo pasa a `ACTIVA` cuando
+  acepta la contraparte.
+
+#### Movimientos, aprobaciones e historial
+
+| Método | Ruta | Entrada | Salida |
+|---|---|---|---|
+| `POST` | `/colaboraciones/metas/{id}/aportes` | `{monto, descripcion, emailAtribucion?}` | `OperacionColaborativaDTO` |
+| `POST` | `/colaboraciones/metas/{id}/gastos` | `{monto, descripcion, emailAtribucion?}` | `OperacionColaborativaDTO` |
+| `POST` | `/colaboraciones/metas/{id}/retiros` | `{monto, descripcion, emailAtribucion?}` | `OperacionColaborativaDTO` |
+| `PUT` | `/colaboraciones/metas/{id}/cambios` | `{montoObjetivo?, fechaLimite?}` | `OperacionColaborativaDTO` (pendiente) |
+| `POST` | `/colaboraciones/metas/{id}/salir` | — | `204` (sin saldo atribuible ni confirmaciones pendientes) |
+| `PATCH` | `/colaboraciones/metas/{id}/cancelar` | — | `OperacionColaborativaDTO` (propuesta) |
+| `POST` | `/colaboraciones/deudas-directas/{id}/pagos` | `{monto, descripcion, emailAtribucion?}` | `OperacionColaborativaDTO` |
+| `POST` | `/colaboraciones/deudas-directas/{id}/condonaciones` | `{monto, descripcion}` | `OperacionColaborativaDTO` (pendiente) |
+| `PUT` | `/colaboraciones/deudas-directas/{id}/cambios` | `{saldoPendiente}` | `OperacionColaborativaDTO` (pendiente) |
+| `POST` | `/colaboraciones/operaciones/{id}/decision` | `{aceptar: true|false}` | `OperacionColaborativaDTO` |
+| `GET` | `/colaboraciones/metas/{id}/historial` | — | `200 [OperacionColaborativaDTO]` |
+| `GET` | `/colaboraciones/deudas-directas/{id}/historial` | — | `200 [OperacionColaborativaDTO]` |
+| `GET` | `/colaboraciones/actividad/me` | — | `200 [ActividadColaborativaDTO]` |
+| `PATCH` | `/colaboraciones/actividad/{id}/leida` | — | `204` |
+
+- Todo aporte reduce el saldo personal del participante atribuido y aumenta el fondo al quedar `CONFIRMADO`. Un
+  aporte atribuido a otra persona requiere su confirmación; mientras esté `PENDIENTE` no crea movimiento ni cambia
+  saldo.
+- Un gasto de meta reduce el fondo compartido y se atribuye según los aportes netos de cada participante; no reduce
+  de nuevo el saldo personal. `atribuciones[]` de la operación conserva los importes por persona. La precisión es 2
+  decimales; los centavos residuales se asignan al mayor saldo atribuible y, en empate, por RUT estable.
+- Un retiro propio no puede superar el saldo atribuible propio. Retirar más requiere aprobación de los demás
+  participantes. Salir de la meta requiere tener saldo atribuible cero; cancelar exige saldo del fondo cero y
+  aprobación de los demás.
+- Un pago creado por el deudor se aplica al instante. Si lo registra otra persona, `emailAtribucion` debe identificar
+  al deudor: el pago queda pendiente hasta que este confirme. Al confirmar, disminuye la deuda y se registra la salida
+  del deudor y entrada del acreedor; un pendiente o rechazado no altera saldos.
+- Una condonación puede ser parcial o total y requiere confirmación de la contraparte. Los cambios de objetivo,
+  fecha o saldo pendiente también requieren aprobación. El historial conserva operaciones rechazadas y acuerdos.
+- `ActividadColaborativaDTO` incluye `operacion` o `invitacion` cuando corresponde; `accionRequerida` indica si hay
+  algo pendiente de responder. La bandeja de actividad es in-app; esta fase no usa correo ni push.
+- La app no calcula saldos ni prorrateos; reemplaza el estado con la respuesta del backend y refresca saldos,
+  movimientos y ejecución presupuestaria tras movimientos confirmados.
+
+### 3.2 Deuda compartida con un tercero (T12, fase 2)
+
+Una deuda grupal registra el total pendiente con un **acreedor externo** (texto libre) repartido entre
+2 a 10 participantes. Igual que la fase 1: JWT, montos JSON con escala 2 (`Decimal`), bandeja in-app.
+
+#### Crear, invitar y aceptar
+
+| Método | Ruta | Entrada | Salida |
+|---|---|---|---|
+| `POST` | `/colaboraciones/deudas-grupales` | `{nombre, descripcion?, acreedorExterno, montoTotal, permisoEdicion, participantes[{email, monto}], cuotas?[{monto, fechaVencimiento}]}` | `201 {deuda, invitaciones[]}` |
+| `GET` | `/colaboraciones/deudas-grupales/me` | — | `200 [DeudaGrupalResponseDTO]` |
+| `PATCH` | `/colaboraciones/deudas-grupales/{id}/cancelar` | — | `204` (solo creador, solo `PENDIENTE`) |
+
+- `participantes` **incluye el correo de quien crea** con su responsabilidad; la suma de montos debe coincidir
+  exactamente con `montoTotal` (si no → `400 DATOS_INVALIDOS`).
+- `cuotas` es opcional y descriptivo (pagos acordados, no realizados): cada cuota lleva `monto` y
+  `fechaVencimiento`, el orden de la lista define el número y la suma debe coincidir con el total.
+- Cada invitación lleva `acreedorExterno`, `montoTotal` y `responsabilidadInvitada`; aceptarla fija esa
+  responsabilidad y activa la deuda con el primer aceptante. Registrar la deuda no toca el efectivo de nadie.
+- `DeudaGrupalResponseDTO` trae `saldoPendiente` (lo que falta al acreedor), `miResponsabilidadPendiente`,
+  `participantes[]` (con original y pendiente), `cuotas[]` y `invitacionesPendientes[]`.
+
+#### Pagos, reparto, salida y adelantos
+
+| Método | Ruta | Entrada | Salida |
+|---|---|---|---|
+| `POST` | `/colaboraciones/deudas-grupales/{id}/pagos` | `{monto, descripcion, imputaciones[{email, monto}]}` | `OperacionColaborativaDTO` |
+| `PUT` | `/colaboraciones/deudas-grupales/{id}/repartos` | `{responsabilidades[{email, monto}]}` | `OperacionColaborativaDTO` (pendiente) |
+| `POST` | `/colaboraciones/deudas-grupales/{id}/salir` | `{reasignaciones[{email, monto}]}` (vacío si sin pendiente) | `OperacionColaborativaDTO` |
+| `POST` | `/colaboraciones/deudas-grupales/{id}/operaciones/{opId}/adelantos` | `{email, descripcion?}` | `201 DeudaDirectaResponseDTO` |
+| `POST` | `/colaboraciones/operaciones/{id}/decision` | `{aceptar: true|false}` | `OperacionColaborativaDTO` |
+| `GET` | `/colaboraciones/deudas-grupales/{id}/historial` | — | `200 [OperacionColaborativaDTO]` |
+
+- Un **pago** es un hecho de quien desembolsa: su movimiento `PAGO_DEUDA`, la baja del saldo con el acreedor y
+  la parte imputada a sí misma se aplican al registrarlo. Las partes imputadas a otros quedan `PENDIENTE`
+  hasta que cada uno confirme; un rechazo no revierte los hechos (quien rechazó conserva su responsabilidad).
+  Las imputaciones suman el monto exacto y no superan la responsabilidad pendiente de cada persona.
+  `imputacionesPago[]` en la operación conserva el reparte. La deuda pasa a `SALDADA` cuando el saldo con el
+  acreedor llega a cero.
+- Un **reparto** propone el nuevo pendiente de cada participante activo (suma exacta al total pendiente) y
+  todos los demás confirman. La `responsabilidadOriginal` nunca cambia: el historial conserva los acuerdos.
+- La **salida** reasigna el pendiente propio a otros activos y los afectados confirman; sin pendiente es
+  inmediata. Quien sale queda `SALIO` y conserva acceso al historial. La persona creadora no puede salir.
+- Un **adelanto** se propone solo desde un pago `CONFIRMADO` y solo por quien desembolsó: genera una deuda
+  directa (visible también en `/deudas-directas/me`) por lo imputado a esa persona, y la contraparte la
+  acepta con su invitación. No se repite el adelanto de la misma persona en el mismo pago (→ `409`).
+- Mientras exista una operación `PENDIENTE` sobre la deuda, no se registra otra (→ `409`). El total de la
+  deuda es fijo; intereses o cargos del acreedor se registran como otra deuda.
+- El flujo de decisiones reutiliza `/operaciones/{id}/decision`; las nuevas operaciones traen
+  `imputacionesPago[]` (pagos) y `cambiosResponsabilidad[]` (repartos y salidas).
+
 ## 4. Errores: mapear por `codigo`
 
 Todo error usa `Content-Type: application/problem+json`:

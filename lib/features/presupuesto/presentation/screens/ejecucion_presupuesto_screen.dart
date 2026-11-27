@@ -129,7 +129,7 @@ class _EjecucionPresupuestoScreenState
           _BloqueGasto(
             titulo: 'Deseos',
             color: AppColors.magenta,
-            textColor: colors.ink,
+            textColor: colors.onAccentSurface,
             presupuesto: ejecucion.presupuestoDeseos,
             real: ejecucion.gastoDeseos,
             porcentaje: ejecucion.porcentajeDeseosConfigurado,

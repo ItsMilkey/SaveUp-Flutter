@@ -11,6 +11,8 @@ class MetaAhorro {
     required this.id,
     required this.nombre,
     required this.montoActual,
+    this.compartida = false,
+    this.estadoCompartida,
     this.montoObjetivo,
     this.fechaLimite,
   });
@@ -20,6 +22,8 @@ class MetaAhorro {
   final Decimal? montoObjetivo;
   final CalendarDate? fechaLimite;
   final Decimal montoActual;
+  final bool compartida;
+  final String? estadoCompartida;
 
   bool get sinObjetivo => montoObjetivo == null;
 

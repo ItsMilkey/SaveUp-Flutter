@@ -7,11 +7,17 @@ import '../../../core/design_system/design_system.dart';
 import '../../../core/errors/app_failure.dart';
 import '../../../core/errors/failure_messages.dart';
 import '../../../core/money/money.dart';
+import '../../colaboraciones/domain/colaboracion.dart';
+import '../../colaboraciones/presentation/colaboraciones_controller.dart';
 import '../domain/deuda.dart';
 import 'deuda_labels.dart';
 import 'deudas_controller.dart';
 
 /// Listado de deudas con progreso y segmentación activas/historial.
+///
+/// Además de las deudas individuales, lista las deudas compartidas con un
+/// acreedor externo (fase 2): se muestran con un distintivo y operan desde
+/// Colaboraciones.
 class DeudasScreen extends ConsumerStatefulWidget {
   const DeudasScreen({super.key});
 
@@ -25,6 +31,8 @@ class _DeudasScreenState extends ConsumerState<DeudasScreen> {
   @override
   Widget build(BuildContext context) {
     final AsyncValue<List<Deuda>> deudas = ref.watch(deudasProvider);
+    final AsyncValue<SnapshotColaboraciones> colaboraciones =
+        ref.watch(colaboracionesProvider);
 
     return NeoScaffold(
       appBar: NeoAppBar(
@@ -69,7 +77,7 @@ class _DeudasScreenState extends ConsumerState<DeudasScreen> {
                     : 'No se pudieron cargar las deudas.',
                 onRetry: () => ref.read(deudasProvider.notifier).refrescar(),
               ),
-              data: (List<Deuda> lista) => _lista(lista),
+              data: (List<Deuda> lista) => _lista(lista, colaboraciones),
             ),
           ),
         ],
@@ -82,14 +90,32 @@ class _DeudasScreenState extends ConsumerState<DeudasScreen> {
     );
   }
 
-  Widget _lista(List<Deuda> lista) {
+  Widget _lista(
+    List<Deuda> lista,
+    AsyncValue<SnapshotColaboraciones> colaboraciones,
+  ) {
     final List<Deuda> visibles = lista
         .where((Deuda d) => _verActivas ? d.estado.activa : !d.estado.activa)
         .toList(growable: false);
+    final List<DeudaGrupal> grupales = colaboraciones.maybeWhen(
+      data: (SnapshotColaboraciones snapshot) => snapshot.deudasGrupales
+          .where(
+            (DeudaGrupal g) => _verActivas
+                ? g.estado == EstadoDeudaGrupal.activa ||
+                      g.estado == EstadoDeudaGrupal.pendiente
+                : g.estado == EstadoDeudaGrupal.saldada ||
+                      g.estado == EstadoDeudaGrupal.cancelada,
+          )
+          .toList(growable: false),
+      orElse: () => const <DeudaGrupal>[],
+    );
 
-    if (visibles.isEmpty) {
+    if (visibles.isEmpty && grupales.isEmpty) {
       return RefreshIndicator(
-        onRefresh: () => ref.read(deudasProvider.notifier).refrescar(),
+        onRefresh: () async {
+          await ref.read(deudasProvider.notifier).refrescar();
+          await ref.read(colaboracionesProvider.notifier).refrescar();
+        },
         child: ListView(
           physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.all(AppSpacing.lg),
@@ -106,7 +132,10 @@ class _DeudasScreenState extends ConsumerState<DeudasScreen> {
     }
 
     return RefreshIndicator(
-      onRefresh: () => ref.read(deudasProvider.notifier).refrescar(),
+      onRefresh: () async {
+        await ref.read(deudasProvider.notifier).refrescar();
+        await ref.read(colaboracionesProvider.notifier).refrescar();
+      },
       child: ListView.separated(
         padding: const EdgeInsets.fromLTRB(
           AppSpacing.lg,
@@ -114,10 +143,13 @@ class _DeudasScreenState extends ConsumerState<DeudasScreen> {
           AppSpacing.lg,
           AppSpacing.xxxl,
         ),
-        itemCount: visibles.length,
+        itemCount: visibles.length + grupales.length,
         separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.sm),
         itemBuilder: (BuildContext context, int index) {
-          final Deuda deuda = visibles[index];
+          if (index < grupales.length) {
+            return _DeudaGrupalResumen(deuda: grupales[index]);
+          }
+          final Deuda deuda = visibles[index - grupales.length];
           return _DeudaCard(
             deuda: deuda,
             onTap: () => context.push<void>(AppRoutes.deudaDetalle(deuda.id)),
@@ -207,6 +239,60 @@ class _DeudaCard extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.xs),
           Text(proxima, style: textTheme.bodySmall),
+        ],
+      ),
+    );
+  }
+}
+
+/// Resumen de una deuda compartida con un acreedor externo: se lista junto a
+/// las deudas individuales y se opera desde Colaboraciones (fase 2).
+class _DeudaGrupalResumen extends StatelessWidget {
+  const _DeudaGrupalResumen({required this.deuda});
+
+  final DeudaGrupal deuda;
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    final SaveUpColors colors = theme.extension<SaveUpColors>()!;
+    return NeoSurface(
+      density: AppDensity.section,
+      onTap: () => context.push<void>(AppRoutes.colaboraciones),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              const Icon(Icons.groups_2_outlined, size: 20),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: Text(
+                  deuda.nombre,
+                  style: theme.textTheme.titleMedium,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              NeoBadge(label: 'Compartida', color: AppColors.lavender, compact: true),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Text('Acreedor externo: ${deuda.acreedorExterno}'),
+          Text(
+            'Pendiente con el acreedor: '
+            '${Money.formatClp(deuda.saldoPendiente)} de '
+            '${Money.formatClp(deuda.montoTotal)}',
+          ),
+          if (deuda.participanteActual)
+            Text(
+              'Tu parte: ${Money.formatClp(deuda.miResponsabilidadPendiente)}',
+              style: theme.textTheme.titleSmall,
+            ),
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            'Se gestiona desde Colaboraciones',
+            style: theme.textTheme.bodySmall?.copyWith(color: colors.muted),
+          ),
         ],
       ),
     );

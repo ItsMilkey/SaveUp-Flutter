@@ -3,9 +3,11 @@ import 'package:flutter/material.dart';
 
 import '../design_system.dart';
 
-enum _ShowcaseVariant { claro, oscuro, bold }
-
 /// Galería interna (solo debug) para revisar tokens y átomos.
+///
+/// No controla la apariencia de la app: renderiza con el tema activo. El único
+/// dueño de la preferencia es `Más → Tema` (`features/appearance`), para que no
+/// existan dos interruptores de tema que se comporten distinto.
 class DesignSystemShowcaseScreen extends StatefulWidget {
   const DesignSystemShowcaseScreen({super.key});
 
@@ -16,20 +18,13 @@ class DesignSystemShowcaseScreen extends StatefulWidget {
 
 class _DesignSystemShowcaseScreenState
     extends State<DesignSystemShowcaseScreen> {
-  _ShowcaseVariant _variant = _ShowcaseVariant.claro;
   String _segment = 'Semana';
   DateTime _periodo = DateTime(2026, 11);
   int _navIndex = 0;
 
   @override
   Widget build(BuildContext context) {
-    return Theme(
-      data: switch (_variant) {
-        _ShowcaseVariant.claro => SaveUpTheme.light(),
-        _ShowcaseVariant.oscuro => SaveUpTheme.dark(),
-        _ShowcaseVariant.bold => SaveUpTheme.bold(),
-      },
-      child: Builder(
+    return Builder(
         builder: (BuildContext context) {
           final ThemeData theme = Theme.of(context);
           final SaveUpColors colors = theme.extension<SaveUpColors>()!;
@@ -50,25 +45,11 @@ class _DesignSystemShowcaseScreenState
                 const SizedBox(height: AppSpacing.xl),
                 _section(
                   context,
-                  'Variantes de tema',
-                  SegmentedButton<_ShowcaseVariant>(
-                    segments: const <ButtonSegment<_ShowcaseVariant>>[
-                      ButtonSegment<_ShowcaseVariant>(
-                        value: _ShowcaseVariant.claro,
-                        label: Text('Claro'),
-                      ),
-                      ButtonSegment<_ShowcaseVariant>(
-                        value: _ShowcaseVariant.oscuro,
-                        label: Text('Oscuro'),
-                      ),
-                      ButtonSegment<_ShowcaseVariant>(
-                        value: _ShowcaseVariant.bold,
-                        label: Text('Bold'),
-                      ),
-                    ],
-                    selected: <_ShowcaseVariant>{_variant},
-                    onSelectionChanged: (Set<_ShowcaseVariant> selection) =>
-                        setState(() => _variant = selection.single),
+                  'Tema activo',
+                  Text(
+                    'Esta pantalla usa el tema de la app. Para cambiarlo, '
+                    'usa Más → Tema.',
+                    style: theme.textTheme.bodyMedium,
                   ),
                 ),
                 _section(
@@ -114,6 +95,61 @@ class _DesignSystemShowcaseScreenState
                         'LABEL / METADATA',
                         style: theme.textTheme.labelMedium,
                       ),
+                    ],
+                  ),
+                ),
+                _section(
+                  context,
+                  'Etiquetas y cifras (R-4)',
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Text(
+                        'SALDO DISPONIBLE · NECESIDADES · AHORRO',
+                        style: AppTypography.label(
+                          size: 12,
+                          color: colors.muted,
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.xs),
+                      Text(
+                        '1.234.567  ·  98.765  ·  4.321',
+                        style: AppTypography.text(
+                          size: 22,
+                          weight: FontWeight.w700,
+                          numeric: true,
+                          color: colors.ink,
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.xs),
+                      Text(
+                        'Cifras tabulares: el ancho no cambia al actualizar el monto.',
+                        style: theme.textTheme.bodySmall,
+                      ),
+                    ],
+                  ),
+                ),
+                _section(
+                  context,
+                  'Escala de elevación (R-2)',
+                  Wrap(
+                    spacing: AppSpacing.md,
+                    runSpacing: AppSpacing.md,
+                    children: <Widget>[
+                      for (final AppDensity density in AppDensity.values)
+                        SizedBox(
+                          width: 150,
+                          child: NeoSurface(
+                            density: density,
+                            child: Text(
+                              density.name.toUpperCase(),
+                              style: AppTypography.label(
+                                size: 11,
+                                color: colors.muted,
+                              ),
+                            ),
+                          ),
+                        ),
                     ],
                   ),
                 ),
@@ -575,7 +611,6 @@ class _DesignSystemShowcaseScreenState
             ),
           );
         },
-      ),
     );
   }
 

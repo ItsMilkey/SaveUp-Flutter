@@ -32,8 +32,18 @@ class NeoSurface extends StatelessWidget {
   final EdgeInsetsGeometry? padding;
   final VoidCallback? onTap;
 
-  /// Color del texto/iconos sobre [color]. Por defecto, tinta si hay fondo.
+  /// Color del texto/iconos sobre [color].
+  ///
+  /// Si no se indica, se deduce por contraste a partir de [color] (regla R-1
+  /// del contrato): tinta sobre superficies claras y texto claro del tema sobre
+  /// superficies oscuras. Sin [color] se hereda el color de texto del tema.
   final Color? textColor;
+
+  /// Foreground por contraste para una superficie con color propio.
+  static Color _foregroundOn(Color surface) =>
+      ThemeData.estimateBrightnessForColor(surface) == Brightness.dark
+      ? AppColors.darkText
+      : AppColors.ink;
 
   @override
   Widget build(BuildContext context) {
@@ -45,8 +55,7 @@ class NeoSurface extends StatelessWidget {
       color: borderColor ?? colors.border,
       width: borderWidth ?? density.borderWidth,
     );
-    final Color? foreground =
-        textColor ?? (color == null ? null : AppColors.ink);
+    final Color? foreground = textColor ?? (color == null ? null : _foregroundOn(color!));
     Widget content = Padding(
       padding: padding ?? EdgeInsets.all(density.padding),
       child: child,

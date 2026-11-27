@@ -98,15 +98,24 @@ class MetasScreen extends ConsumerWidget {
                 meta: lista[i],
                 color: chartPalette[i % chartPalette.length],
                 onAbonar: accionesEnCurso
+                    || lista[i].compartida
                     ? null
                     : () => _abonar(context, ref, lista[i]),
                 onRetirar: accionesEnCurso
+                    || lista[i].compartida
                     ? null
                     : () => _retirar(context, ref, lista[i]),
-                onEditar: () => _abrirFormulario(context, meta: lista[i]),
-                onEliminar: lista[i].esPorDefecto || accionesEnCurso
+                onEditar: lista[i].compartida
+                    ? null
+                    : () => _abrirFormulario(context, meta: lista[i]),
+                onEliminar: lista[i].esPorDefecto ||
+                        lista[i].compartida ||
+                        accionesEnCurso
                     ? null
                     : () => _eliminar(context, ref, lista[i]),
+                onGestionar: lista[i].compartida
+                    ? () => context.push<void>(AppRoutes.colaboraciones)
+                    : null,
                 accionesEnCurso: accionesEnCurso,
               ),
             ),
@@ -235,6 +244,7 @@ class _MetaCard extends StatelessWidget {
     required this.onRetirar,
     required this.onEditar,
     required this.onEliminar,
+    required this.onGestionar,
     required this.accionesEnCurso,
   });
 
@@ -242,8 +252,9 @@ class _MetaCard extends StatelessWidget {
   final Color color;
   final VoidCallback? onAbonar;
   final VoidCallback? onRetirar;
-  final VoidCallback onEditar;
+  final VoidCallback? onEditar;
   final bool accionesEnCurso;
+  final VoidCallback? onGestionar;
 
   /// `null` en la meta por defecto (no se puede eliminar).
   final VoidCallback? onEliminar;
@@ -253,8 +264,8 @@ class _MetaCard extends StatelessWidget {
     final ThemeData theme = Theme.of(context);
     final SaveUpColors colors = theme.extension<SaveUpColors>()!;
     final TextTheme textTheme = theme.textTheme.apply(
-      bodyColor: colors.ink,
-      displayColor: colors.ink,
+      bodyColor: colors.onAccentSurface,
+      displayColor: colors.onAccentSurface,
     );
     final Decimal? objetivo = meta.montoObjetivo;
 
@@ -280,23 +291,32 @@ class _MetaCard extends StatelessWidget {
                   textColor: colors.ink,
                   compact: true,
                 ),
-              PopupMenuButton<_AccionMeta>(
+              if (meta.compartida)
+                const NeoBadge(
+                  label: 'Compartida',
+                  color: AppColors.lavender,
+                  compact: true,
+                ),
+              if (onEditar != null || onEliminar != null)
+                PopupMenuButton<_AccionMeta>(
                 tooltip: 'Opciones',
+                enabled: onEditar != null || onEliminar != null,
                 onSelected: (_AccionMeta accion) {
                   switch (accion) {
                     case _AccionMeta.editar:
-                      onEditar();
+                      onEditar?.call();
                     case _AccionMeta.eliminar:
                       onEliminar?.call();
                   }
                 },
                 itemBuilder: (BuildContext context) =>
                     <PopupMenuEntry<_AccionMeta>>[
-                      const PopupMenuItem<_AccionMeta>(
-                        value: _AccionMeta.editar,
-                        child: Text('Editar'),
-                      ),
-                      if (!meta.esPorDefecto)
+                      if (onEditar != null)
+                        const PopupMenuItem<_AccionMeta>(
+                          value: _AccionMeta.editar,
+                          child: Text('Editar'),
+                        ),
+                      if (onEliminar != null)
                         PopupMenuItem<_AccionMeta>(
                           value: _AccionMeta.eliminar,
                           enabled: !accionesEnCurso,
@@ -309,8 +329,10 @@ class _MetaCard extends StatelessWidget {
           if (objetivo != null) ...<Widget>[
             NeoProgress(
               value: _progreso(meta.montoActual, objetivo),
-              color: colors.ink,
-              trackColor: colors.surface,
+              color: colors.onAccentSurface,
+              // La pista vive sobre un acento, no sobre el surface del tema:
+              // se deriva del foreground para leerse en los tres temas.
+              trackColor: colors.onAccentSurface.withValues(alpha: 0.18),
             ),
             const SizedBox(height: AppSpacing.xs),
             Text(
@@ -332,6 +354,19 @@ class _MetaCard extends StatelessWidget {
                 style: textTheme.bodySmall,
               ),
             ),
+          if (meta.compartida) ...<Widget>[
+            const SizedBox(height: AppSpacing.xs),
+            Text(
+              'Aportes, gastos y cambios se gestionan en Colaboraciones.',
+              style: textTheme.bodySmall,
+            ),
+            NeoButton(
+              label: 'Gestionar colaboración',
+              icon: Icons.people_alt_outlined,
+              variant: NeoButtonVariant.secondary,
+              onPressed: onGestionar,
+            ),
+          ],
           Row(
             children: <Widget>[
               NeoButton(

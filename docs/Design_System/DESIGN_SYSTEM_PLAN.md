@@ -88,6 +88,14 @@ sobriedad en esta etapa.
   con opacidad controlada. Validar contraste; no invertir los acentos.
 - **Patrón de puntos:** `CustomPainter` solo en auth/home hero, nunca detrás de
   formularios o listas densas.
+- **Regla R-1 · foreground de superficies (2026-11-17).** Toda superficie con color propio
+  define su texto **por contraste**: tinta (`AppColors.ink`) sobre colores claros —los
+  acentos— y texto claro del tema (`AppColors.darkText`) sobre superficies oscuras.
+  `NeoSurface` lo aplica por defecto cuando recibe `color` sin `textColor`, y
+  `SaveUpColors.onAccentSurface` expone la tinta explícita para los casos que la necesitan.
+  **Prohibido usar `colors.ink` como foreground sobre un acento:** `ink` es el color de
+  texto del tema y se invierte en oscuro, así que deja texto claro sobre acento claro.
+  Correlato: `surfaceAccent` en oscuro es una superficie oscura, no un acento.
 
 ### 3.2 Tipografía
 
@@ -209,6 +217,10 @@ Reglas:
   componen con primitivas; no se meten en el core.
 - `lib/app/theme.dart` compone `SaveUpTheme.light()` / `dark()` / `bold()` y la preferencia
   local de apariencia.
+- **El showcase no controla la apariencia (2026-11-17).** `DesignSystemShowcaseScreen`
+  renderiza con el tema activo y no tiene selector propio: el único dueño de la preferencia
+  es `Más → Tema` (`features/appearance`). Así no existen dos interruptores de tema con
+  efectos distintos.
 - `ThemeExtension<SaveUpColors>` y `ThemeExtension<SaveUpShadows>` para tokens
   que Material no cubre (sombras duras, borde, colores de categoría/charts).
 - Barrel con API pública explícita; nada de exponer tokens internos por accidente.
@@ -388,3 +400,40 @@ tests verdes).
 **Fases 0–8 cerradas.** El mantenimiento del sistema es incremental: cualquier
 pantalla nueva usa tokens/átomos existentes, y un componente nuevo entra al
 showcase con sus estados y tests antes de usarse en features.
+
+## 13. Evolución 2026-11-17 · «neo-brutalismo disciplinado»
+
+Decisión del rework de UI (plan: `REWORK_UI_PLAN.md`). La identidad se conserva —
+papel + tinta, bordes gruesos, sombras duras, acentos vibrantes, Archivo Black y Space
+Grotesk— y se corrigen **jerarquía, color y densidad**. Estas reglas extienden §3 y
+mandan sobre la práctica anterior cuando choquen.
+
+- **R-2 · Escala de elevación.** La jerarquía se expresa con la densidad ya definida en
+  §3.4, no con un valor único para todo: `hero` (borde 3, sombra `lg`) · `section`
+  (borde 2, sombra `md`) · `list` (borde 1.5, sombra `sm`) · `table` (borde 1, sin
+  sombra). **Una pantalla admite como máximo un bloque `hero`**; las listas y filas de
+  detalle usan `list` o `table`, nunca `section` por defecto.
+- **R-3 · Color semántico, no decorativo.** `yellow` = acción primaria; `green` =
+  éxito/ahorro; `orange` = aviso; `danger` = error/destructivo; `cyan` = información.
+  `magenta` y `lavender` quedan para identidad de categoría y datos de charts. **Las
+  tarjetas de contenido son papel**: el acento entra en el progreso, el estado o el
+  icono, no como relleno de la tarjeta. Queda superada la práctica de «color por
+  tarjeta» descrita en §10 (avance 2026-11-07).
+- **R-4 · Tipografía de etiquetas.** Labels, chips y botones en **MAYÚSCULAS** con
+  `letterSpacing` 0.5 y peso 600. Cifras de dinero con `FontFeature.tabularFigures()`.
+  Una sola pieza tipográfica display por pantalla.
+- **R-5 · Densidad de listas.** Una fila de movimiento = una línea (concepto + monto a
+  la derecha) más una micro-línea de fecha · categoría. Monto siempre con signo, color
+  semántico y alineado a la derecha; objetivo 64–72 dp de alto, sombra `sm`, separación
+  8 dp. Las acciones flotantes respetan el inset inferior y las listas reservan padding
+  para no quedar tapadas.
+- **R-6 · Superficie.** Canvas crema, tarjetas papel. El `dot-grid` vive solo en el hero
+  (auth/home); nunca detrás de listas, formularios o tablas.
+
+**Alternativa registrada:** una veta «editorial» (referencia `References/Diseño4.jpg`)
+con reglas finas, tipografía grande y menos saturación queda como opción posterior y
+acotada a analítica y reportes; hoy no se adopta porque contradice la decisión de
+«sin sobriedad» (2026-11-07).
+
+**Mantenimiento:** el detalle operativo de esta evolución vive en `MASTER.md`, en esta
+misma carpeta, y se actualiza junto con los tokens.
